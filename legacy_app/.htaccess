@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /
+
+# This rule captures the token after /provision/ and sends it to provision.php
+RewriteRule ^provision/([A-Za-z0-9%=\-]+)$ provision.php?token=$1 [L,QSA]

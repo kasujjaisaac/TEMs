@@ -1,0 +1,334 @@
+﻿<?php
+require_once __DIR__ . '/includes/erp_layout.php';
+
+$context = onyx_page_start('System Settings', 'Manage company, accounting, tax, security, notifications, and system preferences.');
+?>
+
+<style>
+    .settings-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .settings-header .section-picker,
+    .settings-header .section-list {
+        flex: 1 1 320px;
+    }
+    .section-picker label,
+    .section-list label {
+        display: block;
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+        color: #d8d8e2;
+    }
+    .section-picker select,
+    .section-list select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        font-size: 1rem;
+    }
+    .accordion {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .accordion-item + .accordion-item {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .accordion-header {
+        width: 100%;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        cursor: pointer;
+        color: #f4f4ff;
+        border: none;
+        text-align: left;
+    }
+    .accordion-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+    .accordion-title i {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        color: #ffb56b;
+    }
+    .accordion-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.2s ease;
+    }
+    .accordion-indicator.open {
+        transform: rotate(180deg);
+    }
+    .accordion-panel {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.28s ease, padding 0.28s ease;
+        padding: 0 24px;
+    }
+    .accordion-panel.open {
+        padding: 20px 24px 24px;
+        max-height: 2000px;
+    }
+    .accordion-panel p {
+        margin: 0 0 18px;
+        color: #cdd0e2;
+        line-height: 1.75;
+    }
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 18px;
+    }
+    .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 18px;
+    }
+    .feature-card strong {
+        display: block;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+    .feature-card ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #d7d8e4;
+    }
+    .feature-card ul li {
+        margin-bottom: 8px;
+        line-height: 1.55;
+    }
+    .settings-form {
+        display: grid;
+        gap: 18px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 18px;
+    }
+    .form-group {
+        display: grid;
+        gap: 8px;
+    }
+    .form-group label {
+        color: #d7d7e3;
+        font-size: 0.95rem;
+    }
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        font-size: 0.98rem;
+    }
+    .form-actions {
+        margin-top: 16px;
+    }
+    .form-actions button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 22px;
+        background: #ff6b00;
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .form-actions button:hover {
+        background: #ff8a32;
+    }
+    @media (max-width: 900px) {
+        .feature-grid,
+        .form-grid,
+        .settings-header {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="settings-header">
+    <div class="section-picker">
+        <label for="section-select">Jump to section</label>
+        <select id="section-select">
+            <option value="company">Company</option>
+        </select>
+    </div>
+    <div class="section-list">
+        <label>Settings menu</label>
+        <select id="section-menu">
+            <option value="company">Company</option>
+        </select>
+    </div>
+</div>
+
+<div class="accordion">
+    <div class="accordion-item" id="company">
+        <button class="accordion-header" type="button">
+            <div class="accordion-title"><i class="fas fa-building"></i> Company</div>
+            <span class="accordion-indicator"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="accordion-panel open">
+            <p>Store the company’s basic information and registration details for branded documents and reports.</p>
+            <form class="settings-form" autocomplete="off">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="company_name">Company Name</label>
+                        <input id="company_name" name="company_name" type="text" placeholder="Acme Corporation">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_logo">Company Logo</label>
+                        <input id="company_logo" name="company_logo" type="text" placeholder="https://example.com/logo.png">
+                    </div>
+                    <div class="form-group">
+                        <label for="business_registration_number">Business Registration Number</label>
+                        <input id="business_registration_number" name="business_registration_number" type="text" placeholder="123456789">
+                    </div>
+                    <div class="form-group">
+                        <label for="tin">Tax Identification Number (TIN)</label>
+                        <input id="tin" name="tin" type="text" placeholder="TIN123456">
+                    </div>
+                    <div class="form-group">
+                        <label for="vat_registration_number">VAT Registration Number</label>
+                        <input id="vat_registration_number" name="vat_registration_number" type="text" placeholder="VAT987654">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_email">Email Address</label>
+                        <input id="company_email" name="company_email" type="email" placeholder="info@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_phone">Phone Number</label>
+                        <input id="company_phone" name="company_phone" type="tel" placeholder="+256 700 000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_website">Website</label>
+                        <input id="company_website" name="company_website" type="url" placeholder="https://company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_address">Physical Address</label>
+                        <input id="company_address" name="company_address" type="text" placeholder="123 Main Street, Kampala">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_country">Country</label>
+                        <input id="company_country" name="company_country" type="text" placeholder="Uganda">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_currency">Currency</label>
+                        <input id="company_currency" name="company_currency" type="text" placeholder="UGX">
+                    </div>
+                    <div class="form-group">
+                        <label for="financial_year">Financial Year</label>
+                        <input id="financial_year" name="financial_year" type="text" placeholder="2026">
+                    </div>
+                    <div class="form-group">
+                        <label for="fiscal_year_start">Fiscal Year Start Date</label>
+                        <input id="fiscal_year_start" name="fiscal_year_start" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="company_time_zone">Time Zone</label>
+                        <input id="company_time_zone" name="company_time_zone" type="text" placeholder="Africa/Kampala">
+                    </div>
+                    <div class="form-group">
+                        <label for="date_format">Date Format</label>
+                        <select id="date_format" name="date_format">
+                            <option value="Y-m-d">YYYY-MM-DD</option>
+                            <option value="d/m/Y">DD/MM/YYYY</option>
+                            <option value="m/d/Y">MM/DD/YYYY</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="time_format">Time Format</label>
+                        <select id="time_format" name="time_format">
+                            <option value="H:i">24-hour</option>
+                            <option value="h:i A">12-hour</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button">Save Company Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<?php onyx_page_end(); ?>
+
+<script>
+    const sectionSelect = document.getElementById('section-select');
+    const sectionMenu = document.getElementById('section-menu');
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+    function togglePanel(button) {
+        const item = button.closest('.accordion-item');
+        const panel = item.querySelector('.accordion-panel');
+        const indicator = button.querySelector('.accordion-indicator');
+        const isOpen = panel.classList.contains('open');
+
+        document.querySelectorAll('.accordion-panel.open').forEach(openPanel => {
+            if (openPanel !== panel) {
+                openPanel.classList.remove('open');
+                const prev = openPanel.previousElementSibling;
+                if (prev) prev.querySelector('.accordion-indicator').classList.remove('open');
+            }
+        });
+
+        panel.classList.toggle('open', !isOpen);
+        if (indicator) indicator.classList.toggle('open', !isOpen);
+    }
+
+    accordionHeaders.forEach(button => {
+        button.addEventListener('click', () => {
+            togglePanel(button);
+        });
+    });
+
+    function scrollToSection(id) {
+        const section = document.getElementById(id);
+        if (!section) return;
+        const headerButton = section.querySelector('.accordion-header');
+        if (headerButton) {
+            const panel = section.querySelector('.accordion-panel');
+            if (!panel.classList.contains('open')) {
+                togglePanel(headerButton);
+            }
+        }
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    sectionSelect.addEventListener('change', (event) => {
+        scrollToSection(event.target.value);
+    });
+
+    sectionMenu.addEventListener('change', (event) => {
+        scrollToSection(event.target.value);
+    });
+</script>
