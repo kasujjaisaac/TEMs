@@ -10,7 +10,9 @@ if (! function_exists('onyx_legacy_pages')) {
         return [
             'dashboard', 'crm', 'customers', 'customers_action', 'suppliers', 'suppliers_action',
             'products', 'products_action', 'inventory', 'sales', 'sales_action', 'pos',
-            'purchases', 'accounting', 'banking', 'budgets', 'assets', 'payroll',
+            'purchases', 'accounting', 'banking', 'budgets', 'assets', 'human_resources',
+            'hr_profiles', 'hr_contracts', 'hr_attendance', 'hr_leave', 'hr_advances',
+            'hr_documents', 'hr_performance', 'hr_payroll_readiness', 'payroll',
             'reports', 'notifications', 'settings', 'mobile_app',
         ];
     }
@@ -202,6 +204,15 @@ if (! function_exists('onyx_nav_items')) {
             ['file' => 'banking.php', 'icon' => 'fa-university', 'label' => 'Banking'],
             ['file' => 'budgets.php', 'icon' => 'fa-wallet', 'label' => 'Budgets'],
             ['file' => 'assets.php', 'icon' => 'fa-boxes', 'label' => 'Assets'],
+            ['file' => 'human_resources.php', 'icon' => 'fa-users-gear', 'label' => 'Human Resource'],
+            ['file' => 'hr_profiles.php', 'icon' => 'fa-address-card', 'label' => 'Employee Profiles'],
+            ['file' => 'hr_contracts.php', 'icon' => 'fa-file-signature', 'label' => 'Contracts'],
+            ['file' => 'hr_attendance.php', 'icon' => 'fa-clock', 'label' => 'Attendance'],
+            ['file' => 'hr_leave.php', 'icon' => 'fa-calendar-check', 'label' => 'Leave'],
+            ['file' => 'hr_advances.php', 'icon' => 'fa-hand-holding-dollar', 'label' => 'Advances'],
+            ['file' => 'hr_documents.php', 'icon' => 'fa-folder-open', 'label' => 'Documents'],
+            ['file' => 'hr_performance.php', 'icon' => 'fa-chart-line', 'label' => 'Performance'],
+            ['file' => 'hr_payroll_readiness.php', 'icon' => 'fa-clipboard-check', 'label' => 'Payroll Readiness'],
             ['file' => 'payroll.php', 'icon' => 'fa-money-bill-wave', 'label' => 'Payroll'],
             ['file' => 'reports.php', 'icon' => 'fa-chart-line', 'label' => 'Reports'],
             ['file' => 'notifications.php', 'icon' => 'fa-bell', 'label' => 'Notifications'],
@@ -248,15 +259,31 @@ if (! function_exists('onyx_nav_groups')) {
                 'items' => [
                     ['file' => 'accounting.php', 'icon' => 'fa-calculator', 'label' => 'Accounting'],
                     ['file' => 'banking.php', 'icon' => 'fa-building-columns', 'label' => 'Banking'],
-                    ['file' => 'payroll.php', 'icon' => 'fa-money-check-dollar', 'label' => 'Payroll'],
                     ['file' => 'budgets.php', 'icon' => 'fa-wallet', 'label' => 'Budgets'],
+                    ['file' => 'assets.php', 'icon' => 'fa-laptop-file', 'label' => 'Assets'],
+                    ['file' => 'reports.php', 'icon' => 'fa-chart-column', 'label' => 'Reports'],
+                ],
+            ],
+            [
+                'label' => 'Human Resource',
+                'icon' => 'fa-users-gear',
+                'items' => [
+                    ['file' => 'human_resources.php', 'icon' => 'fa-users', 'label' => 'Overview'],
+                    ['file' => 'hr_profiles.php', 'icon' => 'fa-address-card', 'label' => 'Employee Profiles'],
+                    ['file' => 'hr_contracts.php', 'icon' => 'fa-file-signature', 'label' => 'Contracts & Roles'],
+                    ['file' => 'hr_attendance.php', 'icon' => 'fa-clock', 'label' => 'Attendance'],
+                    ['file' => 'hr_leave.php', 'icon' => 'fa-calendar-check', 'label' => 'Leave'],
+                    ['file' => 'hr_advances.php', 'icon' => 'fa-hand-holding-dollar', 'label' => 'Advances & Loans'],
+                    ['file' => 'hr_documents.php', 'icon' => 'fa-folder-open', 'label' => 'Documents'],
+                    ['file' => 'hr_performance.php', 'icon' => 'fa-chart-line', 'label' => 'Performance'],
+                    ['file' => 'hr_payroll_readiness.php', 'icon' => 'fa-clipboard-check', 'label' => 'Payroll Readiness'],
+                    ['file' => 'payroll.php', 'icon' => 'fa-money-check-dollar', 'label' => 'Payroll'],
                 ],
             ],
             [
                 'label' => 'Operations',
                 'icon' => 'fa-briefcase',
                 'items' => [
-                    ['file' => 'assets.php', 'icon' => 'fa-laptop-file', 'label' => 'Assets'],
                     ['file' => 'mobile_app.php', 'icon' => 'fa-mobile-screen-button', 'label' => 'Mobile App'],
                     ['file' => 'notifications.php', 'icon' => 'fa-bell', 'label' => 'Notifications'],
                 ],
@@ -269,10 +296,10 @@ if (! function_exists('onyx_nav_groups')) {
                 ],
             ],
             [
-                'label' => 'Administration',
+                'label' => 'Settings',
                 'icon' => 'fa-sliders',
                 'items' => [
-                    ['file' => 'settings.php', 'icon' => 'fa-gear', 'label' => 'Settings'],
+                    ['file' => 'settings.php', 'icon' => 'fa-gear', 'label' => 'Overview'],
                 ],
             ],
         ];
@@ -308,24 +335,26 @@ if (! function_exists('onyx_page_start')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?> - ONYX ACCOUNTING SYSTEM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>?v=<?= $cssVersion ?>">
     <style>
         :root{--onyx-bg:#12121a;--onyx-surface:#1c1c27;--onyx-accent:#fff;--onyx-border:#2a2a3b;--onyx-text:#fff;--onyx-muted:#84849a}
-        .onyx-erp-body{background:var(--onyx-bg);color:var(--onyx-text);font-family:Poppins,system-ui,sans-serif;margin:0;overflow-x:hidden}
+        .onyx-erp-body{background:var(--onyx-bg);color:var(--onyx-text);font-family:Poppins,system-ui,sans-serif;font-size:12px;margin:0;overflow-x:hidden}
         .onyx-erp-body a{color:inherit;text-decoration:none}
         .onyx-erp-body .sidebar{background:radial-gradient(circle at 10% 0,rgba(255,255,255,.07),transparent 24%),linear-gradient(180deg,#0b0b0d 0%,#050506 100%);border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;height:calc(100vh - 82px);left:0;position:fixed;top:82px;width:272px;z-index:1000}
         .sidebar-header{display:none}.sidebar-logo-plate{align-items:center;background:#fff;border:1px solid rgba(255,255,255,.18);display:flex;flex:0 0 58px;height:58px;justify-content:center;padding:6px;width:58px}.sidebar-logo-plate img{display:block;height:100%;object-fit:contain;width:100%}.brand-title{font-size:.82rem;font-weight:800;line-height:1.25;margin:0}.brand-title small{color:#777783;display:block;font-size:.62rem;font-weight:700;margin-top:4px;text-transform:uppercase}.accent-text,.action-btn i,.panel-title i,.currency-badge,.badge{color:var(--onyx-accent)}
         .sidebar-meta,.muted{color:var(--onyx-muted)}.sidebar-menu-wrapper{flex:1;overflow-y:auto;padding:14px 10px}.sidebar-menu-wrapper::-webkit-scrollbar{width:6px}.sidebar-menu-wrapper::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12)}
-        .nav-group{margin-bottom:5px}.nav-dropdown-toggle,.nav-link-onyx{align-items:center;background:transparent;border:0;border-left:2px solid transparent;color:#a8a8b2;cursor:pointer;display:flex;font-family:Poppins,system-ui,sans-serif;font-size:12px;font-weight:700;gap:10px;letter-spacing:0;min-height:34px;padding:0 10px;text-align:left;width:100%}.nav-link-onyx{font-family:Poppins,system-ui,sans-serif;font-size:11px;font-weight:600;min-height:28px}.nav-direct-link{font-size:12px;font-weight:700;min-height:34px}.nav-dropdown-menu .nav-link-onyx{font-family:Poppins,system-ui,sans-serif;font-size:11px;font-weight:600;min-height:28px}.nav-dropdown-toggle{justify-content:space-between}.nav-dropdown-label{align-items:center;display:flex;gap:10px}.nav-link-onyx i,.nav-dropdown-label i{color:#777783;flex:0 0 17px;font-size:11px;text-align:center}.nav-direct-link i{font-size:12px}.nav-dropdown-caret{color:#555560;font-size:9px;transition:transform .16s ease}.nav-dropdown-caret.open{transform:rotate(180deg)}.nav-dropdown-toggle.active,.nav-dropdown-toggle:hover{background:rgba(255,255,255,.045);border-left-color:#fff;color:#fff}.nav-dropdown-toggle.active i,.nav-dropdown-toggle:hover i{color:#fff}.nav-link-onyx:hover{background:rgba(255,255,255,.04);color:#fff}.nav-link-onyx.active{background:#fff;border-left-color:#fff;color:#050506;font-weight:800}.nav-link-onyx.active i{color:#050506}
+        .nav-group{margin-bottom:5px}.nav-dropdown-toggle,.nav-link-onyx{align-items:center;background:transparent;border:0;border-left:2px solid transparent;color:#a8a8b2;cursor:pointer;display:flex;font-family:Poppins,system-ui,sans-serif;font-size:12px;font-weight:700;gap:10px;letter-spacing:0;min-height:34px;padding:0 10px;text-align:left;width:100%}.nav-link-onyx{font-family:Poppins,system-ui,sans-serif;font-size:12px;font-weight:600;min-height:28px}.nav-direct-link{font-size:12px;font-weight:700;min-height:34px}.nav-dropdown-menu .nav-link-onyx{font-family:Poppins,system-ui,sans-serif;font-size:12px;font-weight:600;min-height:28px}.nav-dropdown-toggle{justify-content:space-between}.nav-dropdown-label{align-items:center;display:flex;gap:10px}.nav-link-onyx i,.nav-dropdown-label i{color:#777783;flex:0 0 17px;font-size:11px;text-align:center}.nav-direct-link i{font-size:12px}.nav-dropdown-caret{color:#555560;font-size:9px;transition:transform .16s ease}.nav-dropdown-caret.open{transform:rotate(180deg)}.nav-dropdown-toggle.active,.nav-dropdown-toggle:hover{background:rgba(255,255,255,.045);border-left-color:#fff;color:#fff}.nav-dropdown-toggle.active i,.nav-dropdown-toggle:hover i{color:#fff}.nav-link-onyx:hover{background:rgba(255,255,255,.04);color:#fff}.nav-link-onyx.active{background:#fff;border-left-color:#fff;color:#050506;font-weight:800}.nav-link-onyx.active i{color:#050506}
         .nav-dropdown-menu{display:none;flex-direction:column;padding:4px 0 5px 19px}.nav-dropdown-menu.open{display:flex}.nav-dropdown-menu .nav-link-onyx{border-left-color:rgba(255,255,255,.06);margin:1px 0}.sidebar-footer{border-top:1px solid rgba(255,255,255,.08);padding:14px}.sidebar-user{align-items:center;display:flex;gap:10px;margin-bottom:12px;min-width:0}.sidebar-user-avatar{align-items:center;background:#fff;color:#050506;display:flex;flex:0 0 32px;font-size:12px;font-weight:800;height:32px;justify-content:center;width:32px}.sidebar-user-copy{min-width:0}.sidebar-user-copy strong,.sidebar-user-copy span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sidebar-user-copy strong{color:#fff;font-size:12px;font-weight:800}.sidebar-user-copy span{color:#777783;font-size:10px;font-weight:700;margin-top:2px}.logout-btn{align-items:center;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:0;color:#d8d8de;cursor:pointer;display:flex;font:inherit;font-size:12px;font-weight:700;gap:8px;justify-content:center;min-height:34px;padding:0 12px;width:100%}.logout-btn:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.38);color:#fff}
-        .main-content{margin-left:272px;min-height:100vh;padding:24px 34px 34px}.main-topbar{align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid rgba(255,255,255,.08);display:flex;gap:12px;justify-content:space-between;margin:-24px -34px 24px -306px;min-height:58px;padding:10px 12px;position:sticky;top:0;width:calc(100% + 340px);z-index:1200}.topbar-left,.topbar-right{align-items:center;display:flex;gap:10px;min-width:0}.topbar-left{flex:1}.topbar-brand{align-items:center;display:flex;flex:0 0 272px;gap:10px;min-width:0;padding:0 10px;text-decoration:none}.topbar-brand img{background:#fff;height:38px;object-fit:contain;padding:4px;width:38px}.topbar-brand strong,.topbar-brand small{display:block;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-brand strong{color:#fff;font-size:13px;font-weight:800}.topbar-brand small{color:#777783;font-size:10px;font-weight:800;margin-top:4px;text-transform:uppercase}.topbar-right{flex-wrap:wrap;justify-content:flex-end}.topbar-search{align-items:center;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);display:flex;gap:8px;min-height:38px;padding:0 12px;width:min(360px,100%)}.topbar-search i{color:#777783;font-size:11px}.topbar-search input{background:transparent;border:0;color:#fff;font-family:Poppins,system-ui,sans-serif;font-size:12px;outline:0;padding:0;width:100%}.topbar-search input::placeholder{color:#777783}.topbar-action,.topbar-icon,.topbar-chip,.topbar-user{align-items:center;border:1px solid rgba(255,255,255,.08);display:inline-flex;min-height:38px}.topbar-action{background:#fff;color:#050506;font-size:12px;font-weight:800;gap:8px;padding:0 13px;text-decoration:none}.topbar-icon{background:rgba(255,255,255,.035);color:#d8d8de;justify-content:center;position:relative;width:38px}.topbar-icon-dot{background:#ef4444;height:7px;position:absolute;right:9px;top:9px;width:7px}.topbar-chip{background:rgba(255,255,255,.035);color:#d8d8de;font-size:11px;font-weight:700;gap:7px;padding:0 11px;white-space:nowrap}.topbar-chip i{color:#8d8d98;font-size:11px}.topbar-user{background:rgba(255,255,255,.035);gap:9px;padding:4px 10px 4px 4px}.topbar-user-avatar{align-items:center;background:#fff;color:#050506;display:flex;font-size:12px;font-weight:800;height:30px;justify-content:center;width:30px}.topbar-user strong,.topbar-user span{display:block;line-height:1.1;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-user strong{color:#fff;font-size:11px;font-weight:800}.topbar-user span{color:#777783;font-size:10px;font-weight:700;margin-top:3px}.page-header{align-items:flex-start;display:flex;gap:20px;justify-content:space-between;margin-bottom:26px}.page-header h1{font-size:1.75rem;margin:0 0 6px}.page-subtitle{color:var(--onyx-muted);font-size:.88rem;margin:0}
+        .main-content{margin-left:272px;min-height:100vh;padding:24px 34px 34px}.main-topbar{align-items:center;background:#050506;border:0;border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 10px 24px rgba(0,0,0,.35);display:flex;gap:12px;justify-content:space-between;margin:-24px -34px 24px -306px;min-height:58px;padding:10px 12px;position:sticky;top:0;width:calc(100% + 340px);z-index:1200}.topbar-left,.topbar-right{align-items:center;display:flex;gap:10px;min-width:0}.topbar-left{flex:1}.topbar-brand{align-items:center;display:flex;flex:0 0 272px;gap:10px;min-width:0;padding:0 10px;text-decoration:none}.topbar-brand img{background:#fff;height:38px;object-fit:contain;padding:4px;width:38px}.topbar-brand strong,.topbar-brand small{display:block;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-brand strong{color:#fff;font-size:13px;font-weight:800}.topbar-brand small{color:#777783;font-size:10px;font-weight:800;margin-top:4px;text-transform:uppercase}.topbar-right{flex-wrap:wrap;justify-content:flex-end}.topbar-search{align-items:center;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);display:flex;gap:8px;min-height:38px;padding:0 12px;width:min(360px,100%)}.topbar-search i{color:#777783;font-size:11px}.topbar-search input{background:transparent;border:0;color:#fff;font-family:Poppins,system-ui,sans-serif;font-size:12px;outline:0;padding:0;width:100%}.topbar-search input::placeholder{color:#777783}.topbar-action,.topbar-icon,.topbar-chip,.topbar-user{align-items:center;border:1px solid rgba(255,255,255,.08);display:inline-flex;min-height:38px}.topbar-action{background:transparent;color:#fff;font-size:12px;font-weight:800;gap:8px;padding:0 13px;text-decoration:none}.topbar-action:hover{background:rgba(255,255,255,.06);text-decoration:none}.topbar-icon{background:rgba(255,255,255,.035);color:#d8d8de;justify-content:center;position:relative;width:38px}.topbar-icon-dot{background:#ef4444;height:7px;position:absolute;right:9px;top:9px;width:7px}.topbar-chip{background:rgba(255,255,255,.035);color:#d8d8de;font-size:11px;font-weight:700;gap:7px;padding:0 11px;white-space:nowrap}.topbar-chip i{color:#8d8d98;font-size:11px}.topbar-user{background:rgba(255,255,255,.035);gap:9px;padding:4px 10px 4px 4px}.topbar-user-avatar{align-items:center;background:#fff;color:#050506;display:flex;font-size:12px;font-weight:800;height:30px;justify-content:center;width:30px}.topbar-user strong,.topbar-user span{display:block;line-height:1.1;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-user strong{color:#fff;font-size:11px;font-weight:800}.topbar-user span{color:#777783;font-size:10px;font-weight:700;margin-top:3px}.page-header{align-items:flex-start;display:flex;gap:20px;justify-content:space-between;margin-bottom:26px}.page-header h1{font-size:1.75rem;margin:0 0 6px}.page-subtitle{color:var(--onyx-muted);font-size:.88rem;margin:0}
         .currency-badge,.panel,.onyx-erp-body .stat-card,.profile-card,.product-tile{border:1px solid var(--onyx-border);border-radius:8px}.currency-badge{font-family:monospace;font-size:.78rem;padding:10px 12px;white-space:nowrap}
         .stat-grid,.module-grid{display:grid;gap:18px;margin-bottom:22px}.stat-grid{grid-template-columns:repeat(5,minmax(150px,1fr))}.module-grid{grid-template-columns:repeat(12,1fr)}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-5{grid-column:span 5}.span-6{grid-column:span 6}.span-7{grid-column:span 7}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
         .panel,.onyx-erp-body .stat-card{background:var(--onyx-surface);padding:20px}.panel-title,.stat-card .label,.onyx-erp-body .table th{color:var(--onyx-muted);font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase}.stat-card .value{font-size:1.45rem;font-weight:800;margin-top:12px}.stat-card .note{color:var(--onyx-muted);font-size:.76rem;margin-top:8px}
-        .quick-actions,.profile-grid,.product-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.action-btn{align-items:center;background:rgba(255,107,0,.06);border:1px solid var(--onyx-border);border-radius:8px;color:var(--onyx-text);display:inline-flex;font-weight:600;gap:10px;padding:12px}
+        .quick-actions,.profile-grid,.product-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.action-btn{align-items:center;background:rgba(255,255,255,.035);border:1px solid var(--onyx-border);border-radius:8px;color:var(--onyx-text);display:inline-flex;font-weight:600;gap:10px;padding:12px}
+        .ops-board,.ops-board *{border-radius:0!important}.ops-board{display:grid;gap:18px}.ops-strip{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(148px,1fr))}.ops-card,.ops-action,.ops-check,.ops-report-card{background:var(--onyx-surface);border:1px solid var(--onyx-border);min-width:0}.ops-card{padding:14px}.ops-card span,.ops-field label,.ops-section-title,.ops-check span,.ops-report-card span{color:var(--onyx-muted);display:block;font-size:.58rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase}.ops-card strong{color:#fff;display:block;font-size:1.08rem;font-weight:900;line-height:1.2;margin-top:8px;word-break:break-word}.ops-form{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}.ops-field{display:grid;gap:6px;min-width:0}.ops-field.wide{grid-column:span 2}.ops-field.full{grid-column:1/-1}.ops-field input,.ops-field select,.ops-field textarea,.ops-filters input,.ops-filters select{background:#101016;border:1px solid rgba(255,255,255,.12);color:#fff;font:inherit;font-size:.78rem;min-height:38px;padding:9px;width:100%}.ops-field select option,.ops-filters select option{background:#050506;color:#fff}.ops-btn,.ops-action{align-items:center;display:inline-flex;font-size:.68rem;font-weight:800;gap:8px;justify-content:center;min-height:38px;padding:0 12px;text-decoration:none;text-transform:uppercase;white-space:nowrap}.ops-btn{background:#fff;border:1px solid #fff;color:#050506}.ops-btn.ghost{background:transparent;color:#fff}.ops-action{background:rgba(255,255,255,.035);color:#fff}.ops-action.primary{background:#fff;color:#050506}.ops-actions,.ops-tags{display:flex;flex-wrap:wrap;gap:8px}.ops-action i,.ops-report-card i{color:#fff}.ops-tags{align-items:flex-start}.ops-tag,.ops-tags span{border:1px solid rgba(255,255,255,.12);color:#d8d8de;font-size:.68rem;font-weight:800;padding:7px 9px}.ops-checks{display:grid;gap:8px}.ops-check{padding:9px}.ops-check strong,.ops-report-card strong{color:#fff;display:block;font-size:.72rem;font-weight:900}.ops-check span{font-size:.62rem;letter-spacing:0;line-height:1.45;margin-top:4px;text-transform:none}.ops-report-grid{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}.ops-report-card{padding:14px}.ops-report-card strong{font-size:.82rem;margin-top:10px}.ops-report-card span{font-size:.62rem;letter-spacing:0;line-height:1.45;margin-top:6px;text-transform:none}.ops-filters{display:grid;gap:12px;grid-template-columns:repeat(5,1fr)}@media(max-width:1000px){.ops-strip,.ops-form,.ops-report-grid,.ops-filters{grid-template-columns:1fr}.ops-field.wide{grid-column:auto}.ops-actions{display:grid;grid-template-columns:1fr}.ops-action{width:100%}}
         .table-wrap{overflow-x:auto}.onyx-erp-body .table{border-collapse:collapse;min-width:760px;width:100%}.onyx-erp-body .table td,.onyx-erp-body .table th{border-bottom:1px solid rgba(255,255,255,.05);padding:13px 12px;text-align:left}
+        .onyx-erp-body,.onyx-erp-body button,.onyx-erp-body input,.onyx-erp-body select,.onyx-erp-body textarea{font-family:Poppins,system-ui,sans-serif;font-size:12px}.onyx-erp-body *{border-radius:0!important}.page-header h1{font-size:20px;font-weight:900;letter-spacing:0}.page-subtitle{font-size:12px;line-height:1.5}.panel{padding:16px}.panel-title,.stat-card .label,.onyx-erp-body .table th{font-size:12px;font-weight:800;letter-spacing:0;text-transform:uppercase}.onyx-erp-body .table td{font-size:12px;line-height:1.45}.stat-card .value{font-size:18px}.stat-card .note{font-size:12px}.action-btn{font-size:12px;font-weight:800;min-height:38px}.ops-board{gap:14px}.ops-strip{gap:10px}.ops-card{padding:12px}.ops-card span,.ops-field label,.ops-section-title,.ops-check span,.ops-report-card span{font-size:12px;letter-spacing:0}.ops-card strong{font-size:16px}.ops-field input,.ops-field select,.ops-field textarea,.ops-filters input,.ops-filters select{font-size:12px;min-height:38px}.ops-btn,.ops-action{font-size:12px}.ops-tag,.ops-tags span{font-size:12px}.ops-check strong,.ops-report-card strong{font-size:12px}.ops-check span,.ops-report-card span{font-size:12px}.ops-report-card{padding:12px}
         @media(max-width:1180px){.stat-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.main-topbar{align-items:stretch;flex-direction:column}.topbar-left,.topbar-right{width:100%}.topbar-brand{flex-basis:auto;width:100%}.topbar-search{width:100%}}@media(max-width:760px){.onyx-erp-body .sidebar{height:auto;position:static;width:100%}.main-content{margin-left:0;padding:20px}.main-topbar{margin:-20px -20px 24px;width:calc(100% + 40px)}.page-header{flex-direction:column}.stat-grid{grid-template-columns:1fr}.topbar-right{justify-content:flex-start}}
     </style>
 </head>
@@ -374,8 +403,20 @@ if (! function_exists('onyx_page_start')) {
                                     <span><?= htmlspecialchars($item['label']) ?></span>
                                 </a>
                                 <?php if (($item['file'] ?? '') === 'settings.php'): ?>
-                                <?php foreach (['company' => 'Company', 'accounting' => 'Accounting', 'tax' => 'Tax', 'users_roles' => 'Users & Roles', 'branches' => 'Branches', 'warehouses' => 'Warehouses', 'products' => 'Products', 'payment_methods' => 'Payment Methods', 'invoice_settings' => 'Invoice Settings', 'receipt_settings' => 'Receipt Settings', 'quotation_settings' => 'Quotation Settings', 'notifications' => 'Notifications', 'email_smtp' => 'Email (SMTP)', 'security' => 'Security', 'audit_logs' => 'Audit Logs', 'financial_periods' => 'Financial Periods', 'backup_restore' => 'Backup & Restore', 'import_export' => 'Import & Export', 'system_info' => 'System Information'] as $anchor => $label): ?>
-                                    <a class="nav-link-onyx" href="<?= url('settings.php') ?>#<?= htmlspecialchars($anchor) ?>" data-nav-link><span><?= htmlspecialchars($label) ?></span></a>
+                                <?php foreach ([
+                                    'company' => ['label' => 'Company', 'icon' => 'fa-building'],
+                                    'finance' => ['label' => 'Finance', 'icon' => 'fa-coins'],
+                                    'organization' => ['label' => 'Organization', 'icon' => 'fa-users-gear'],
+                                    'operations' => ['label' => 'Operations', 'icon' => 'fa-diagram-project'],
+                                    'documents' => ['label' => 'Documents', 'icon' => 'fa-file-invoice'],
+                                    'communications' => ['label' => 'Communications', 'icon' => 'fa-envelope-open-text'],
+                                    'security_data' => ['label' => 'Security & Data', 'icon' => 'fa-shield-halved'],
+                                    'system' => ['label' => 'System', 'icon' => 'fa-server'],
+                                ] as $anchor => $section): ?>
+                                    <a class="nav-link-onyx" href="<?= url('settings.php') ?>?section=<?= htmlspecialchars($anchor) ?>" data-nav-link>
+                                        <i class="fa-solid <?= htmlspecialchars($section['icon']) ?>"></i>
+                                        <span><?= htmlspecialchars($section['label']) ?></span>
+                                    </a>
                                 <?php endforeach; ?>
                                 <?php endif; ?>
                             <?php endforeach; ?>
@@ -454,7 +495,7 @@ if (! function_exists('onyx_page_start')) {
                 </label>
             </div>
             <div class="topbar-right">
-                <a class="topbar-action" href="<?= url('pos.php') ?>">
+                <a class="topbar-action" href="<?= url('pos.php') ?>" style="background:transparent!important;color:#fff!important">
                     <i class="fa-solid fa-plus"></i>
                     <span>New Sale</span>
                 </a>

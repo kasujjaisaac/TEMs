@@ -16,7 +16,7 @@
             </label>
         </div>
         <div class="topbar-right">
-            <a class="topbar-action" href="{{ url('pos') }}">
+            <a class="topbar-action" href="{{ url('pos') }}" style="background: transparent !important; color: #ffffff !important;">
                 <i class="fa-solid fa-plus"></i>
                 <span>New Sale</span>
             </a>

@@ -38,15 +38,31 @@
             'items' => [
                 ['label' => 'Accounting', 'icon' => 'fa-calculator', 'url' => url('accounting'), 'patterns' => ['accounting*']],
                 ['label' => 'Banking', 'icon' => 'fa-building-columns', 'url' => url('banking'), 'patterns' => ['banking*']],
-                ['label' => 'Payroll', 'icon' => 'fa-money-check-dollar', 'url' => url('payroll'), 'patterns' => ['payroll*']],
                 ['label' => 'Budgets', 'icon' => 'fa-chart-line', 'url' => url('budgets'), 'patterns' => ['budgets*']],
+                ['label' => 'Assets', 'icon' => 'fa-laptop-file', 'url' => url('assets.php'), 'patterns' => ['assets*']],
+                ['label' => 'Reports', 'icon' => 'fa-chart-column', 'url' => url('reports'), 'patterns' => ['reports*']],
+            ],
+        ],
+        [
+            'label' => 'Human Resource',
+            'icon' => 'fa-users-gear',
+            'items' => [
+                ['label' => 'Overview', 'icon' => 'fa-users', 'url' => url('human_resources'), 'patterns' => ['human_resources*']],
+                ['label' => 'Employee Profiles', 'icon' => 'fa-address-card', 'url' => url('hr_profiles'), 'patterns' => ['hr_profiles*']],
+                ['label' => 'Contracts & Roles', 'icon' => 'fa-file-signature', 'url' => url('hr_contracts'), 'patterns' => ['hr_contracts*']],
+                ['label' => 'Attendance', 'icon' => 'fa-clock', 'url' => url('hr_attendance'), 'patterns' => ['hr_attendance*']],
+                ['label' => 'Leave', 'icon' => 'fa-calendar-check', 'url' => url('hr_leave'), 'patterns' => ['hr_leave*']],
+                ['label' => 'Advances & Loans', 'icon' => 'fa-hand-holding-dollar', 'url' => url('hr_advances'), 'patterns' => ['hr_advances*']],
+                ['label' => 'Documents', 'icon' => 'fa-folder-open', 'url' => url('hr_documents'), 'patterns' => ['hr_documents*']],
+                ['label' => 'Performance', 'icon' => 'fa-chart-line', 'url' => url('hr_performance'), 'patterns' => ['hr_performance*']],
+                ['label' => 'Payroll Readiness', 'icon' => 'fa-clipboard-check', 'url' => url('hr_payroll_readiness'), 'patterns' => ['hr_payroll_readiness*']],
+                ['label' => 'Payroll', 'icon' => 'fa-money-check-dollar', 'url' => url('payroll'), 'patterns' => ['payroll*']],
             ],
         ],
         [
             'label' => 'Operations',
             'icon' => 'fa-briefcase',
             'items' => [
-                ['label' => 'Assets', 'icon' => 'fa-laptop-file', 'url' => url('assets.php'), 'patterns' => ['assets*']],
                 ['label' => 'Mobile App', 'icon' => 'fa-mobile-screen-button', 'url' => url('mobile_app'), 'patterns' => ['mobile_app*']],
                 ['label' => 'Notifications', 'icon' => 'fa-bell', 'url' => url('notifications'), 'patterns' => ['notifications*']],
             ],
@@ -59,11 +75,11 @@
             ],
         ],
         [
-            'label' => 'Administration',
+            'label' => 'Settings',
             'icon' => 'fa-sliders',
             'items' => [
-                ['label' => 'Settings', 'icon' => 'fa-gear', 'url' => url('settings'), 'patterns' => ['settings*']],
-                ['label' => 'Users & Roles', 'icon' => 'fa-user-shield', 'url' => url('settings') . '#users_roles', 'patterns' => ['settings*']],
+                ['label' => 'Overview', 'icon' => 'fa-gear', 'url' => url('settings') . '?section=overview', 'patterns' => ['settings*']],
+                ['label' => 'Organization', 'icon' => 'fa-user-shield', 'url' => url('settings') . '?section=organization', 'patterns' => ['settings*']],
             ],
         ],
     ];

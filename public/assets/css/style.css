@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap");
+
 /* Modern shared stylesheet for Onyx Hub
    - Responsive layout (sidebar + main)
    - Theme variables for easy brand tuning
@@ -8,8 +10,8 @@
 
 /* ===== Theme variables (tweak these to match brand) ===== */
 :root{
-  --accent: #f39c12;           /* primary accent */
-  --accent-600: #d97706;
+  --accent: #ffffff;           /* primary accent */
+  --accent-600: #d8d8de;
   --bg: #0f172a;               /* page background */
   --surface: #0f172a;          /* same as bg to maintain dark theme */
   --sidebar: #0f172a;          /* sidebar background */
@@ -22,9 +24,9 @@
   --warning: #f59e0b;
   --glass: rgba(255,255,255,0.02);
 
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
   --max-width: 1280px;
 
   --shadow-sm: 0 6px 18px rgba(2,6,23,0.6);
@@ -38,13 +40,13 @@ html,body { height:100%; }
 body{
   margin:0;
   min-height:100%;
-  font-family: "Inter", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   background: linear-gradient(180deg, var(--bg) 0%, #071021 100%);
   color: var(--text);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   line-height:1.45;
-  font-size:14px;
+  font-size:12px;
 }
 
 /* Links */
@@ -66,8 +68,10 @@ a:hover { text-decoration: underline; }
   justify-content:space-between;
   gap: 12px;
   padding:10px 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018));
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #050506;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
   position: sticky;
   top: 0;
   z-index: 1200;
@@ -177,12 +181,17 @@ a:hover { text-decoration: underline; }
 }
 
 .topbar-action {
-  background: #ffffff;
-  color: #050506;
+  background: transparent;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 800;
   gap: 8px;
   padding: 0 13px;
+  text-decoration: none;
+}
+
+.topbar-action:hover {
+  background: rgba(255,255,255,0.06);
   text-decoration: none;
 }
 
@@ -629,6 +638,10 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 6px 18px rgba(243,156,18,0.08);
   outline: none;
 }
+select option {
+  background: #050506;
+  color: #fff;
+}
 label.form-label { display:block; font-size:12px; color:var(--muted); font-weight:700; margin-bottom:6px; text-transform:uppercase; }
 
 /* ===== Tables ===== */
@@ -679,7 +692,7 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 :root {
   --onyx-bg: #12121a;
   --onyx-surface: #1c1c27;
-  --onyx-accent: #ff6b00;
+  --onyx-accent: #ffffff;
   --onyx-border: #2a2a3b;
   --onyx-text: #ffffff;
   --onyx-muted: #84849a;
@@ -778,7 +791,7 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 .nav-link-onyx:hover,
 .nav-link-onyx.active,
 .nav-dropdown-toggle.active {
-  background-color: rgba(255, 107, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.05);
   border-left-color: var(--onyx-accent);
   color: var(--onyx-text);
 }
@@ -938,7 +951,7 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 
 .action-btn {
   align-items: center;
-  background: rgba(255, 107, 0, 0.06);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--onyx-border);
   border-radius: 8px;
   color: var(--onyx-text);
@@ -1086,4 +1099,66 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
   .stat-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Final system design baseline: square, Poppins, compact 12px ERP typography. */
+body,
+button,
+input,
+select,
+textarea,
+.onyx-erp-body,
+.onyx-erp-body button,
+.onyx-erp-body input,
+.onyx-erp-body select,
+.onyx-erp-body textarea {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-size: 12px;
+}
+
+.onyx-erp-body *,
+.app-topbar *,
+.sidebar *,
+.card,
+.panel,
+.stat-card,
+.profile-card,
+.product-tile,
+.input-like,
+.btn,
+.badge,
+.table,
+input,
+select,
+textarea,
+button {
+  border-radius: 0 !important;
+}
+
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.page-subtitle,
+.panel-title,
+.onyx-erp-body .table th,
+.onyx-erp-body .table td,
+.sidebar-link,
+.sidebar-direct-link,
+.menu-item,
+.nav-link-onyx,
+.nav-dropdown-toggle,
+.action-btn,
+.btn,
+.input-like {
+  font-size: 12px;
+}
+
+.panel,
+.card,
+.profile-card,
+.product-tile {
+  padding: 16px;
 }

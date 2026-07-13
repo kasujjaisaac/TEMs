@@ -6,327 +6,412 @@
     <title>Login | Onyx Business Control System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root {
-            --page: #11111a;
-            --card: #1b1b25;
-            --card-deep: #15151e;
-            --field-dark: #11111a;
-            --field-light: #edf3ff;
-            --line: rgba(255, 255, 255, 0.09);
-            --line-strong: rgba(255, 255, 255, 0.16);
-            --text: #f7f8ff;
-            --muted: #a7a3ad;
-            --soft: #d9dcec;
-            --accent: #ff6512;
-            --accent-deep: #e85305;
-            --danger: #ff7171;
+            --bg: #050506;
+            --panel: #0a0a0c;
+            --panel-2: #101014;
+            --line: rgba(255,255,255,.1);
+            --line-strong: rgba(255,255,255,.22);
+            --text: #fff;
+            --muted: #858590;
+            --soft: #d8d8de;
+            --danger: #ffaaaa;
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            min-height: 100%;
-        }
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; }
 
         body {
             align-items: center;
             background:
-                radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.035), transparent 26%),
-                linear-gradient(180deg, #11111a 0%, #0f0f17 100%);
+                linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px),
+                radial-gradient(circle at 50% 18%, rgba(255,255,255,.08), transparent 28%),
+                var(--bg);
+            background-size: 40px 40px, 40px 40px, auto, auto;
             color: var(--text);
             display: flex;
             font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             justify-content: center;
-            letter-spacing: 0;
             margin: 0;
-            padding: 0;
+            padding: 28px;
         }
 
-        .login-panel {
+        .auth-shell {
             align-items: center;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
-            padding: 40px 22px;
+            min-height: calc(100vh - 56px);
             position: relative;
             width: 100%;
         }
 
         .back-link {
             align-items: center;
-            background: rgba(255, 255, 255, 0.035);
+            background: rgba(0,0,0,.34);
             border: 1px solid var(--line);
-            border-radius: 8px;
-            color: var(--muted);
+            color: var(--soft);
             display: inline-flex;
-            font-size: 0.76rem;
-            font-weight: 700;
-            gap: 7px;
-            left: 22px;
-            min-height: 32px;
+            font-size: 12px;
+            font-weight: 900;
+            gap: 8px;
+            left: 0;
+            min-height: 36px;
             padding: 0 12px;
             position: absolute;
             text-decoration: none;
-            top: 22px;
+            top: 0;
+        }
+
+        .back-link:hover {
+            background: #fff;
+            color: #050506;
+        }
+
+        .login-frame {
+            background: transparent;
+            border: 1px solid var(--line-strong);
+            box-shadow: 0 34px 90px rgba(0,0,0,.55);
+            display: grid;
+            grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
+            min-height: 560px;
+            overflow: hidden;
+            position: relative;
+            width: min(940px, 100%);
+        }
+
+        .login-frame::before {
+            border: 1px solid rgba(255,255,255,.055);
+            content: "";
+            inset: 10px;
+            pointer-events: none;
+            position: absolute;
             z-index: 2;
         }
 
-        .back-link span {
-            font-size: 1.08rem;
-            line-height: 1;
-        }
-
-        .login-content {
+        .brand-side {
             align-items: center;
             background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 36%),
-                var(--card);
-            border: 1px solid var(--line-strong);
-            border-radius: 8px;
-            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+                linear-gradient(145deg, rgba(255,255,255,.08), transparent 38%),
+                #09090b;
+            border-right: 1px solid var(--line);
             display: flex;
-            flex-direction: column;
-            max-width: 380px;
-            padding: 38px 36px 40px;
-            position: relative;
-            text-align: center;
-            width: 100%;
-            z-index: 1;
-        }
-
-        .brand-plate {
-            align-items: center;
-            background: transparent;
-            border: 0;
-            border-radius: 0;
-            box-shadow: none;
-            display: flex;
-            height: 44px;
             justify-content: center;
-            margin-bottom: 10px;
-            padding: 0;
+            padding: 30px;
             position: relative;
-            width: 120px;
         }
 
-        .brand-plate img {
-            border-radius: 0;
+        .brand-lockup {
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 3;
+        }
+
+        .brand-mark {
+            align-items: center;
+            background: #fff;
+            display: flex;
+            height: 150px;
+            justify-content: center;
+            padding: 16px;
+            width: 150px;
+        }
+
+        .brand-mark img {
+            display: block;
             height: 100%;
             object-fit: contain;
             width: 100%;
         }
 
-        .brand-kicker {
-            color: var(--text);
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: 0;
-            line-height: 1;
-            margin: 0;
-            text-transform: none;
+        .form-side {
+            align-content: center;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,.035), transparent 34%),
+                var(--panel);
+            display: grid;
+            padding: 42px;
+            position: relative;
         }
 
-        .brand-kicker span {
-            color: var(--accent);
+        .login-card {
+            margin: 0 auto;
+            max-width: 390px;
+            position: relative;
+            width: 100%;
+            z-index: 3;
+        }
+
+        .login-eyebrow {
+            align-items: center;
+            color: var(--muted);
+            display: flex;
+            font-size: 11px;
+            font-weight: 900;
+            gap: 8px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        .login-eyebrow::before {
+            background: #fff;
+            content: "";
+            height: 1px;
+            width: 34px;
         }
 
         .login-title {
-            color: rgba(255, 255, 255, 0.12);
-            font-size: 0.76rem;
-            font-weight: 700;
-            line-height: 1.4;
-            margin: 12px 0 30px;
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1.08;
+            margin: 0 0 9px;
         }
 
-        .login-copy {
+        .login-subtitle {
             color: var(--muted);
-            font-size: 0.8rem;
+            font-size: 12px;
             font-weight: 700;
-            margin: 22px 0 0;
-            text-align: right;
-            width: 100%;
-        }
-
-        .login-copy a {
-            color: #d7a94f;
-            font-weight: 800;
-            text-decoration: none;
+            line-height: 1.55;
+            margin: 0 0 26px;
         }
 
         .login-form {
-            max-width: 304px;
-            width: 100%;
+            display: grid;
+            gap: 13px;
         }
 
         .error-box {
-            background: rgba(255, 113, 113, 0.1);
-            border: 1px solid rgba(255, 113, 113, 0.28);
-            border-radius: 6px;
-            color: #ffb3b3;
-            font-size: 0.76rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            padding: 10px 12px;
-            text-align: left;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,170,170,.5);
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 800;
+            padding: 11px 12px;
         }
 
         .field-group {
-            margin-bottom: 16px;
-            text-align: left;
+            display: grid;
+            gap: 7px;
         }
 
         .field-group label {
+            color: var(--soft);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .input-wrap {
+            align-items: center;
+            background: #050506;
+            border: 1px solid var(--line);
+            display: grid;
+            gap: 11px;
+            grid-template-columns: 18px 1fr;
+            min-height: 44px;
+            padding: 0 12px;
+        }
+
+        .input-wrap i {
             color: var(--muted);
-            display: block;
-            font-size: 0.78rem;
-            font-weight: 600;
-            margin: 0 0 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .input-wrap:focus-within {
+            border-color: #fff;
+            box-shadow: 0 0 0 3px rgba(255,255,255,.08);
         }
 
         .input {
-            background: var(--field-light);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            color: #10121b;
-            display: block;
+            background: transparent;
+            border: 0;
+            color: #fff;
             font: inherit;
-            font-size: 0.86rem;
-            height: 34px;
-            padding: 0 13px;
-            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+            font-size: 13px;
+            font-weight: 700;
+            height: 42px;
+            min-width: 0;
+            outline: 0;
+            padding: 0;
             width: 100%;
-        }
-
-        .input.workspace {
-            background: var(--field-dark);
-            border-color: rgba(255, 255, 255, 0.08);
-            color: #f4f4f8;
         }
 
         .input::placeholder {
-            color: rgba(20, 20, 28, 0.35);
+            color: rgba(255,255,255,.24);
         }
 
-        .input.workspace::placeholder {
-            color: rgba(255, 255, 255, 0.08);
-        }
-
-        .input:focus {
-            border-color: rgba(255, 101, 18, 0.78);
-            box-shadow: 0 0 0 3px rgba(255, 101, 18, 0.16);
-            outline: none;
-        }
-
-        .primary-button,
-        .secondary-button {
-            align-items: center;
-            border-radius: 5px;
-            cursor: pointer;
-            display: inline-flex;
-            font: inherit;
-            font-size: 0.8rem;
-            font-weight: 800;
-            height: 36px;
-            justify-content: center;
-            text-decoration: none;
-            transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease;
-            width: 100%;
+        .input:-webkit-autofill,
+        .input:-webkit-autofill:hover,
+        .input:-webkit-autofill:focus,
+        .input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #0a0a0c inset;
+            -webkit-text-fill-color: #ffffff;
+            caret-color: #ffffff;
+            transition: background-color 9999s ease-out;
         }
 
         .primary-button {
-            background: var(--accent);
-            border: 0;
-            box-shadow: 0 12px 26px rgba(255, 101, 18, 0.18);
-            color: #ffffff;
-            margin-top: 6px;
-        }
-
-        .primary-button:hover,
-        .secondary-button:hover {
-            filter: brightness(1.04);
-            transform: translateY(-1px);
-        }
-
-        .divider {
-            background: rgba(255, 255, 255, 0.18);
-            height: 1px;
-            margin: 20px 0 0;
-            max-width: 304px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #fff;
+            color: #050506;
+            cursor: pointer;
+            display: inline-flex;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 900;
+            gap: 9px;
+            height: 46px;
+            justify-content: center;
+            margin-top: 8px;
+            text-transform: uppercase;
             width: 100%;
         }
 
-        @media (max-width: 740px) {
+        .primary-button:hover {
+            background: transparent;
+            color: #fff;
+        }
+
+        .login-foot {
+            align-items: center;
+            border-top: 1px solid var(--line);
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-top: 26px;
+            padding-top: 16px;
+        }
+
+        .login-foot span {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .login-foot a {
+            border: 1px solid var(--line);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            min-height: 34px;
+            padding: 9px 11px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .login-foot a:hover {
+            background: #fff;
+            color: #050506;
+        }
+
+        @media (max-width: 820px) {
             body {
-                padding: 0;
+                padding: 16px;
             }
 
-            .login-panel {
-                border-radius: 0;
-                min-height: 100vh;
-                padding: 76px 18px 52px;
+            .auth-shell {
+                align-items: flex-start;
+                min-height: calc(100vh - 32px);
+                padding-top: 54px;
             }
 
-            .login-content {
-                padding: 34px 28px 36px;
+            .login-frame {
+                grid-template-columns: 1fr;
+                min-height: auto;
             }
 
-            .back-link {
-                left: 18px;
-                top: 18px;
+            .brand-side {
+                border-bottom: 1px solid var(--line);
+                border-right: 0;
+                padding: 24px;
+            }
+
+            .form-side {
+                padding: 28px 22px;
             }
         }
 
-        @media (max-width: 420px) {
-            .brand-plate {
-                width: 104px;
+        @media (max-width: 460px) {
+            .login-title {
+                font-size: 24px;
+            }
+
+            .login-foot {
+                align-items: stretch;
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <main class="login-panel" aria-labelledby="login-title">
-        <a class="back-link" href="{{ url('/') }}"><span>&lsaquo;</span> Back</a>
+    <main class="auth-shell" aria-labelledby="login-title">
+        <a class="back-link" href="{{ url('/') }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
 
-        <section class="login-content">
-            <div class="brand-plate" aria-label="Onyx Technology Solutions Limited">
-                <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
-            </div>
-
-            <p class="brand-kicker">ONYX <span>ERP</span></p>
-            <h1 class="login-title" id="login-title">Access your business workspace</h1>
-
-            <form class="login-form" method="POST" action="{{ route('login') }}">
-                @csrf
-
-                @if($errors->any())
-                    <div class="error-box">{{ $errors->first() }}</div>
-                @endif
-
-                <div class="field-group">
-                    <label for="workspace">Company Workspace Handle</label>
-                    <input id="workspace" name="workspace" type="text" class="input workspace" value="{{ old('workspace') }}" placeholder="e.g onyx-tech" autocomplete="organization">
+        <section class="login-frame">
+            <aside class="brand-side" aria-label="Onyx logo">
+                <div class="brand-lockup">
+                    <div class="brand-mark" aria-label="Onyx Business Control System">
+                        <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+                    </div>
                 </div>
+            </aside>
 
-                <div class="field-group">
-                    <label for="email">Enterprise Email Address</label>
-                    <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="onyx21@mru.ac.ug" autocomplete="email" required autofocus>
+            <section class="form-side">
+                <div class="login-card">
+                    <div class="login-eyebrow">Authorized access</div>
+                    <h1 class="login-title" id="login-title">Sign in to your workspace</h1>
+                    <p class="login-subtitle">Use your company workspace and administrator credentials to continue.</p>
+
+                    <form class="login-form" method="POST" action="{{ route('login') }}">
+                        @csrf
+
+                        @if($errors->any())
+                            <div class="error-box">{{ $errors->first() }}</div>
+                        @endif
+
+                        <div class="field-group">
+                            <label for="workspace">Workspace</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-building"></i>
+                                <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-envelope"></i>
+                                <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="admin@clinic.test" autocomplete="email" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="password">Password</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-lock"></i>
+                                <input id="password" name="password" type="password" class="input" placeholder="Enter password" autocomplete="current-password" required>
+                            </div>
+                        </div>
+
+                        <button class="primary-button" type="submit">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                            Sign In
+                        </button>
+                    </form>
+
+                    <footer class="login-foot">
+                        <span>New workspace?</span>
+                        <a href="{{ route('register') }}">Register</a>
+                    </footer>
                 </div>
-
-                <div class="field-group">
-                    <label for="password">Secure Passphrase</label>
-                    <input id="password" name="password" type="password" class="input" placeholder="....." autocomplete="current-password" required>
-                </div>
-
-                <button class="primary-button" type="submit">UNLOCK WORKSPACE</button>
-            </form>
-
-            <div class="divider"></div>
-            <p class="login-copy">New workspace? <a href="{{ route('register') }}">Register Here</a></p>
+            </section>
         </section>
     </main>
 </body>
