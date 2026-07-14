@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('payroll.php?success=' . urlencode('Payroll run prepared for review.')));
+    exit;
+}
+
 $context = onyx_page_start('Payroll', 'Payroll runs, earnings, deductions, statutory items, payslips, approvals, and payment files.');
 $currency = $context['currency'];
 
@@ -26,6 +31,7 @@ $payrollChecks = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Payroll Period</span><strong><?= htmlspecialchars(date('F Y')) ?></strong></div>
         <div class="ops-card"><span>Gross Pay</span><strong><?= htmlspecialchars(onyx_money(0, $currency)) ?></strong></div>
@@ -41,7 +47,7 @@ $payrollChecks = [
                 <div class="ops-field"><label>Department</label><select><option>All departments</option><option>Administration</option><option>Sales</option><option>Inventory</option><option>Finance</option></select></div>
                 <div class="ops-field"><label>Payment Method</label><select><option>Bank transfer</option><option>Mobile money</option><option>Cash</option></select></div>
                 <div class="ops-field full"><label>Payroll Notes</label><textarea rows="2" placeholder="Allowances, deductions, overtime, approval notes"></textarea></div>
-                <button class="ops-btn" type="button">Prepare Payroll</button>
+                <button class="ops-btn" type="submit">Prepare Payroll</button>
             </form>
         <?php onyx_panel_end(); ?>
 

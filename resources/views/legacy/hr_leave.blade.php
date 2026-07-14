@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('hr_leave.php?success=' . urlencode('Leave request submitted for approval.')));
+    exit;
+}
+
 $context = onyx_page_start('Leave Management', 'Annual, sick, maternity, unpaid leave, balances, requests, approvals, and return-to-work tracking.');
 $currency = $context['currency'];
 
@@ -14,6 +19,7 @@ $balanceRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Open Requests</span><strong><?= htmlspecialchars((string) count($leaveRows)) ?></strong></div>
         <div class="ops-card"><span>Approved Days</span><strong>0</strong></div>
@@ -31,7 +37,7 @@ $balanceRows = [
                 <div class="ops-field"><label>Days</label><input type="number" step="0.5" placeholder="0"></div>
                 <div class="ops-field"><label>Approver</label><input type="text" placeholder="Supervisor / HR"></div>
                 <div class="ops-field wide"><label>Reason</label><input type="text" placeholder="Leave reason"></div>
-                <button class="ops-btn" type="button">Submit Request</button>
+                <button class="ops-btn" type="submit">Submit Request</button>
             </form>
         <?php onyx_panel_end(); ?>
 

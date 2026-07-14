@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Tests\TestCase;
 
 class LegacyModuleConnectivityTest extends TestCase
@@ -12,8 +13,11 @@ class LegacyModuleConnectivityTest extends TestCase
             $this->markTestSkipped('Legacy ERP modules require the MySQL demo schema.');
         }
 
+        $admin = User::where('role', 'super_admin')->firstOrFail();
+
         foreach (onyx_legacy_pages() as $page) {
-            $this->get('/' . $page . '.php')
+            $this->actingAs($admin)
+                ->get('/' . $page . '.php')
                 ->assertOk()
                 ->assertSee('ONYX ACCOUNTING SYSTEM', false);
         }

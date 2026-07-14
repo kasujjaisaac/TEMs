@@ -242,6 +242,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'check
 
 $context = onyx_page_start('POS', 'Fast product search, cashier cart, payments, receipts, and daily sales tracking.');
 $currency = $context['currency'];
+$settingsRows = onyx_rows('SELECT setting_key, setting_value FROM tenant_settings WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$posSettings = [];
+foreach ($settingsRows as $settingRow) {
+    $posSettings[$settingRow['setting_key']] = $settingRow['setting_value'];
+}
+$posCompanyLogo = trim((string) ($posSettings['company_logo'] ?? '')) ?: asset('assets/onxy logo.jpeg');
+$posCompanyAddress = trim((string) ($posSettings['physical_address'] ?? 'Kampala, Uganda'));
+$posCompanyPhone = trim((string) ($posSettings['phone_number'] ?? '+256 700 000 000'));
+$posReceiptFooter = trim((string) ($posSettings['receipt_footer'] ?? 'Goods sold are subject to company policy.'));
 
 $products = onyx_rows(
     'SELECT p.id, p.name, p.sku, p.barcode, p.selling_price, p.vat_rate, p.current_stock, p.min_stock, p.image_url, pc.name AS category_name
@@ -346,7 +355,7 @@ $customerPayload = array_map(static fn (array $customer): array => [
     .pos-tender{border:1px solid rgba(255,255,255,.08);margin-top:10px;padding:10px}.pos-tender-title{color:var(--onyx-muted);font-size:9px;font-weight:800;margin-bottom:8px;text-transform:uppercase}
     .pos-actions{display:grid;gap:8px;grid-template-columns:repeat(2,1fr);margin-top:12px}.pos-actions .wide{grid-column:span 2}
     .pos-bottom-grid{display:grid;gap:16px;grid-template-columns:1fr}.pos-table-wrap{overflow:auto}.pos-table{border-collapse:collapse;min-width:620px;width:100%}.pos-table th,.pos-table td{border-bottom:1px solid rgba(255,255,255,.06);font-size:10px;padding:9px;text-align:left}.pos-table th{color:var(--onyx-muted);font-size:9px;font-weight:800;text-transform:uppercase}
-    .pos-receipt{background:#f7f8fa;color:#171b22;font-family:Arial,sans-serif;padding:16px}.pos-receipt h3{font-size:15px;margin:0}.pos-receipt small{color:#697281}.pos-receipt table{border-collapse:collapse;margin-top:10px;width:100%}.pos-receipt td,.pos-receipt th{border-bottom:1px solid #dde2ea;font-size:11px;padding:7px;text-align:left}.pos-receipt .right{text-align:right}.pos-receipt-total{font-weight:800}
+    .pos-receipt{background:#fff;color:#171b22;font-family:Arial,sans-serif;padding:20px}.pos-receipt h3{font-size:16px;margin:0}.pos-receipt small{color:#697281}.pos-receipt-head{align-items:flex-start;border-bottom:2px solid #171b22;display:flex;gap:14px;justify-content:space-between;padding-bottom:14px}.pos-receipt-brand{align-items:center;display:flex;gap:10px}.pos-receipt-logo{align-items:center;background:#fff;border:1px solid #dde2ea;display:flex;height:48px;justify-content:center;width:48px}.pos-receipt-logo img{max-height:40px;max-width:40px}.pos-receipt-meta{text-align:right}.pos-receipt-customer{background:#f7f8fa;border:1px solid #dde2ea;margin-top:12px;padding:9px}.pos-receipt table{border-collapse:collapse;margin-top:12px;width:100%}.pos-receipt td,.pos-receipt th{border-bottom:1px solid #dde2ea;font-size:11px;padding:8px;text-align:left}.pos-receipt th{background:#171b22;color:#fff;text-transform:uppercase}.pos-receipt .right{text-align:right}.pos-receipt-total{font-weight:800}.pos-receipt-foot{border-top:1px solid #dde2ea;color:#697281;font-size:10px;line-height:1.5;margin-top:12px;padding-top:10px;text-align:center}
     .pos-empty{border:1px solid rgba(255,255,255,.08);color:var(--onyx-muted);font-size:11px;padding:14px}.pos-alert{border:1px solid rgba(143,240,195,.24);color:#8ff0c3;font-size:11px;font-weight:700;padding:11px 12px}.pos-alert.error{border-color:rgba(255,138,138,.28);color:#ff8a8a}
     @media(max-width:1200px){.pos-cart-grid{grid-template-columns:1fr}.pos-filterbar{grid-template-columns:1fr 1fr}.pos-status-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:640px){.pos-filterbar,.pos-status-grid,.pos-payment-grid,.pos-actions{grid-template-columns:1fr}.pos-actions .wide{grid-column:auto}}
@@ -473,11 +482,14 @@ $customerPayload = array_map(static fn (array $customer): array => [
         <section class="pos-panel">
             <div class="pos-title no-print"><i class="fa-solid fa-receipt"></i> Receipt Preview</div>
             <div class="pos-receipt" id="pos-receipt">
-                <div style="display:flex;justify-content:space-between;gap:16px;">
-                    <div><h3><?= pos_h(session('company_name', 'Onyx BCS')) ?></h3><small>POS Receipt</small></div>
-                    <div class="right"><strong><?= pos_h($receipt['invoice_number']) ?></strong><br><small><?= pos_h($receipt['invoice_date']) ?></small></div>
+                <div class="pos-receipt-head">
+                    <div class="pos-receipt-brand">
+                        <div class="pos-receipt-logo"><img src="<?= pos_h($posCompanyLogo) ?>" alt="Company logo"></div>
+                        <div><h3><?= pos_h(session('company_name', 'Onyx BCS')) ?></h3><small><?= pos_h($posCompanyAddress) ?><br><?= pos_h($posCompanyPhone) ?></small></div>
+                    </div>
+                    <div class="pos-receipt-meta"><strong><?= pos_h($receipt['invoice_number']) ?></strong><br><small>POS Receipt<br><?= pos_h($receipt['invoice_date']) ?></small></div>
                 </div>
-                <div style="margin-top:10px;"><small>Customer: <?= pos_h($receipt['customer_name'] ?: 'Walk-in Customer') ?></small></div>
+                <div class="pos-receipt-customer"><small>Customer: <?= pos_h($receipt['customer_name'] ?: 'Walk-in Customer') ?><?= ! empty($receipt['customer_phone']) ? ' | ' . pos_h($receipt['customer_phone']) : '' ?></small></div>
                 <table>
                     <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Amount</th></tr></thead>
                     <tbody>
@@ -492,7 +504,8 @@ $customerPayload = array_map(static fn (array $customer): array => [
                         <tr class="pos-receipt-total"><td colspan="2">Total</td><td class="right"><?= pos_h(pos_money($receipt['total'], $currency)) ?></td></tr>
                     </tfoot>
                 </table>
-                <?php if ($receiptPayments !== []): ?><small>Payment: <?= pos_h($receiptPayments[0]['method']) ?> · <?= pos_h(number_format((float) $receiptPayments[0]['amount'], 2)) ?></small><?php endif; ?>
+                <?php if ($receiptPayments !== []): ?><div style="margin-top:10px;"><small>Payment: <?= pos_h($receiptPayments[0]['method']) ?> | <?= pos_h(number_format((float) $receiptPayments[0]['amount'], 2)) ?></small></div><?php endif; ?>
+                <div class="pos-receipt-foot"><?= pos_h($posReceiptFooter) ?><br>Served by <?= pos_h(session('user_name', 'Operator')) ?></div>
             </div>
             <div class="pos-actions no-print" style="max-width:360px;">
                 <button class="pos-btn primary" type="button" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>

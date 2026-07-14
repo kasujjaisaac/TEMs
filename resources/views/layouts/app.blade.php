@@ -3,6 +3,9 @@
 <main>
     <div class="app-topbar">
         <div class="topbar-left">
+            <button class="topbar-sidebar-toggle" type="button" data-sidebar-collapse aria-label="Toggle sidebar" aria-pressed="false" title="Toggle sidebar">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
             <a class="topbar-brand" href="{{ url('dashboard') }}" aria-label="Onyx dashboard">
                 <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="Onyx logo">
                 <span>
@@ -46,5 +49,33 @@
         @yield('content')
     </div>
 </main>
+
+<script>
+    (function () {
+        const key = 'onyx_sidebar_collapsed';
+        const root = document.body;
+        const button = document.querySelector('[data-sidebar-collapse]');
+
+        function sync(collapsed) {
+            root.classList.toggle('sidebar-collapsed', collapsed);
+            if (button) {
+                button.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+                button.setAttribute('aria-label', collapsed ? 'Open sidebar' : 'Collapse sidebar');
+                button.setAttribute('title', collapsed ? 'Open sidebar' : 'Collapse sidebar');
+                button.classList.toggle('active', collapsed);
+            }
+        }
+
+        sync(localStorage.getItem(key) === '1');
+
+        if (button) {
+            button.addEventListener('click', function () {
+                const collapsed = !root.classList.contains('sidebar-collapsed');
+                localStorage.setItem(key, collapsed ? '1' : '0');
+                sync(collapsed);
+            });
+        }
+    })();
+</script>
 
 @include('layouts.footer')

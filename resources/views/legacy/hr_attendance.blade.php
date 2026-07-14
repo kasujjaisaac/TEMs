@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('hr_attendance.php?success=' . urlencode('Attendance record captured for review.')));
+    exit;
+}
+
 $context = onyx_page_start('Attendance', 'Clock-in, overtime, absence, late arrival, shift planning, and attendance approvals.');
 $currency = $context['currency'];
 
@@ -14,6 +19,7 @@ $shiftRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Present Today</span><strong>2</strong></div>
         <div class="ops-card"><span>Late Arrivals</span><strong>1</strong></div>
@@ -31,7 +37,7 @@ $shiftRows = [
                 <div class="ops-field"><label>Status</label><select><option>Present</option><option>Late</option><option>Absent</option><option>Half day</option><option>Remote</option></select></div>
                 <div class="ops-field"><label>Overtime</label><input type="number" step="0.25" placeholder="0"></div>
                 <div class="ops-field wide"><label>Reason / Approval Note</label><input type="text" placeholder="Reason for late, absence, or overtime"></div>
-                <button class="ops-btn" type="button">Record Attendance</button>
+                <button class="ops-btn" type="submit">Record Attendance</button>
             </form>
         <?php onyx_panel_end(); ?>
 

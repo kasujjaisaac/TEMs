@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('hr_performance.php?success=' . urlencode('Performance review saved for follow-up.')));
+    exit;
+}
+
 $context = onyx_page_start('Performance', 'Appraisals, KPIs, training, confirmations, disciplinary actions, and performance improvement plans.');
 $currency = $context['currency'];
 
@@ -14,6 +19,7 @@ $trainingRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Reviews Due</span><strong>3</strong></div>
         <div class="ops-card"><span>Training Plans</span><strong>2</strong></div>
@@ -31,7 +37,7 @@ $trainingRows = [
                 <div class="ops-field"><label>KPI Score</label><input type="number" step="0.1" placeholder="0"></div>
                 <div class="ops-field"><label>Outcome</label><select><option>Scheduled</option><option>Meets expectation</option><option>Needs improvement</option><option>Confirmed</option></select></div>
                 <div class="ops-field wide"><label>Action Plan</label><input type="text" placeholder="Training, targets, follow-up actions"></div>
-                <button class="ops-btn" type="button">Save Review</button>
+                <button class="ops-btn" type="submit">Save Review</button>
             </form>
         <?php onyx_panel_end(); ?>
 

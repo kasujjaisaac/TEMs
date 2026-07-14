@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('hr_payroll_readiness.php?success=' . urlencode('Payroll readiness check updated.')));
+    exit;
+}
+
 $context = onyx_page_start('Payroll Readiness', 'Basic pay, allowances, deductions, bank details, attendance imports, approval status, and payroll handoff.');
 $currency = $context['currency'];
 
@@ -16,6 +21,7 @@ $payItems = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Payroll Ready</span><strong>1</strong></div>
         <div class="ops-card"><span>Needs Review</span><strong>1</strong></div>
@@ -33,7 +39,7 @@ $payItems = [
                 <div class="ops-field"><label>Attendance Imported</label><select><option>Yes</option><option>No</option><option>Not required</option></select></div>
                 <div class="ops-field"><label>Approvals</label><select><option>Ready</option><option>Review</option><option>Blocked</option></select></div>
                 <div class="ops-field wide"><label>Payroll Note</label><input type="text" placeholder="Missing details or approval notes"></div>
-                <button class="ops-btn" type="button">Mark Ready</button>
+                <button class="ops-btn" type="submit">Mark Ready</button>
                 <a class="ops-btn ghost" href="<?= htmlspecialchars(onyx_legacy_url('payroll.php')) ?>">Open Payroll</a>
             </form>
         <?php onyx_panel_end(); ?>

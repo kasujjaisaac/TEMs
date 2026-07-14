@@ -76,7 +76,7 @@
             border: 1px solid var(--line-strong);
             box-shadow: 0 34px 90px rgba(0,0,0,.55);
             display: grid;
-            grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
+            grid-template-columns: minmax(360px, 420px) minmax(360px, 1fr);
             min-height: 560px;
             overflow: hidden;
             position: relative;
@@ -93,33 +93,62 @@
         }
 
         .brand-side {
-            align-items: center;
+            align-items: stretch;
             background:
-                linear-gradient(145deg, rgba(255,255,255,.08), transparent 38%),
+                linear-gradient(145deg, rgba(20,184,166,.18), transparent 31%),
+                linear-gradient(315deg, rgba(245,158,11,.14), transparent 36%),
+                linear-gradient(180deg, rgba(255,255,255,.08), transparent 60%),
                 #09090b;
             border-right: 1px solid var(--line);
             display: flex;
-            justify-content: center;
-            padding: 30px;
+            min-width: 0;
+            padding: 28px;
             position: relative;
+        }
+
+        .brand-side::before {
+            background:
+                linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+            background-size: 34px 34px;
+            content: "";
+            inset: 0;
+            opacity: .35;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .brand-panel {
+            align-content: start;
+            display: grid;
+            gap: 20px;
+            min-width: 0;
+            position: relative;
+            width: 100%;
+            z-index: 3;
+        }
+
+        .brand-heading {
+            display: grid;
+            gap: 14px;
         }
 
         .brand-lockup {
             align-items: center;
             display: flex;
-            justify-content: center;
-            position: relative;
-            z-index: 3;
+            gap: 14px;
+            min-width: 0;
         }
 
         .brand-mark {
             align-items: center;
             background: #fff;
             display: flex;
-            height: 150px;
+            flex: 0 0 auto;
+            height: 54px;
             justify-content: center;
-            padding: 16px;
-            width: 150px;
+            padding: 8px;
+            width: 54px;
         }
 
         .brand-mark img {
@@ -127,6 +156,134 @@
             height: 100%;
             object-fit: contain;
             width: 100%;
+        }
+
+        .brand-name {
+            min-width: 0;
+        }
+
+        .brand-name strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .brand-name span {
+            color: rgba(255,255,255,.62);
+            display: block;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .brand-copy {
+            display: grid;
+            gap: 9px;
+        }
+
+        .brand-copy h2 {
+            font-size: 24px;
+            font-weight: 900;
+            line-height: 1.04;
+            margin: 0;
+        }
+
+        .brand-copy p {
+            color: rgba(255,255,255,.68);
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .feature-item {
+            align-items: center;
+            background: rgba(5,5,6,.42);
+            border: 1px solid rgba(255,255,255,.11);
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 30px 1fr;
+            min-height: 54px;
+            padding: 9px;
+        }
+
+        .feature-icon {
+            align-items: center;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.13);
+            color: #fff;
+            display: inline-flex;
+            height: 30px;
+            justify-content: center;
+            width: 30px;
+        }
+
+        .feature-icon i {
+            font-size: 12px;
+        }
+
+        .feature-icon.inventory {
+            color: #67e8f9;
+        }
+
+        .feature-icon.finance {
+            color: #86efac;
+        }
+
+        .feature-icon.team {
+            color: #fcd34d;
+        }
+
+        .feature-item strong {
+            display: block;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1.25;
+        }
+
+        .feature-item span {
+            color: rgba(255,255,255,.56);
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.45;
+            margin-top: 2px;
+        }
+
+        .brand-metrics {
+            border-top: 1px solid rgba(255,255,255,.13);
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            padding-top: 13px;
+        }
+
+        .metric {
+            min-width: 0;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .metric span {
+            color: rgba(255,255,255,.52);
+            display: block;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-top: 5px;
         }
 
         .form-side {
@@ -333,6 +490,18 @@
                 padding: 24px;
             }
 
+            .brand-panel {
+                gap: 20px;
+            }
+
+            .brand-copy h2 {
+                font-size: 22px;
+            }
+
+            .feature-list {
+                grid-template-columns: 1fr;
+            }
+
             .form-side {
                 padding: 28px 22px;
             }
@@ -347,6 +516,22 @@
                 align-items: stretch;
                 flex-direction: column;
             }
+
+            .brand-side {
+                padding: 22px 18px;
+            }
+
+            .brand-lockup {
+                align-items: flex-start;
+            }
+
+            .brand-copy h2 {
+                font-size: 20px;
+            }
+
+            .brand-metrics {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -355,10 +540,64 @@
         <a class="back-link" href="{{ url('/') }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
 
         <section class="login-frame">
-            <aside class="brand-side" aria-label="Onyx logo">
-                <div class="brand-lockup">
-                    <div class="brand-mark" aria-label="Onyx Business Control System">
-                        <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+            <aside class="brand-side" aria-label="Onyx system overview">
+                <div class="brand-panel">
+                    <div class="brand-heading">
+                        <div class="brand-lockup">
+                            <div class="brand-mark" aria-label="Onyx Business Control System">
+                                <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+                            </div>
+                            <div class="brand-name">
+                                <strong>Onyx Business Control System</strong>
+                                <span>Secure company workspace</span>
+                            </div>
+                        </div>
+
+                        <div class="brand-copy">
+                            <h2>One place to run daily operations with clarity.</h2>
+                            <p>Manage sales, stock, customers, suppliers, purchases, reports, and financial workflows from a single controlled dashboard.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-list" aria-label="Key system features">
+                        <div class="feature-item">
+                            <div class="feature-icon inventory"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <div>
+                                <strong>Inventory and product control</strong>
+                                <span>Track stock movement, product records, purchases, and supplier activity.</span>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon finance"><i class="fa-solid fa-chart-line"></i></div>
+                            <div>
+                                <strong>Sales, reporting, and finance</strong>
+                                <span>Monitor performance, review transactions, and keep business decisions data-led.</span>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon team"><i class="fa-solid fa-users-gear"></i></div>
+                            <div>
+                                <strong>Customers, teams, and access</strong>
+                                <span>Organize customer records and keep workspace access under administrator control.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="brand-metrics" aria-label="System highlights">
+                        <div class="metric">
+                            <strong>24/7</strong>
+                            <span>Workspace access</span>
+                        </div>
+                        <div class="metric">
+                            <strong>Multi</strong>
+                            <span>Module operations</span>
+                        </div>
+                        <div class="metric">
+                            <strong>Admin</strong>
+                            <span>Controlled login</span>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -388,7 +627,7 @@
                             <label for="email">Email Address</label>
                             <div class="input-wrap">
                                 <i class="fa-solid fa-envelope"></i>
-                                <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="admin@clinic.test" autocomplete="email" required autofocus>
+                                <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="admin@clinic.test" autocomplete="email" required>
                             </div>
                         </div>
 

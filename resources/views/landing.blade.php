@@ -546,8 +546,8 @@
         <div class="mx-auto mt-6 flex max-w-7xl flex-col justify-between gap-4 text-sm font-semibold md:flex-row">
             <p>&copy; 2026 Onyx Technology Solutions Ltd. All rights reserved.</p>
             <div class="flex gap-6">
-                <a href="#" class="hover:text-white">Privacy Policy</a>
-                <a href="#" class="hover:text-white">Terms of Service</a>
+                <a href="mailto:support@onyxtechpay.com?subject=Privacy%20Policy" class="hover:text-white">Privacy Policy</a>
+                <a href="mailto:support@onyxtechpay.com?subject=Terms%20of%20Service" class="hover:text-white">Terms of Service</a>
             </div>
         </div>
     </footer>

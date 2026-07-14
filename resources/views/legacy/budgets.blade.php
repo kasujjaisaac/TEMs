@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('budgets.php?success=' . urlencode('Budget request submitted for review.')));
+    exit;
+}
+
 $context = onyx_page_start('Budgets', 'Department budgets, approvals, forecasts, controls, and variance monitoring.');
 $currency = $context['currency'];
 
@@ -16,6 +21,7 @@ $approvalRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Annual Budget</span><strong><?= htmlspecialchars(onyx_money(49500000, $currency)) ?></strong></div>
         <div class="ops-card"><span>Committed</span><strong><?= htmlspecialchars(onyx_money(0, $currency)) ?></strong></div>
@@ -31,7 +37,7 @@ $approvalRows = [
                 <div class="ops-field"><label>Period</label><select><option>Monthly</option><option>Quarterly</option><option>Annual</option></select></div>
                 <div class="ops-field"><label>Amount</label><input type="number" step="0.01" placeholder="0.00"></div>
                 <div class="ops-field full"><label>Purpose and control notes</label><textarea rows="2" placeholder="Budget justification, limits, approval notes"></textarea></div>
-                <button class="ops-btn" type="button">Submit Budget</button>
+                <button class="ops-btn" type="submit">Submit Budget</button>
             </form>
         <?php onyx_panel_end(); ?>
 

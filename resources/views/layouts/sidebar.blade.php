@@ -1,8 +1,25 @@
 @php
     use Illuminate\Support\Facades\Auth;
     use Illuminate\Support\Facades\Request;
+    use App\Support\PagePermissionMap;
 
     $user = Auth::user();
+
+    $canOpen = function (array $item) use ($user): bool {
+        if (! $user) {
+            return false;
+        }
+
+        if (isset($item['permission'])) {
+            return $user->hasPermission($item['permission']);
+        }
+
+        $path = trim(parse_url($item['url'], PHP_URL_PATH) ?: '', '/');
+        $page = str_replace('.php', '', basename($path ?: 'dashboard'));
+        $permission = PagePermissionMap::forPage(str_replace('-', '_', $page));
+
+        return ! $permission || $user->hasPermission($permission);
+    };
 
     $navGroups = [
         [
@@ -47,8 +64,7 @@
             'label' => 'Human Resource',
             'icon' => 'fa-users-gear',
             'items' => [
-                ['label' => 'Overview', 'icon' => 'fa-users', 'url' => url('human_resources'), 'patterns' => ['human_resources*']],
-                ['label' => 'Employee Profiles', 'icon' => 'fa-address-card', 'url' => url('hr_profiles'), 'patterns' => ['hr_profiles*']],
+                ['label' => 'Employees', 'icon' => 'fa-users', 'url' => url('human_resources'), 'patterns' => ['human_resources*']],
                 ['label' => 'Contracts & Roles', 'icon' => 'fa-file-signature', 'url' => url('hr_contracts'), 'patterns' => ['hr_contracts*']],
                 ['label' => 'Attendance', 'icon' => 'fa-clock', 'url' => url('hr_attendance'), 'patterns' => ['hr_attendance*']],
                 ['label' => 'Leave', 'icon' => 'fa-calendar-check', 'url' => url('hr_leave'), 'patterns' => ['hr_leave*']],
@@ -75,16 +91,37 @@
             ],
         ],
         [
+            'label' => 'Users & Roles Management',
+            'icon' => 'fa-users-gear',
+            'items' => [
+                ['label' => 'Users', 'icon' => 'fa-users-gear', 'url' => route('settings.users'), 'patterns' => ['settings/users*'], 'permission' => 'users.manage'],
+                ['label' => 'Roles & Permissions', 'icon' => 'fa-shield-halved', 'url' => route('settings.roles'), 'patterns' => ['settings/roles*'], 'permission' => 'roles.manage'],
+                ['label' => 'Security Settings', 'icon' => 'fa-lock', 'url' => route('settings.security'), 'patterns' => ['settings/security*'], 'permission' => 'security.manage'],
+                ['label' => 'Audit Logs', 'icon' => 'fa-clock-rotate-left', 'url' => route('settings.audit_logs'), 'patterns' => ['settings/audit-logs*'], 'permission' => 'audit.view'],
+            ],
+        ],
+        [
             'label' => 'Settings',
             'icon' => 'fa-sliders',
             'items' => [
-                ['label' => 'Overview', 'icon' => 'fa-gear', 'url' => url('settings') . '?section=overview', 'patterns' => ['settings*']],
-                ['label' => 'Organization', 'icon' => 'fa-user-shield', 'url' => url('settings') . '?section=organization', 'patterns' => ['settings*']],
+                ['label' => 'Overview', 'icon' => 'fa-gear', 'url' => url('settings') . '?section=overview', 'patterns' => ['settings'], 'section' => 'overview'],
+                ['label' => 'Company', 'icon' => 'fa-building', 'url' => url('settings') . '?section=company', 'patterns' => ['settings'], 'section' => 'company'],
+                ['label' => 'Finance', 'icon' => 'fa-coins', 'url' => url('settings') . '?section=finance', 'patterns' => ['settings'], 'section' => 'finance'],
+                ['label' => 'Organization', 'icon' => 'fa-users-gear', 'url' => url('settings') . '?section=organization', 'patterns' => ['settings'], 'section' => 'organization'],
+                ['label' => 'Operations', 'icon' => 'fa-diagram-project', 'url' => url('settings') . '?section=operations', 'patterns' => ['settings'], 'section' => 'operations'],
+                ['label' => 'Documents', 'icon' => 'fa-file-lines', 'url' => url('settings') . '?section=documents', 'patterns' => ['settings'], 'section' => 'documents'],
+                ['label' => 'Communications', 'icon' => 'fa-envelope-open-text', 'url' => url('settings') . '?section=communications', 'patterns' => ['settings'], 'section' => 'communications'],
+                ['label' => 'Security & Data', 'icon' => 'fa-shield-halved', 'url' => url('settings') . '?section=security_data', 'patterns' => ['settings'], 'section' => 'security_data'],
+                ['label' => 'System', 'icon' => 'fa-server', 'url' => url('settings') . '?section=system', 'patterns' => ['settings'], 'section' => 'system'],
             ],
         ],
     ];
 
     $isItemActive = function (array $item): bool {
+        if (($item['section'] ?? null) !== null) {
+            return Request::is('settings') && request('section', 'overview') === $item['section'];
+        }
+
         foreach ($item['patterns'] as $pattern) {
             if (Request::is($pattern)) {
                 return true;
@@ -109,6 +146,10 @@
     <nav class="sidebar-nav" aria-label="ERP modules">
         @foreach ($navGroups as $groupIndex => $group)
             @php
+                $group['items'] = array_values(array_filter($group['items'], $canOpen));
+                if (count($group['items']) === 0) {
+                    continue;
+                }
                 $groupId = 'sidebar-group-' . $groupIndex;
                 $groupActive = collect($group['items'])->contains(fn ($item) => $isItemActive($item));
             @endphp

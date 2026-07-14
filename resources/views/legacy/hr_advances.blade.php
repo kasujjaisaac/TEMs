@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('hr_advances.php?success=' . urlencode('Advance or loan request submitted for approval.')));
+    exit;
+}
+
 $context = onyx_page_start('Advances & Loans', 'Salary advances, staff loans, approval workflow, repayment schedules, and payroll recovery.');
 $currency = $context['currency'];
 
@@ -12,6 +17,7 @@ $scheduleRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Open Requests</span><strong>2</strong></div>
         <div class="ops-card"><span>Outstanding</span><strong><?= htmlspecialchars(onyx_money(250000, $currency)) ?></strong></div>
@@ -29,7 +35,7 @@ $scheduleRows = [
                 <div class="ops-field"><label>First Recovery</label><input type="month" value="<?= htmlspecialchars(date('Y-m')) ?>"></div>
                 <div class="ops-field"><label>Approver</label><input type="text" placeholder="Finance / HR"></div>
                 <div class="ops-field wide"><label>Purpose</label><input type="text" placeholder="Reason for request"></div>
-                <button class="ops-btn" type="button">Submit Request</button>
+                <button class="ops-btn" type="submit">Submit Request</button>
             </form>
         <?php onyx_panel_end(); ?>
 

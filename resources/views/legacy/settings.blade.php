@@ -223,6 +223,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'cash_account', 'bank_account', 'accounts_receivable_account', 'accounts_payable_account',
             'invoice_prefix', 'receipt_prefix', 'quotation_prefix', 'purchase_prefix', 'next_invoice_number', 'next_receipt_number', 'next_quotation_number', 'next_purchase_number',
             'invoice_footer', 'receipt_footer', 'quotation_terms', 'purchase_terms', 'payment_due_days',
+            'invoice_accent_color', 'quotation_accent_color', 'receipt_accent_color', 'document_logo_size', 'document_show_signature', 'document_show_discount',
+            'document_payment_account_name', 'document_payment_account_number', 'document_payment_bank_name', 'document_payment_mobile_money', 'document_payment_methods_note',
             'stock_negative_sales', 'low_stock_alerts', 'default_reorder_level', 'default_warehouse_policy',
             'email_from_name', 'email_from_address', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_encryption',
             'notify_low_stock', 'notify_overdue_invoices', 'notify_new_sale', 'notify_purchase_received',
@@ -271,19 +273,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('Payment method added successfully.', true, 'operations');
     }
 
-    if ($action === 'add_user') {
-        $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $password = (string) ($_POST['password'] ?? '');
-        if ($name === '' || $email === '' || $password === '') admin_redirect('Name, email, and password are required.', false, 'users_roles');
-        $exists = (int) onyx_scalar('SELECT COUNT(*) FROM users WHERE email = :email', ['email' => $email], 0);
-        if ($exists > 0) admin_redirect('A user with that email already exists.', false, 'users_roles');
-        $hash = \Illuminate\Support\Facades\Hash::make($password);
-        $pdo->prepare('INSERT INTO users (tenant_id, name, email, password, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())')
-            ->execute([$tenant_id, $name, $email, $hash, trim($_POST['role'] ?? 'user'), (int) ($_POST['is_active'] ?? 1)]);
-        admin_audit($pdo, $tenant_id, 'User added', $email);
-        admin_redirect('User added successfully.', true, 'organization');
-    }
 }
 
 $tenant = onyx_row('SELECT * FROM tenants WHERE id = :id LIMIT 1', ['id' => $tenant_id]) ?: [];
@@ -351,12 +340,6 @@ if (! array_key_exists($activeSection, $navSections)) {
     </section>
 
     <div class="admin-layout">
-        <nav class="admin-nav" aria-label="Settings sections">
-            <?php foreach ($navSections as $anchor => $label): ?>
-                <a class="<?= $activeSection === $anchor ? 'active' : '' ?>" href="<?= admin_h(admin_url($anchor)) ?>"><?= admin_h($label) ?></a>
-            <?php endforeach; ?>
-        </nav>
-
         <div class="admin-form">
             <?php if ($activeSection === 'overview'): ?>
                 <section class="admin-panel">
@@ -423,6 +406,33 @@ if (! array_key_exists($activeSection, $navSections)) {
                         <div class="admin-field"><label>VAT Inclusive</label><select name="vat_inclusive_pricing"><option value="no" <?= admin_setting($settings, 'vat_inclusive_pricing', 'no') === 'no' ? 'selected' : '' ?>>No</option><option value="yes" <?= admin_setting($settings, 'vat_inclusive_pricing') === 'yes' ? 'selected' : '' ?>>Yes</option></select></div>
                         <div class="admin-field"><label>Withholding Tax %</label><input type="number" step="0.01" name="withholding_tax_rate" value="<?= admin_h(admin_setting($settings, 'withholding_tax_rate', '0.00')) ?>"></div>
                         <div class="admin-field"><label>Invoice Tax Label</label><input name="invoice_tax_label" value="<?= admin_h(admin_setting($settings, 'invoice_tax_label', 'VAT')) ?>"></div>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <?php if ($activeSection === 'documents'): ?>
+                <section class="admin-panel" id="document_branding">
+                    <div class="admin-section-title">Document Branding and Controls</div>
+                    <div class="admin-grid">
+                        <div class="admin-field"><label>Invoice Color</label><input type="color" name="invoice_accent_color" value="<?= admin_h(admin_setting($settings, 'invoice_accent_color', '#51439a')) ?>"></div>
+                        <div class="admin-field"><label>Quotation Color</label><input type="color" name="quotation_accent_color" value="<?= admin_h(admin_setting($settings, 'quotation_accent_color', '#55734f')) ?>"></div>
+                        <div class="admin-field"><label>Receipt Bar Color</label><input type="color" name="receipt_accent_color" value="<?= admin_h(admin_setting($settings, 'receipt_accent_color', '#111111')) ?>"></div>
+                        <div class="admin-field"><label>Logo Size</label><select name="document_logo_size"><option value="small" <?= admin_setting($settings, 'document_logo_size', 'medium') === 'small' ? 'selected' : '' ?>>Small</option><option value="medium" <?= admin_setting($settings, 'document_logo_size', 'medium') === 'medium' ? 'selected' : '' ?>>Medium</option><option value="large" <?= admin_setting($settings, 'document_logo_size', 'medium') === 'large' ? 'selected' : '' ?>>Large</option></select></div>
+                        <div class="admin-field"><label>Signature Line</label><select name="document_show_signature"><option value="yes" <?= admin_setting($settings, 'document_show_signature', 'yes') === 'yes' ? 'selected' : '' ?>>Show</option><option value="no" <?= admin_setting($settings, 'document_show_signature') === 'no' ? 'selected' : '' ?>>Hide</option></select></div>
+                        <div class="admin-field"><label>Discount Row</label><select name="document_show_discount"><option value="yes" <?= admin_setting($settings, 'document_show_discount', 'yes') === 'yes' ? 'selected' : '' ?>>Show</option><option value="no" <?= admin_setting($settings, 'document_show_discount') === 'no' ? 'selected' : '' ?>>Hide</option></select></div>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <?php if ($activeSection === 'documents'): ?>
+                <section class="admin-panel" id="document_payments">
+                    <div class="admin-section-title">Payment Details</div>
+                    <div class="admin-grid">
+                        <div class="admin-field"><label>Account Name</label><input name="document_payment_account_name" value="<?= admin_h(admin_setting($settings, 'document_payment_account_name', $tenant['company_name'] ?? 'Company Collections')) ?>"></div>
+                        <div class="admin-field"><label>Account Number</label><input name="document_payment_account_number" value="<?= admin_h(admin_setting($settings, 'document_payment_account_number', '')) ?>"></div>
+                        <div class="admin-field"><label>Bank Name</label><input name="document_payment_bank_name" value="<?= admin_h(admin_setting($settings, 'document_payment_bank_name', admin_setting($settings, 'bank_account', 'Main Bank'))) ?>"></div>
+                        <div class="admin-field"><label>Mobile Money</label><input name="document_payment_mobile_money" value="<?= admin_h(admin_setting($settings, 'document_payment_mobile_money', $tenant['phone'] ?? '')) ?>"></div>
+                        <div class="admin-field full"><label>Payment Methods Note</label><textarea name="document_payment_methods_note"><?= admin_h(admin_setting($settings, 'document_payment_methods_note', 'Cash, mobile money, bank transfer, cheque.')) ?></textarea></div>
                     </div>
                 </section>
                 <?php endif; ?>
@@ -550,24 +560,6 @@ if (! array_key_exists($activeSection, $navSections)) {
                     <div class="admin-actions"><button class="admin-btn primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button></div>
                 </section>
             </form>
-            <?php endif; ?>
-
-            <?php if ($activeSection === 'organization'): ?>
-            <section class="admin-panel" id="users_roles">
-                <div class="admin-section-title">Users and Roles</div>
-                <form method="POST" action="<?= admin_h(admin_url('organization')) ?>">
-                    <input type="hidden" name="action" value="add_user">
-                    <div class="admin-grid">
-                        <div class="admin-field"><label>Name</label><input name="name" required></div>
-                        <div class="admin-field"><label>Email</label><input type="email" name="email" required></div>
-                        <div class="admin-field"><label>Password</label><input type="password" name="password" required></div>
-                        <div class="admin-field"><label>Role</label><select name="role"><option value="super_admin">Super Admin</option><option value="accountant">Accountant</option><option value="sales">Sales</option><option value="user">User</option></select></div>
-                        <div class="admin-field"><label>Status</label><select name="is_active"><option value="1">Active</option><option value="0">Inactive</option></select></div>
-                    </div>
-                    <div class="admin-actions" style="margin-top:14px;"><button class="admin-btn primary" type="submit">Add User</button></div>
-                </form>
-                <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th></tr></thead><tbody><?php foreach ($users as $user): ?><tr><td><?= admin_h($user['name']) ?></td><td><?= admin_h($user['email']) ?></td><td><?= admin_h($user['role'] ?? 'user') ?></td><td><span class="admin-badge <?= (int)($user['is_active'] ?? 1) ? 'ok' : 'danger' ?>"><?= (int)($user['is_active'] ?? 1) ? 'Active' : 'Inactive' ?></span></td><td><?= admin_h($user['created_at'] ?? '-') ?></td></tr><?php endforeach; ?></tbody></table></div>
-            </section>
             <?php endif; ?>
 
             <?php if ($activeSection === 'organization'): ?>

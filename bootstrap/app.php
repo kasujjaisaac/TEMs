@@ -14,15 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $legacyPages = function_exists('onyx_legacy_pages') ? onyx_legacy_pages() : [];
-        $legacyCsrfExceptions = [];
-
-        foreach ($legacyPages as $page) {
-            $legacyCsrfExceptions[] = $page;
-            $legacyCsrfExceptions[] = $page . '.php';
-        }
-
-        $middleware->validateCsrfTokens(except: $legacyCsrfExceptions);
+        $middleware->validateCsrfTokens();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -6,8 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
+use App\Models\Role;
+use App\Models\SecuritySetting;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -26,13 +30,28 @@ class AuthController extends Controller
 
         $credentials['email'] = Str::lower($credentials['email']);
         $credentials['is_active'] = true;
+        $candidate = User::where('email', $credentials['email'])->first();
+        $security = SecuritySetting::forTenant($candidate?->tenant_id);
+        $throttleKey = 'login:' . $credentials['email'] . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, (int) $security['login_attempt_limit'])) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => 'Too many login attempts. Try again in ' . ceil($seconds / 60) . ' minute(s).',
+            ]);
+        }
 
         if (Auth::attempt($credentials)) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
+            $request->user()->forceFill(['last_login_at' => now()])->save();
             $this->hydrateLegacySession($request, Auth::user());
 
             return redirect()->intended('/dashboard');
         }
+
+        RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
 
         return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
     }
@@ -68,13 +87,18 @@ class AuthController extends Controller
                 'updated_at' => now(),
             ]);
 
+            Role::ensureDefaultsForTenant($tenantId);
+            $role = Role::where('tenant_id', $tenantId)->where('slug', 'super_admin')->first();
+
             return User::create([
                 'tenant_id' => $tenantId,
+                'role_id' => $role?->id,
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
                 'role' => 'super_admin',
                 'is_active' => true,
+                'password_changed_at' => now(),
             ]);
         });
 

@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('assets.php?success=' . urlencode('Asset registration captured for review.')));
+    exit;
+}
+
 $context = onyx_page_start('Assets', 'Fixed assets register, depreciation, custody, maintenance, insurance, and disposals.');
 $currency = $context['currency'];
 $assetRows = [
@@ -13,6 +18,7 @@ $maintenanceRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="module-grid">
         <?php onyx_panel_start('Asset Register Form', 'fa-laptop-file', 'span-12'); ?>
             <form class="ops-form" method="post">
@@ -25,7 +31,7 @@ $maintenanceRows = [
                 <div class="ops-field"><label>Depreciation</label><select><option>Straight line</option><option>Reducing balance</option><option>Manual</option></select></div>
                 <div class="ops-field"><label>Status</label><select><option>In use</option><option>Under maintenance</option><option>Disposed</option></select></div>
                 <div class="ops-field full"><label>Notes</label><textarea rows="2" placeholder="Serial number, warranty, insurance, disposal notes"></textarea></div>
-                <button class="ops-btn" type="button">Register Asset</button>
+                <button class="ops-btn" type="submit">Register Asset</button>
             </form>
         <?php onyx_panel_end(); ?>
 

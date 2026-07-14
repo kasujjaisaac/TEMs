@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\LegacyPageController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('home');
@@ -13,6 +14,25 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/settings/users', [AccessControlController::class, 'users'])->name('settings.users');
+    Route::get('/settings/users/create', [AccessControlController::class, 'createUser'])->name('settings.users.create');
+    Route::post('/settings/users', [AccessControlController::class, 'storeUser'])->name('settings.users.store');
+    Route::put('/settings/users/{user}', [AccessControlController::class, 'updateUser'])->name('settings.users.update');
+
+    Route::get('/settings/roles', [AccessControlController::class, 'roles'])->name('settings.roles');
+    Route::get('/settings/roles/create', [AccessControlController::class, 'createRole'])->name('settings.roles.create');
+    Route::post('/settings/roles', [AccessControlController::class, 'storeRole'])->name('settings.roles.store');
+    Route::get('/settings/roles/{role}', [AccessControlController::class, 'showRole'])->name('settings.roles.show');
+    Route::get('/settings/roles/{role}/edit', [AccessControlController::class, 'editRole'])->name('settings.roles.edit');
+    Route::put('/settings/roles/{role}', [AccessControlController::class, 'updateRole'])->name('settings.roles.update');
+
+    Route::get('/settings/security', [AccessControlController::class, 'security'])->name('settings.security');
+    Route::put('/settings/security', [AccessControlController::class, 'updateSecurity'])->name('settings.security.update');
+
+    Route::get('/settings/audit-logs', [AccessControlController::class, 'auditLogs'])->name('settings.audit_logs');
+});
 
 // Migrated ERP pages. The .php routes keep existing in-page links working while
 // clean Laravel URLs are available for the same pages.

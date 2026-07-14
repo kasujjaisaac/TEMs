@@ -173,11 +173,51 @@ a:hover { text-decoration: underline; }
 .topbar-action,
 .topbar-icon,
 .topbar-chip,
-.topbar-user {
+.topbar-user,
+.topbar-sidebar-toggle {
   align-items: center;
   border: 1px solid rgba(255,255,255,0.08);
   display: inline-flex;
   min-height: 38px;
+}
+
+.topbar-sidebar-toggle {
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+  color: #050506;
+  cursor: pointer;
+  flex: 0 0 22px;
+  font: inherit;
+  height: 22px;
+  justify-content: center;
+  left: 242px;
+  min-height: 22px;
+  padding: 0;
+  position: fixed;
+  top: 101px;
+  transition: left var(--transition-fast), transform var(--transition-fast), background 160ms ease, color 160ms ease;
+  width: 22px;
+  z-index: 1400;
+}
+
+.topbar-sidebar-toggle i {
+  font-size: 9px;
+  transition: transform var(--transition-fast);
+}
+
+.topbar-sidebar-toggle:hover,
+.topbar-sidebar-toggle.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #050506;
+}
+
+body.sidebar-collapsed .topbar-sidebar-toggle {
+  left: 12px;
+}
+
+body.sidebar-collapsed .topbar-sidebar-toggle i {
+  transform: rotate(180deg);
 }
 
 .topbar-action {
@@ -298,6 +338,27 @@ a:hover { text-decoration: underline; }
   margin-right: 0;
   margin-left: 272px;
   margin-bottom: 48px;
+  transition: margin-left var(--transition-fast), width var(--transition-fast);
+}
+
+body.sidebar-collapsed .sidebar,
+body.sidebar-collapsed #sidebar {
+  transform: translateX(-290px);
+}
+
+body.sidebar-collapsed #main {
+  margin-left: 0;
+  width: 100%;
+}
+
+body.sidebar-collapsed .app-topbar {
+  margin-left: -24px;
+  width: calc(100% + 48px);
+}
+
+body.sidebar-collapsed .topbar-brand {
+  flex: 0 1 auto;
+  min-width: 190px;
 }
 
 /* Mobile behavior */
@@ -395,8 +456,8 @@ a:hover { text-decoration: underline; }
   border: 0;
   color: #a8a8b2;
   display: flex;
-  font-family: inherit;
-  font-size: 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 700;
   gap: 10px;
   letter-spacing: 0;
@@ -404,6 +465,26 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
   width: 100%;
+}
+
+.sidebar a,
+.sidebar a:hover,
+.sidebar button:hover,
+.sidebar-link,
+.sidebar-link:hover,
+.sidebar-group-toggle,
+.sidebar-group-toggle:hover,
+.sidebar-logout,
+.sidebar-logout:hover,
+.topbar-brand,
+.topbar-brand:hover,
+.topbar-action,
+.topbar-action:hover,
+.topbar-icon,
+.topbar-icon:hover,
+.topbar-sidebar-toggle,
+.topbar-sidebar-toggle:hover {
+  text-decoration: none !important;
 }
 
 .sidebar-group-toggle {
@@ -427,7 +508,7 @@ a:hover { text-decoration: underline; }
 .sidebar-logout i {
   color: #777783;
   flex: 0 0 17px;
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
 }
 
@@ -473,13 +554,13 @@ a:hover { text-decoration: underline; }
 }
 
 .sidebar-direct-link {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   min-height: 34px;
 }
 
 .sidebar-direct-link i {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sidebar-submenu .sidebar-link {
@@ -491,6 +572,7 @@ a:hover { text-decoration: underline; }
 
 .sidebar-link:hover {
   background: rgba(255,255,255,0.04);
+  border-left-color: rgba(255,255,255,0.22);
   color: #ffffff;
 }
 
@@ -912,9 +994,9 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 .panel-title,
 .onyx-erp-body .table th {
   color: var(--onyx-muted);
-  font-size: 0.72rem;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1023,7 +1105,7 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 
 .onyx-erp-body .table td {
   color: var(--onyx-text);
-  font-size: 0.84rem;
+  font-size: 11px;
 }
 
 .profile-grid,
@@ -1153,7 +1235,7 @@ button {
 .action-btn,
 .btn,
 .input-like {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .panel,
@@ -1161,4 +1243,117 @@ button {
 .profile-card,
 .product-tile {
   padding: 16px;
+}
+
+/* Compact summary surfaces used across modules. */
+.stat-grid,
+.dashboard-grid,
+.sales-summary-grid,
+.inventory-kpis,
+.purchase-kpis,
+.supplier-kpis,
+.admin-kpis,
+.product-kpis,
+.product-summary-grid,
+.dash-kpis,
+.bottom-kpis {
+  align-items: start !important;
+  align-content: start !important;
+  grid-auto-rows: max-content !important;
+}
+
+.onyx-erp-body .stat-card,
+.stat-card.card,
+.dashboard-grid .stat-card {
+  align-self: start !important;
+  display: grid !important;
+  gap: 3px !important;
+  height: auto !important;
+  justify-content: initial !important;
+  min-height: 42px !important;
+  padding: 7px 9px !important;
+}
+
+.stat-card .label,
+.stat-label {
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
+
+.stat-card .value,
+.stat-value {
+  font-size: 13px !important;
+  line-height: 1 !important;
+  margin-top: 3px !important;
+}
+
+.stat-card .note {
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  margin-top: 2px !important;
+}
+
+.inventory-kpi,
+.purchase-kpi,
+.supplier-kpi,
+.admin-kpi,
+.product-kpi,
+.product-summary-card,
+.sales-metric,
+.crm-kpi,
+.dash-kpi,
+.bottom-card {
+  align-self: start !important;
+  height: auto !important;
+  min-height: 42px !important;
+  padding: 7px 9px !important;
+}
+
+.inventory-kpi span,
+.purchase-kpi span,
+.supplier-kpi span,
+.admin-kpi span,
+.product-kpi span,
+.product-summary-card span,
+.sales-metric span,
+.crm-kpi span,
+.dash-kpi span,
+.bottom-card span {
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
+
+.inventory-kpi strong,
+.purchase-kpi strong,
+.supplier-kpi strong,
+.admin-kpi strong,
+.product-kpi strong,
+.product-summary-card strong,
+.sales-metric strong,
+.crm-kpi strong,
+.dash-kpi strong,
+.bottom-card strong {
+  font-size: 13px !important;
+  line-height: 1 !important;
+  margin-top: 3px !important;
+}
+
+.sales-metric small,
+.crm-kpi em,
+.dash-kpi small,
+.bottom-card small {
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  margin-top: 2px !important;
+}
+
+.dash-kpi {
+  grid-template-columns: 30px minmax(0, 1fr) !important;
+}
+
+.dash-kpi i,
+.bottom-card i {
+  font-size: 11px !important;
+  height: 30px !important;
+  width: 30px !important;
 }

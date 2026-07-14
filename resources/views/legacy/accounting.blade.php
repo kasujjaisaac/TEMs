@@ -1,4 +1,10 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $status = ($_POST['journal_status'] ?? 'posted') === 'draft' ? 'Journal draft saved.' : 'Journal queued for posting.';
+    header('Location: ' . onyx_legacy_url('accounting.php?success=' . urlencode($status)));
+    exit;
+}
+
 $context = onyx_page_start('Accounting', 'General ledger, chart of accounts, journals, tax control, receivables, payables, and period close.');
 $currency = $context['currency'];
 $tenant_id = onyx_tenant_id();
@@ -25,6 +31,7 @@ $journalRows = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-strip">
         <div class="ops-card"><span>Monthly Revenue</span><strong><?= htmlspecialchars(onyx_money($monthSales, $currency)) ?></strong></div>
         <div class="ops-card"><span>Receivables</span><strong><?= htmlspecialchars(onyx_money($customersDue, $currency)) ?></strong></div>
@@ -47,8 +54,8 @@ $journalRows = [
                 <div class="ops-field"><label>Credit</label><input type="number" step="0.01" placeholder="0.00"></div>
                 <div class="ops-field wide"><label>Cost Center</label><input type="text" placeholder="Branch, department, project"></div>
                 <div class="ops-field full"><label>Narration</label><textarea rows="2" placeholder="Journal narration and approval note"></textarea></div>
-                <button class="ops-btn" type="button">Post Journal</button>
-                <button class="ops-btn ghost" type="button">Save Draft</button>
+                <button class="ops-btn" type="submit" name="journal_status" value="posted">Post Journal</button>
+                <button class="ops-btn ghost" type="submit" name="journal_status" value="draft">Save Draft</button>
             </form>
         <?php onyx_panel_end(); ?>
 

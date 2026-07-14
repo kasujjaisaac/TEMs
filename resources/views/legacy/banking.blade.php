@@ -1,4 +1,9 @@
 <?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: ' . onyx_legacy_url('banking.php?success=' . urlencode('Bank transaction captured for review.')));
+    exit;
+}
+
 $context = onyx_page_start('Banking', 'Bank accounts, cash book, deposits, transfers, withdrawals, and reconciliation.');
 $currency = $context['currency'];
 $tenant_id = onyx_tenant_id();
@@ -19,13 +24,14 @@ $transactions = [
 ?>
 
 <div class="ops-board">
+    <?php if (! empty($_GET['success'])): ?><div class="ops-card" style="color:#8ff0c3;"><?= htmlspecialchars((string) $_GET['success']) ?></div><?php endif; ?>
     <div class="ops-actions">
-        <a class="ops-action" href="#"><i class="fa-solid fa-building-columns"></i><span>Add Account</span></a>
-        <a class="ops-action" href="#"><i class="fa-solid fa-money-bill-transfer"></i><span>Bank Transfer</span></a>
-        <a class="ops-action" href="#"><i class="fa-solid fa-arrow-down"></i><span>Deposit</span></a>
-        <a class="ops-action" href="#"><i class="fa-solid fa-arrow-up"></i><span>Withdrawal</span></a>
-        <a class="ops-action" href="#"><i class="fa-solid fa-scale-balanced"></i><span>Reconcile</span></a>
-        <a class="ops-action" href="#"><i class="fa-solid fa-file-export"></i><span>Statement Import</span></a>
+        <a class="ops-action" href="<?= htmlspecialchars(onyx_legacy_url('settings.php?section=finance')) ?>"><i class="fa-solid fa-building-columns"></i><span>Add Account</span></a>
+        <a class="ops-action" href="#bank-transaction"><i class="fa-solid fa-money-bill-transfer"></i><span>Bank Transfer</span></a>
+        <a class="ops-action" href="#bank-transaction"><i class="fa-solid fa-arrow-down"></i><span>Deposit</span></a>
+        <a class="ops-action" href="#bank-transaction"><i class="fa-solid fa-arrow-up"></i><span>Withdrawal</span></a>
+        <a class="ops-action" href="#bank-queue"><i class="fa-solid fa-scale-balanced"></i><span>Reconcile</span></a>
+        <a class="ops-action" href="#bank-queue"><i class="fa-solid fa-file-export"></i><span>Statement Import</span></a>
     </div>
 
     <div class="module-grid">
@@ -33,6 +39,7 @@ $transactions = [
             <?php onyx_table(['Account', 'Type', 'Currency', 'Book Balance', 'Status'], $bankAccounts); ?>
         <?php onyx_panel_end(); ?>
 
+        <div id="bank-transaction"></div>
         <?php onyx_panel_start('Transaction Capture', 'fa-money-bill-transfer', 'span-12'); ?>
             <form class="ops-form" method="post">
                 <div class="ops-field"><label>Date</label><input type="date" value="<?= htmlspecialchars(date('Y-m-d')) ?>"></div>
@@ -40,10 +47,11 @@ $transactions = [
                 <div class="ops-field"><label>Type</label><select><option>Deposit</option><option>Withdrawal</option><option>Transfer</option><option>Bank charge</option></select></div>
                 <div class="ops-field"><label>Amount</label><input type="number" step="0.01" placeholder="0.00"></div>
                 <div class="ops-field full"><label>Description</label><textarea rows="2" placeholder="Narration, reference, cheque number, mobile money transaction id"></textarea></div>
-                <button class="ops-btn" type="button">Record Transaction</button>
+                <button class="ops-btn" type="submit">Record Transaction</button>
             </form>
         <?php onyx_panel_end(); ?>
 
+        <div id="bank-queue"></div>
         <?php onyx_panel_start('Cash Book and Matching Queue', 'fa-list-check', 'span-12'); ?>
             <?php onyx_table(['Date', 'Description', 'Type', 'Amount', 'Match Status'], $transactions); ?>
         <?php onyx_panel_end(); ?>

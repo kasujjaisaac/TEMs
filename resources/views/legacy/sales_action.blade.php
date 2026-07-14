@@ -929,12 +929,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 if (isset($_GET['print']) && $_GET['print']) {
                         // Determine company context
                         $ctx = onyx_context();
+                        $settingsRows = onyx_rows('SELECT setting_key, setting_value FROM tenant_settings WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+                        $settings = [];
+                        foreach ($settingsRows as $settingRow) {
+                            $settings[$settingRow['setting_key']] = $settingRow['setting_value'];
+                        }
                         $company_name = $ctx['company_name'] ?? 'Company';
-                        $company_logo = $_SESSION['company_logo'] ?? ($_SESSION['company_logo'] ?? '');
-                        $company_email = $_SESSION['email_address'] ?? '';
-                        $company_phone = $_SESSION['phone_number'] ?? '';
-                        $company_address = $_SESSION['physical_address'] ?? '';
+                        $company_logo = trim((string) ($settings['company_logo'] ?? '')) ?: asset('assets/onxy logo.jpeg');
+                        $company_email = $settings['email_address'] ?? ($_SESSION['email_address'] ?? '');
+                        $company_phone = $settings['phone_number'] ?? ($_SESSION['phone_number'] ?? '');
+                        $company_address = $settings['physical_address'] ?? ($_SESSION['physical_address'] ?? '');
                         $currency = $ctx['currency'] ?? 'UGX';
+                        $documentTitle = invoice_type_label($invoice['invoice_type']);
+                        $documentFooter = $invoice['invoice_type'] === 'quotation'
+                            ? ($settings['quotation_terms'] ?? 'This quotation is valid for 7 days.')
+                            : ($settings['invoice_footer'] ?? 'Thank you for your business.');
 
                         // Prepare totals
                         $subtotal = number_format((float)$invoice['subtotal'], 2);
@@ -948,47 +957,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Tax Invoice <?= htmlspecialchars($invoice['invoice_number']) ?></title>
+    <title><?= htmlspecialchars($documentTitle) ?> <?= htmlspecialchars($invoice['invoice_number']) ?></title>
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; }
-        .page { width: 800px; margin: 20px auto; background: #f3f5f7; padding: 24px; box-shadow: 0 0 0 #000; }
-        .header { display:flex; justify-content:space-between; align-items:flex-start; }
+        body { background:#eef1f5; font-family: Arial, Helvetica, sans-serif; color: #172033; margin: 0; }
+        .page { width: 820px; margin: 20px auto; background: #fff; padding: 34px; box-shadow: 0 14px 40px rgba(15,23,42,.12); }
+        .header { border-bottom:3px solid #172033; display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:18px; }
         .company { max-width:60%; }
-        .company h2 { margin:0; font-size:16px; color:#111; }
-        .company .meta { margin-top:8px; color:#333; font-size:13px; line-height:1.4 }
-        .logo { width:160px; height:100px; display:flex; align-items:center; justify-content:center; }
-        .invoice-badge { background:#9c1e7a; color:#fff; padding:12px 16px; border-radius:4px; text-align:right; }
-        .invoice-badge h3 { margin:0; font-size:18px; }
+        .brand-row { align-items:center; display:flex; gap:14px; }
+        .company h2 { margin:0; font-size:18px; color:#111827; }
+        .company .meta { margin-top:8px; color:#64748b; font-size:12px; line-height:1.5 }
+        .logo { background:#fff; border:1px solid #e5e7eb; width:64px; height:64px; display:flex; align-items:center; justify-content:center; }
+        .invoice-badge { background:#172033; color:#fff; padding:14px 18px; text-align:right; }
+        .invoice-badge h3 { margin:0; font-size:20px; }
         .meta-rows { margin-top:12px; display:flex; gap:20px; }
-        .meta-rows .col { background:#fff; padding:8px 12px; border-radius:4px; }
+        .meta-rows .col { background:#f8fafc; border:1px solid #e5e7eb; padding:12px 14px; }
         table.items { width:100%; border-collapse:collapse; margin-top:18px; background:#fff; }
-        table.items thead th { background:#6d1050; color:#fff; padding:10px; text-align:left; }
-        table.items td { padding:10px; border-bottom:1px solid #eee; }
+        table.items thead th { background:#172033; color:#fff; padding:10px; text-align:left; }
+        table.items td { padding:10px; border-bottom:1px solid #e5e7eb; }
         .right { text-align:right; }
         .summary { margin-top:12px; display:flex; justify-content:flex-end; gap:12px; }
-        .summary .box { background:#fff; padding:10px 14px; border-radius:6px; min-width:200px; }
-        .total-due { background:#9c1e7a; color:#fff; padding:10px 14px; border-radius:6px; font-weight:700; }
-        .tax-summary { margin-top:18px; background:#fff; padding:10px; border-radius:6px; }
-        @media print { body { background: #fff; } .page { box-shadow:none; margin:0; } }
+        .summary .box { background:#f8fafc; border:1px solid #e5e7eb; padding:10px 14px; min-width:200px; }
+        .total-due { background:#172033; color:#fff; padding:12px 16px; font-weight:700; }
+        .tax-summary { margin-top:18px; background:#f8fafc; border:1px solid #e5e7eb; padding:12px; }
+        .footer-note{border-top:1px solid #e5e7eb;color:#64748b;font-size:11px;line-height:1.5;margin-top:22px;padding-top:12px}
+        @media print { body { background: #fff; } .page { box-shadow:none; margin:0; width:auto; } }
     </style>
 </head>
 <body>
     <div class="page">
         <div class="header">
             <div class="company">
-                <h2><?= htmlspecialchars($company_name) ?></h2>
-                <div class="meta">
-                    <?= nl2br(htmlspecialchars($company_address)) ?><br>
-                    <?= htmlspecialchars($company_phone) ?> <?= $company_email ? ' | ' . htmlspecialchars($company_email) : '' ?>
+                <div class="brand-row">
+                    <?php if ($company_logo): ?>
+                        <div class="logo"><img src="<?= htmlspecialchars($company_logo) ?>" alt="logo" style="max-width:54px;max-height:54px;"></div>
+                    <?php endif; ?>
+                    <div>
+                        <h2><?= htmlspecialchars($company_name) ?></h2>
+                        <div class="meta">
+                            <?= nl2br(htmlspecialchars($company_address)) ?><br>
+                            <?= htmlspecialchars($company_phone) ?> <?= $company_email ? ' | ' . htmlspecialchars($company_email) : '' ?>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div style="text-align:right;">
-                <?php if ($company_logo): ?>
-                    <div class="logo"><img src="<?= htmlspecialchars($company_logo) ?>" alt="logo" style="max-width:100%;max-height:100%;"></div>
-                <?php endif; ?>
-                <div style="height:10px"></div>
                 <div class="invoice-badge">
-                    <div style="font-size:12px;">Tax Invoice</div>
+                    <div style="font-size:12px;"><?= htmlspecialchars($documentTitle) ?></div>
                     <h3><?= htmlspecialchars($invoice['invoice_number']) ?></h3>
                 </div>
             </div>
@@ -1059,6 +1073,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     <td class="right"><?= $subtotal ?></td>
                 </tr>
             </table>
+        </div>
+        <div class="footer-note">
+            <?= nl2br(htmlspecialchars($documentFooter)) ?><br>
+            Authorized signature: ______________________________
         </div>
     </div>
 </body>

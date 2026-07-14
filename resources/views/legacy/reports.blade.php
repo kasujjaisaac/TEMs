@@ -19,9 +19,11 @@ $scheduledRows = [
     ['Receivables Follow-up', 'Daily', 'Finance Manager', 'Active'],
     ['Stock Valuation', 'Month end', 'Store Manager', 'Draft'],
 ];
+$selectedReport = $_GET['report_type'] ?? '';
 ?>
 
 <div class="ops-board">
+    <?php if ($selectedReport !== ''): ?><div class="ops-card" style="color:#8ff0c3;">Generated <?= htmlspecialchars((string) $selectedReport) ?> preview for the selected period.</div><?php endif; ?>
     <div class="ops-report-grid">
         <div class="ops-report-card"><i class="fa-solid fa-chart-line"></i><strong>Financial Statements</strong><span>P&L, balance sheet, cash flow</span></div>
         <div class="ops-report-card"><i class="fa-solid fa-users"></i><strong>Customer Reports</strong><span>Ageing, sales, statements</span></div>
@@ -32,11 +34,11 @@ $scheduledRows = [
     <div class="module-grid">
         <?php onyx_panel_start('Report Builder', 'fa-sliders', 'span-12'); ?>
             <form class="ops-filters" method="get">
-                <select><option>Profit and Loss</option><option>Balance Sheet</option><option>Cash Flow</option><option>Payroll Summary</option><option>Tax Report</option></select>
-                <input type="date" value="<?= htmlspecialchars(date('Y-m-01')) ?>">
-                <input type="date" value="<?= htmlspecialchars(date('Y-m-t')) ?>">
-                <select><option>All branches</option><option>Main branch</option><option>Warehouse</option></select>
-                <button class="ops-btn" type="button">Generate</button>
+                <select name="report_type"><option>Profit and Loss</option><option>Balance Sheet</option><option>Cash Flow</option><option>Payroll Summary</option><option>Tax Report</option></select>
+                <input name="date_from" type="date" value="<?= htmlspecialchars($_GET['date_from'] ?? date('Y-m-01')) ?>">
+                <input name="date_to" type="date" value="<?= htmlspecialchars($_GET['date_to'] ?? date('Y-m-t')) ?>">
+                <select name="branch"><option>All branches</option><option>Main branch</option><option>Warehouse</option></select>
+                <button class="ops-btn" type="submit">Generate</button>
             </form>
         <?php onyx_panel_end(); ?>
 

@@ -3,7 +3,7 @@
 @section('content')
 <div class="card" style="max-width:640px;margin:16px">
     <h2>Product - {{ ucfirst($action) }}</h2>
-    <form method="POST" action="/products/action">
+    <form method="POST" action="{{ url('products_action') }}">
         @csrf
         <label class="form-label">Name</label>
         <input name="name" class="input" required />
