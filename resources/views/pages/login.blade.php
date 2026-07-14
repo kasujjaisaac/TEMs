@@ -6,19 +6,21 @@
     <title>Login | Onyx Business Control System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root {
-            --bg: #050506;
-            --panel: #0a0a0c;
-            --panel-2: #101014;
-            --line: rgba(255,255,255,.1);
-            --line-strong: rgba(255,255,255,.22);
+            --bg: #07111a;
+            --panel: #101923;
+            --panel-2: #131d28;
+            --accent: #ff6a00;
+            --accent-2: #ff8a1d;
+            --line: rgba(255,106,0,.18);
+            --line-strong: rgba(255,106,0,.42);
             --text: #fff;
-            --muted: #858590;
-            --soft: #d8d8de;
-            --danger: #ffaaaa;
+            --muted: #8d99a8;
+            --soft: #dce3ec;
+            --danger: #ff7b64;
         }
 
         * { box-sizing: border-box; }
@@ -27,14 +29,15 @@
         body {
             align-items: center;
             background:
-                linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px),
-                radial-gradient(circle at 50% 18%, rgba(255,255,255,.08), transparent 28%),
+                linear-gradient(rgba(255,106,0,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,106,0,.028) 1px, transparent 1px),
+                radial-gradient(circle at 82% 14%, rgba(255,106,0,.24), transparent 30%),
+                radial-gradient(circle at 18% 82%, rgba(255,138,29,.12), transparent 28%),
                 var(--bg);
-            background-size: 40px 40px, 40px 40px, auto, auto;
+            background-size: 40px 40px, 40px 40px, auto, auto, auto;
             color: var(--text);
             display: flex;
-            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             justify-content: center;
             margin: 0;
             padding: 28px;
@@ -74,7 +77,7 @@
         .login-frame {
             background: transparent;
             border: 1px solid var(--line-strong);
-            box-shadow: 0 34px 90px rgba(0,0,0,.55);
+            box-shadow: 0 34px 90px rgba(0,0,0,.62), 0 0 0 1px rgba(255,106,0,.08);
             display: grid;
             grid-template-columns: minmax(360px, 420px) minmax(360px, 1fr);
             min-height: 560px;
@@ -95,10 +98,10 @@
         .brand-side {
             align-items: stretch;
             background:
-                linear-gradient(145deg, rgba(20,184,166,.18), transparent 31%),
-                linear-gradient(315deg, rgba(245,158,11,.14), transparent 36%),
-                linear-gradient(180deg, rgba(255,255,255,.08), transparent 60%),
-                #09090b;
+                linear-gradient(145deg, rgba(255,106,0,.28), transparent 35%),
+                linear-gradient(315deg, rgba(255,138,29,.2), transparent 40%),
+                linear-gradient(180deg, rgba(255,255,255,.065), transparent 60%),
+                #07111a;
             border-right: 1px solid var(--line);
             display: flex;
             min-width: 0;
@@ -108,8 +111,8 @@
 
         .brand-side::before {
             background:
-                linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+                linear-gradient(rgba(255,106,0,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,106,0,.04) 1px, transparent 1px);
             background-size: 34px 34px;
             content: "";
             inset: 0;
@@ -142,7 +145,7 @@
 
         .brand-mark {
             align-items: center;
-            background: #fff;
+            background: var(--accent);
             display: flex;
             flex: 0 0 auto;
             height: 54px;
@@ -231,15 +234,15 @@
         }
 
         .feature-icon.inventory {
-            color: #67e8f9;
+            color: var(--accent);
         }
 
         .feature-icon.finance {
-            color: #86efac;
+            color: #ffb347;
         }
 
         .feature-icon.team {
-            color: #fcd34d;
+            color: var(--accent-2);
         }
 
         .feature-item strong {
@@ -290,6 +293,7 @@
             align-content: center;
             background:
                 linear-gradient(180deg, rgba(255,255,255,.035), transparent 34%),
+                linear-gradient(135deg, rgba(255,106,0,.055), transparent 35%),
                 var(--panel);
             display: grid;
             padding: 42px;
@@ -316,7 +320,7 @@
         }
 
         .login-eyebrow::before {
-            background: #fff;
+            background: var(--accent);
             content: "";
             height: 1px;
             width: 34px;
@@ -365,7 +369,7 @@
 
         .input-wrap {
             align-items: center;
-            background: #050506;
+            background: #0b141e;
             border: 1px solid var(--line);
             display: grid;
             gap: 11px;
@@ -381,8 +385,8 @@
         }
 
         .input-wrap:focus-within {
-            border-color: #fff;
-            box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255,106,0,.12);
         }
 
         .input {
@@ -415,8 +419,8 @@
 
         .primary-button {
             align-items: center;
-            background: #fff;
-            border: 1px solid #fff;
+            background: var(--accent);
+            border: 1px solid var(--accent);
             color: #050506;
             cursor: pointer;
             display: inline-flex;
@@ -432,7 +436,7 @@
         }
 
         .primary-button:hover {
-            background: transparent;
+            background: #0b141e;
             color: #fff;
         }
 
@@ -464,7 +468,7 @@
         }
 
         .login-foot a:hover {
-            background: #fff;
+            background: var(--accent);
             color: #050506;
         }
 

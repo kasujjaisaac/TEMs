@@ -10,27 +10,27 @@
 
 /* ===== Theme variables (tweak these to match brand) ===== */
 :root{
-  --accent: #ffffff;           /* primary accent */
-  --accent-600: #d8d8de;
-  --bg: #0f172a;               /* page background */
-  --surface: #0f172a;          /* same as bg to maintain dark theme */
-  --sidebar: #0f172a;          /* sidebar background */
-  --panel: rgba(255,255,255,0.03);
-  --panel-border: rgba(255,255,255,0.06);
-  --muted: #94a3b8;
-  --text: #e6eef8;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --glass: rgba(255,255,255,0.02);
+  --accent: #ff6a00;           /* primary accent */
+  --accent-600: #ff8a1d;
+  --bg: #07111a;               /* page background */
+  --surface: #101923;
+  --sidebar: #07111a;
+  --panel: rgba(255,106,0,0.035);
+  --panel-border: rgba(255,138,29,0.18);
+  --muted: #8d99a8;
+  --text: #f5f7fa;
+  --success: #20d39b;
+  --danger: #ff4f38;
+  --warning: #ffb347;
+  --glass: rgba(255,255,255,0.025);
 
   --radius-sm: 0;
   --radius-md: 0;
   --radius-lg: 0;
   --max-width: 1280px;
 
-  --shadow-sm: 0 6px 18px rgba(2,6,23,0.6);
-  --shadow-md: 0 10px 30px rgba(2,6,23,0.7);
+  --shadow-sm: 0 6px 20px rgba(0,0,0,0.45);
+  --shadow-md: 0 16px 42px rgba(0,0,0,0.58);
   --transition-fast: 160ms ease;
 }
 
@@ -772,12 +772,12 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 
 /* ===== Migrated ONYX ERP pages ===== */
 :root {
-  --onyx-bg: #12121a;
-  --onyx-surface: #1c1c27;
-  --onyx-accent: #ffffff;
-  --onyx-border: #2a2a3b;
-  --onyx-text: #ffffff;
-  --onyx-muted: #84849a;
+  --onyx-bg: #07111a;
+  --onyx-surface: #101923;
+  --onyx-accent: #ff6a00;
+  --onyx-border: #263241;
+  --onyx-text: #f5f7fa;
+  --onyx-muted: #8d99a8;
 }
 
 .onyx-erp-body {
@@ -1356,4 +1356,901 @@ button {
   font-size: 11px !important;
   height: 30px !important;
   width: 30px !important;
+}
+
+/* Onyx Performance theme: dark executive UI with orange KPI accents. */
+:root {
+  --onyx-bg: #07111a;
+  --onyx-surface: #101923;
+  --onyx-surface-2: #131d28;
+  --onyx-accent: #ff6a00;
+  --onyx-accent-2: #ff8a1d;
+  --onyx-border: #263241;
+  --onyx-text: #f5f7fa;
+  --onyx-muted: #8d99a8;
+}
+
+body,
+.onyx-erp-body {
+  background:
+    linear-gradient(rgba(255,106,0,.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,106,0,.018) 1px, transparent 1px),
+    radial-gradient(circle at 80% 0%, rgba(255,106,0,.13), transparent 30%),
+    linear-gradient(180deg, #07111a 0%, #0a121c 46%, #050a10 100%) !important;
+  background-size: 42px 42px, 42px 42px, auto, auto !important;
+  color: var(--onyx-text) !important;
+}
+
+.app-topbar {
+  background:
+    linear-gradient(90deg, rgba(255,106,0,.13), transparent 32%),
+    #07111a !important;
+  border-bottom: 1px solid rgba(255,106,0,.22) !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,.48) !important;
+}
+
+.topbar-brand img,
+.sidebar-brand-mark,
+.topbar-user-avatar {
+  background: var(--onyx-accent) !important;
+  border-color: var(--onyx-accent) !important;
+  color: #050506 !important;
+}
+
+.topbar-brand strong,
+.page-header h1,
+.panel h1,
+.panel h2,
+.panel h3 {
+  color: #ffffff !important;
+}
+
+.topbar-brand small,
+.topbar-search i,
+.topbar-search input::placeholder,
+.topbar-user span,
+.page-subtitle,
+.currency-badge,
+.panel-title,
+.stat-card .label,
+.stat-label,
+.table th,
+.onyx-erp-body .table th {
+  color: var(--onyx-muted) !important;
+}
+
+.topbar-search,
+.topbar-icon,
+.topbar-chip,
+.topbar-user,
+.topbar-action,
+.currency-badge {
+  background: rgba(16,25,35,.82) !important;
+  border-color: rgba(255,106,0,.18) !important;
+}
+
+.topbar-action:hover,
+.topbar-icon:hover,
+.topbar-chip:hover {
+  border-color: rgba(255,106,0,.48) !important;
+  color: #ffffff !important;
+}
+
+.topbar-action i,
+.topbar-chip i,
+.panel-title i,
+#sidebar h3,
+.sidebar-group-toggle:hover i,
+.sidebar-group-toggle.active i,
+.sidebar-link.active i,
+.menu-item:hover,
+.menu-item:hover i {
+  color: var(--onyx-accent) !important;
+}
+
+.topbar-sidebar-toggle {
+  background: var(--onyx-accent) !important;
+  border-color: var(--onyx-accent) !important;
+  box-shadow: 0 8px 18px rgba(255,106,0,.22) !important;
+  color: #050506 !important;
+}
+
+.sidebar,
+#sidebar,
+.onyx-erp-body .sidebar {
+  background:
+    linear-gradient(180deg, rgba(255,106,0,.075), transparent 22%),
+    linear-gradient(180deg, #07111a 0%, #050a10 100%) !important;
+  border-right: 1px solid rgba(255,106,0,.2) !important;
+}
+
+.sidebar-group-toggle,
+.sidebar-link,
+.sidebar-direct-link,
+.sidebar-logout,
+.menu-item {
+  border-color: transparent !important;
+  color: #c8d0dc !important;
+}
+
+.sidebar-group-toggle:hover,
+.sidebar-group-toggle.active,
+.sidebar-link:hover,
+.sidebar-direct-link:hover,
+.sidebar-link.active,
+.sidebar-direct-link.active,
+.menu-item.active {
+  background: rgba(255,106,0,.1) !important;
+  border-color: rgba(255,106,0,.44) !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.sidebar-link.active,
+.sidebar-direct-link.active,
+.menu-item.active {
+  border-left-color: var(--onyx-accent) !important;
+}
+
+#main,
+.main-content {
+  background: transparent !important;
+}
+
+.card,
+.panel,
+.profile-card,
+.product-tile,
+.onyx-erp-body .stat-card,
+.access-header,
+.access-panel,
+.access-kpi,
+.permission-group,
+.hr-hero,
+.hr-panel,
+.hr-stat,
+.contract-hero,
+.contract-panel,
+.contract-stat,
+.employee-hero,
+.employee-panel,
+.employee-stat {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    var(--onyx-surface) !important;
+  border-color: rgba(255,106,0,.18) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.24) !important;
+}
+
+.card:hover {
+  border-color: rgba(255,106,0,.38) !important;
+}
+
+.btn,
+.action-btn,
+.access-button,
+.hr-btn.primary,
+.contract-btn.primary,
+.employee-btn.primary,
+.sales-action.primary,
+.product-action.primary,
+.supplier-btn.primary,
+.purchase-btn.primary,
+.admin-btn.primary,
+.pos-btn.primary {
+  background: var(--onyx-accent) !important;
+  border-color: var(--onyx-accent) !important;
+  color: #050506 !important;
+}
+
+.btn:hover,
+.action-btn:hover,
+.access-button:hover,
+.hr-btn:hover,
+.contract-btn:hover,
+.employee-btn:hover,
+.sales-action:hover,
+.product-action:hover,
+.supplier-btn:hover,
+.purchase-btn:hover,
+.admin-btn:hover,
+.pos-btn:hover {
+  border-color: var(--onyx-accent-2) !important;
+  box-shadow: 0 0 0 3px rgba(255,106,0,.11) !important;
+  text-decoration: none !important;
+}
+
+.btn.ghost,
+.access-button.secondary,
+.hr-btn,
+.contract-btn,
+.employee-btn,
+.sales-action,
+.product-action,
+.supplier-btn,
+.purchase-btn,
+.admin-btn,
+.pos-btn {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(255,106,0,.2) !important;
+  color: #f5f7fa !important;
+}
+
+input,
+select,
+textarea,
+.input,
+.input-like,
+.access-field input,
+.access-field select,
+.access-field textarea {
+  background: #0b141e !important;
+  border-color: rgba(255,106,0,.18) !important;
+  color: #ffffff !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.input:focus,
+.access-field input:focus,
+.access-field select:focus,
+.access-field textarea:focus {
+  border-color: var(--onyx-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255,106,0,.13) !important;
+}
+
+.table th,
+.table td,
+.onyx-erp-body .table th,
+.onyx-erp-body .table td,
+.access-table th,
+.access-table td {
+  border-color: rgba(255,255,255,.06) !important;
+}
+
+.table tbody tr:hover,
+.access-table tbody tr:hover {
+  background: rgba(255,106,0,.055) !important;
+}
+
+.stat-card .value,
+.stat-value,
+.access-kpi strong,
+.hr-stat strong,
+.contract-stat strong,
+.employee-stat strong,
+.inventory-kpi strong,
+.purchase-kpi strong,
+.supplier-kpi strong,
+.admin-kpi strong,
+.product-kpi strong,
+.sales-metric strong,
+.crm-kpi strong {
+  color: #ffffff !important;
+}
+
+.stat-card .value::first-letter,
+.stat-value::first-letter {
+  color: var(--onyx-accent);
+}
+
+.badge,
+.access-badge,
+.hr-status,
+.contract-status,
+.employee-status {
+  border-color: rgba(255,106,0,.32) !important;
+}
+
+/* Broad module sweep for page-specific legacy classes. */
+.dash-hero,
+.dash-panel,
+.sales-panel,
+.sales-metric,
+.sales-report-card,
+.product-panel,
+.product-kpi,
+.product-action-panel,
+.product-summary-card,
+.product-detail-item,
+.inventory-panel,
+.inventory-kpi,
+.purchase-panel,
+.purchase-kpi,
+.supplier-panel,
+.supplier-kpi,
+.customer-panel,
+.customer-summary,
+.customer-card,
+.crm-panel,
+.crm-kpi,
+.pos-panel,
+.pos-stat,
+.admin-panel,
+.admin-kpi,
+.admin-card,
+.template-panel,
+.template-card,
+.preview-shell,
+.bank-panel,
+.budget-panel,
+.asset-panel,
+.report-panel,
+.notification-panel,
+.mobile-panel {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    var(--onyx-surface) !important;
+  border-color: rgba(255,106,0,.18) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.22) !important;
+}
+
+.dash-kpi i,
+.bottom-card i,
+.dash-tabs span:first-child,
+.dash-progress span,
+.activity-stat i,
+.product-action.primary,
+.product-btn.primary,
+.inventory-btn.primary,
+.inventory-tab.active,
+.purchase-btn.primary,
+.purchase-tab.active,
+.supplier-btn.primary,
+.customer-action.primary,
+.customer-form-btn.primary,
+.crm-btn.primary,
+.pos-btn.primary,
+.admin-btn.primary,
+.template-btn.primary,
+.preview-btn.primary {
+  background: var(--onyx-accent) !important;
+  border-color: var(--onyx-accent) !important;
+  color: #050506 !important;
+}
+
+.dash-title i,
+.dash-title a,
+.attention-icon,
+.report-icon,
+.product-action-title i,
+.product-title i,
+.inventory-title i,
+.purchase-title i,
+.supplier-title i,
+.customer-title i,
+.crm-title i,
+.pos-title i,
+.admin-title i,
+.template-title i {
+  color: var(--onyx-accent) !important;
+}
+
+.dash-title a,
+.dash-tabs span,
+.dash-status,
+.product-action,
+.product-btn,
+.inventory-btn,
+.inventory-tab,
+.purchase-btn,
+.purchase-tab,
+.supplier-btn,
+.customer-action,
+.customer-form-btn,
+.crm-btn,
+.pos-btn,
+.admin-btn,
+.template-btn,
+.preview-btn {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(255,106,0,.22) !important;
+  color: #f5f7fa !important;
+}
+
+.dash-title a:hover,
+.attention-item:hover,
+.report-item:hover,
+.product-action:hover,
+.product-btn:hover,
+.inventory-btn:hover,
+.inventory-tab:hover,
+.purchase-btn:hover,
+.purchase-tab:hover,
+.supplier-btn:hover,
+.customer-action:hover,
+.customer-form-btn:hover,
+.crm-btn:hover,
+.pos-btn:hover,
+.admin-btn:hover,
+.template-btn:hover,
+.preview-btn:hover {
+  background: rgba(255,106,0,.1) !important;
+  border-color: rgba(255,106,0,.46) !important;
+  text-decoration: none !important;
+}
+
+.dash-table td,
+.dash-table th,
+.sales-table td,
+.sales-table th,
+.product-table td,
+.product-table th,
+.inventory-table td,
+.inventory-table th,
+.purchase-table td,
+.purchase-table th,
+.supplier-table td,
+.supplier-table th,
+.customer-table td,
+.customer-table th,
+.crm-table td,
+.crm-table th,
+.pos-table td,
+.pos-table th,
+.admin-table td,
+.admin-table th {
+  border-color: rgba(255,255,255,.06) !important;
+}
+
+.dash-table tbody tr:hover,
+.sales-table tbody tr:hover,
+.product-table tbody tr:hover,
+.inventory-table tbody tr:hover,
+.purchase-table tbody tr:hover,
+.supplier-table tbody tr:hover,
+.customer-table tbody tr:hover,
+.crm-table tbody tr:hover,
+.pos-table tbody tr:hover,
+.admin-table tbody tr:hover {
+  background: rgba(255,106,0,.055) !important;
+}
+
+.dash-empty,
+.product-note,
+.inventory-empty,
+.purchase-empty,
+.supplier-empty,
+.customer-empty,
+.admin-empty,
+.template-empty {
+  border-color: rgba(255,106,0,.18) !important;
+  color: var(--onyx-muted) !important;
+}
+
+.dash-board {
+  --dash-line: rgba(255,106,0,.2) !important;
+  --dash-soft: rgba(255,106,0,.09) !important;
+}
+
+/* Mobile app experience */
+.mobile-appbar,
+.mobile-bottom-nav,
+.mobile-more-panel,
+.mobile-fab {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body,
+  .onyx-erp-body {
+    padding-bottom: 82px !important;
+  }
+
+  .app-topbar,
+  .main-topbar,
+  .sidebar,
+  #sidebar,
+  .topbar-sidebar-toggle {
+    display: none !important;
+  }
+
+  #main,
+  .main-content {
+    margin: 0 !important;
+    padding: 82px 12px 96px !important;
+    width: 100% !important;
+  }
+
+  .app-layout {
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  .mobile-appbar {
+    align-items: center;
+    background:
+      linear-gradient(90deg, rgba(255,106,0,.16), transparent 42%),
+      rgba(7,17,26,.96);
+    border-bottom: 1px solid rgba(255,106,0,.24);
+    box-shadow: 0 12px 28px rgba(0,0,0,.42);
+    display: flex;
+    gap: 10px;
+    height: 64px;
+    justify-content: space-between;
+    left: 0;
+    padding: 9px 12px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 2500;
+  }
+
+  .mobile-brand {
+    align-items: center;
+    display: flex;
+    gap: 9px;
+    min-width: 0;
+    text-decoration: none;
+  }
+
+  .mobile-brand img {
+    background: var(--onyx-accent);
+    border: 1px solid var(--onyx-accent);
+    height: 36px;
+    object-fit: contain;
+    padding: 4px;
+    width: 36px;
+  }
+
+  .mobile-brand strong,
+  .mobile-brand small {
+    display: block;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-brand strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .mobile-brand small {
+    color: var(--onyx-muted);
+    font-size: 9px;
+    font-weight: 800;
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+
+  .mobile-appbar-actions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobile-appbar-actions a,
+  .mobile-appbar-actions button {
+    align-items: center;
+    background: rgba(255,255,255,.035);
+    border: 1px solid rgba(255,106,0,.22);
+    color: #fff;
+    display: inline-flex;
+    font: inherit;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+  }
+
+  .mobile-appbar-actions i {
+    color: var(--onyx-accent);
+  }
+
+  .mobile-bottom-nav {
+    align-items: center;
+    background:
+      linear-gradient(180deg, rgba(19,29,40,.96), rgba(7,17,26,.98));
+    border-top: 1px solid rgba(255,106,0,.24);
+    bottom: 0;
+    box-shadow: 0 -14px 28px rgba(0,0,0,.44);
+    display: grid;
+    gap: 2px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    left: 0;
+    padding: 6px 5px max(6px, env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    z-index: 2500;
+  }
+
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #9ca7b6;
+    display: grid;
+    font: inherit;
+    gap: 3px;
+    justify-items: center;
+    min-height: 50px;
+    padding: 4px 2px;
+    text-decoration: none;
+  }
+
+  .mobile-bottom-nav i {
+    font-size: 14px;
+  }
+
+  .mobile-bottom-nav span {
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .mobile-bottom-nav a.active,
+  .mobile-bottom-nav button.active {
+    background: rgba(255,106,0,.12);
+    color: #fff;
+  }
+
+  .mobile-bottom-nav a.active i,
+  .mobile-bottom-nav button.active i {
+    color: var(--onyx-accent);
+  }
+
+  .mobile-more-panel {
+    background:
+      linear-gradient(180deg, rgba(255,106,0,.08), transparent 24%),
+      #07111a;
+    border-top: 1px solid rgba(255,106,0,.28);
+    bottom: 0;
+    box-shadow: 0 -24px 60px rgba(0,0,0,.6);
+    display: block;
+    left: 0;
+    max-height: 76vh;
+    overflow-y: auto;
+    padding: 14px 14px 96px;
+    position: fixed;
+    right: 0;
+    transform: translateY(105%);
+    transition: transform 180ms ease;
+    z-index: 2700;
+  }
+
+  .mobile-more-panel.open {
+    transform: translateY(0);
+  }
+
+  .mobile-more-head {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .mobile-more-head strong {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .mobile-more-head button {
+    align-items: center;
+    background: var(--onyx-accent);
+    border: 1px solid var(--onyx-accent);
+    color: #050506;
+    display: inline-flex;
+    font: inherit;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+  }
+
+  .mobile-more-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-more-grid a {
+    align-items: center;
+    background: rgba(255,255,255,.035);
+    border: 1px solid rgba(255,106,0,.2);
+    color: #fff;
+    display: flex;
+    gap: 9px;
+    min-height: 48px;
+    padding: 0 10px;
+    text-decoration: none;
+  }
+
+  .mobile-more-grid i {
+    color: var(--onyx-accent);
+    width: 16px;
+  }
+
+  .mobile-more-grid span {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .mobile-fab {
+    align-items: center;
+    background: var(--onyx-accent);
+    border: 1px solid var(--onyx-accent);
+    box-shadow: 0 14px 30px rgba(255,106,0,.28);
+    color: #050506;
+    display: inline-flex;
+    font-size: 10px;
+    font-weight: 900;
+    gap: 7px;
+    min-height: 42px;
+    padding: 0 13px;
+    position: fixed;
+    right: 12px;
+    text-decoration: none;
+    text-transform: uppercase;
+    bottom: 76px;
+    z-index: 2550;
+  }
+
+  .page-header {
+    margin: 0 0 12px !important;
+  }
+
+  .page-header h1 {
+    font-size: 16px !important;
+    line-height: 1.15;
+  }
+
+  .page-subtitle {
+    font-size: 10px !important;
+  }
+
+  .stat-grid,
+  .module-grid,
+  .dashboard-grid,
+  .ops-strip,
+  .ops-form,
+  .sales-summary-grid,
+  .inventory-kpis,
+  .purchase-kpis,
+  .supplier-kpis,
+  .admin-kpis,
+  .product-kpis,
+  .hr-stats,
+  .contract-stats,
+  .employee-stats,
+  .dash-kpis,
+  .bottom-kpis {
+    display: grid !important;
+    gap: 8px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .module-grid,
+  .dash-grid,
+  .employee-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .span-3,
+  .span-4,
+  .span-5,
+  .span-6,
+  .span-7,
+  .span-8,
+  .span-12,
+  .span-2x,
+  .span-3x,
+  .span-4x,
+  .span-5x,
+  .span-6x,
+  .span-8x,
+  .span-12x,
+  .employee-panel.full {
+    grid-column: 1 / -1 !important;
+  }
+
+  .panel,
+  .card,
+  .access-panel,
+  .hr-panel,
+  .contract-panel,
+  .employee-panel,
+  .dash-panel,
+  .ops-card,
+  .ops-report-card {
+    padding: 11px !important;
+  }
+
+  .table-wrap,
+  .access-table-wrap,
+  .hr-table-wrap,
+  .contract-table-wrap,
+  .inventory-table-wrap,
+  .purchase-table-wrap,
+  .supplier-table-wrap,
+  .customer-table-wrap {
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  table[data-mobile-enhanced="1"],
+  table[data-mobile-enhanced="1"] thead,
+  table[data-mobile-enhanced="1"] tbody,
+  table[data-mobile-enhanced="1"] tr,
+  table[data-mobile-enhanced="1"] th,
+  table[data-mobile-enhanced="1"] td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  table[data-mobile-enhanced="1"] {
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  table[data-mobile-enhanced="1"] thead {
+    display: none !important;
+  }
+
+  table[data-mobile-enhanced="1"] tbody {
+    display: grid !important;
+    gap: 9px !important;
+  }
+
+  table[data-mobile-enhanced="1"] tr {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+      var(--onyx-surface) !important;
+    border: 1px solid rgba(255,106,0,.18) !important;
+    padding: 8px !important;
+  }
+
+  table[data-mobile-enhanced="1"] td {
+    align-items: start;
+    border: 0 !important;
+    display: grid !important;
+    gap: 8px;
+    grid-template-columns: minmax(88px, 34%) minmax(0, 1fr);
+    padding: 6px 0 !important;
+    text-align: right !important;
+  }
+
+  table[data-mobile-enhanced="1"] td::before {
+    color: var(--onyx-muted);
+    content: attr(data-label);
+    font-size: 8px;
+    font-weight: 900;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .ops-actions,
+  .hr-actions,
+  .contract-actions,
+  .employee-actions,
+  .product-actions,
+  .sales-row-actions,
+  .supplier-actions,
+  .purchase-actions {
+    flex-wrap: wrap !important;
+  }
+
+  .ops-btn,
+  .ops-action,
+  .hr-btn,
+  .contract-btn,
+  .employee-btn,
+  .product-action,
+  .sales-action,
+  .supplier-btn,
+  .purchase-btn,
+  .customer-action {
+    min-height: 38px !important;
+  }
 }

@@ -444,7 +444,7 @@ if (! function_exists('onyx_page_start')) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset('assets/css/style.css') ?>?v=<?= $cssVersion ?>">
     <style>
-        :root{--onyx-bg:#12121a;--onyx-surface:#1c1c27;--onyx-accent:#fff;--onyx-border:#2a2a3b;--onyx-text:#fff;--onyx-muted:#84849a}
+        :root{--onyx-bg:#07111a;--onyx-surface:#101923;--onyx-surface-2:#131d28;--onyx-accent:#ff6a00;--onyx-accent-2:#ff8a1d;--onyx-border:#263241;--onyx-text:#f5f7fa;--onyx-muted:#8d99a8}
         .onyx-erp-body{background:var(--onyx-bg);color:var(--onyx-text);font-family:Poppins,system-ui,sans-serif;font-size:12px;margin:0;overflow-x:hidden}
         .onyx-erp-body a{color:inherit;text-decoration:none}
         .onyx-erp-body .sidebar{background:radial-gradient(circle at 10% 0,rgba(255,255,255,.07),transparent 24%),linear-gradient(180deg,#0b0b0d 0%,#050506 100%);border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;height:calc(100vh - 82px);left:0;position:fixed;top:82px;transition:transform .18s ease;width:272px;z-index:1000}.onyx-erp-body.sidebar-collapsed .sidebar{transform:translateX(-290px)}
@@ -461,10 +461,41 @@ if (! function_exists('onyx_page_start')) {
         .ops-board,.ops-board *{border-radius:0!important}.ops-board{display:grid;gap:18px}.ops-strip{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(148px,1fr))}.ops-card,.ops-action,.ops-check,.ops-report-card{background:var(--onyx-surface);border:1px solid var(--onyx-border);min-width:0}.ops-card{padding:14px}.ops-card span,.ops-field label,.ops-section-title,.ops-check span,.ops-report-card span{color:var(--onyx-muted);display:block;font-size:.58rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase}.ops-card strong{color:#fff;display:block;font-size:1.08rem;font-weight:900;line-height:1.2;margin-top:8px;word-break:break-word}.ops-form{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}.ops-field{display:grid;gap:6px;min-width:0}.ops-field.wide{grid-column:span 2}.ops-field.full{grid-column:1/-1}.ops-field input,.ops-field select,.ops-field textarea,.ops-filters input,.ops-filters select{background:#101016;border:1px solid rgba(255,255,255,.12);color:#fff;font:inherit;font-size:.78rem;min-height:38px;padding:9px;width:100%}.ops-field select option,.ops-filters select option{background:#050506;color:#fff}.ops-btn,.ops-action{align-items:center;display:inline-flex;font-size:.68rem;font-weight:800;gap:8px;justify-content:center;min-height:38px;padding:0 12px;text-decoration:none;text-transform:uppercase;white-space:nowrap}.ops-btn{background:#fff;border:1px solid #fff;color:#050506}.ops-btn.ghost{background:transparent;color:#fff}.ops-action{background:rgba(255,255,255,.035);color:#fff}.ops-action.primary{background:#fff;color:#050506}.ops-actions,.ops-tags{display:flex;flex-wrap:wrap;gap:8px}.ops-action i,.ops-report-card i{color:#fff}.ops-tags{align-items:flex-start}.ops-tag,.ops-tags span{border:1px solid rgba(255,255,255,.12);color:#d8d8de;font-size:.68rem;font-weight:800;padding:7px 9px}.ops-checks{display:grid;gap:8px}.ops-check{padding:9px}.ops-check strong,.ops-report-card strong{color:#fff;display:block;font-size:.72rem;font-weight:900}.ops-check span{font-size:.62rem;letter-spacing:0;line-height:1.45;margin-top:4px;text-transform:none}.ops-report-grid{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}.ops-report-card{padding:14px}.ops-report-card strong{font-size:.82rem;margin-top:10px}.ops-report-card span{font-size:.62rem;letter-spacing:0;line-height:1.45;margin-top:6px;text-transform:none}.ops-filters{display:grid;gap:12px;grid-template-columns:repeat(5,1fr)}@media(max-width:1000px){.ops-strip,.ops-form,.ops-report-grid,.ops-filters{grid-template-columns:1fr}.ops-field.wide{grid-column:auto}.ops-actions{display:grid;grid-template-columns:1fr}.ops-action{width:100%}}
         .table-wrap{overflow-x:auto}.onyx-erp-body .table{border-collapse:collapse;min-width:760px;width:100%}.onyx-erp-body .table td,.onyx-erp-body .table th{border-bottom:1px solid rgba(255,255,255,.05);padding:13px 12px;text-align:left}
         .onyx-erp-body,.onyx-erp-body button,.onyx-erp-body input,.onyx-erp-body select,.onyx-erp-body textarea{font-family:Poppins,system-ui,sans-serif;font-size:12px}.onyx-erp-body *{border-radius:0!important}.page-header h1{font-size:20px;font-weight:900;letter-spacing:0}.page-subtitle{font-size:12px;line-height:1.5}.panel{padding:16px}.panel-title,.stat-card .label,.onyx-erp-body .table th{font-size:11px;font-weight:800;letter-spacing:0;text-transform:uppercase}.onyx-erp-body .table td{font-size:11px;line-height:1.45}.stat-card .value{font-size:18px}.stat-card .note{font-size:12px}.action-btn{font-size:12px;font-weight:800;min-height:38px}.nav-link-onyx,.nav-direct-link,.nav-dropdown-toggle,.nav-dropdown-menu .nav-link-onyx{font-family:Poppins,system-ui,sans-serif;font-size:11px}.ops-board{gap:14px}.ops-strip{gap:10px}.ops-card{padding:12px}.ops-card span,.ops-field label,.ops-section-title,.ops-check span,.ops-report-card span{font-size:11px;letter-spacing:0}.ops-card strong{font-size:16px}.ops-field input,.ops-field select,.ops-field textarea,.ops-filters input,.ops-filters select{font-size:12px;min-height:38px}.ops-btn,.ops-action{font-size:11px}.ops-tag,.ops-tags span{font-size:11px}.ops-check strong,.ops-report-card strong{font-size:11px}.ops-check span,.ops-report-card span{font-size:11px}.ops-report-card{padding:12px}
-        @media(max-width:1180px){.stat-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.main-topbar{align-items:stretch;flex-direction:column}.topbar-left,.topbar-right{width:100%}.topbar-brand{flex-basis:auto;width:100%}.topbar-search{width:100%}}@media(max-width:760px){.onyx-erp-body .sidebar{height:auto;position:static;width:100%}.main-content{margin-left:0;padding:20px}.main-topbar{margin:-20px -20px 24px;width:calc(100% + 40px)}.page-header{flex-direction:column}.stat-grid{grid-template-columns:1fr}.topbar-right{justify-content:flex-start}}
+        .onyx-erp-body{background:linear-gradient(rgba(255,106,0,.026) 1px,transparent 1px),linear-gradient(90deg,rgba(255,106,0,.018) 1px,transparent 1px),radial-gradient(circle at 82% 0,rgba(255,106,0,.13),transparent 30%),linear-gradient(180deg,#07111a 0%,#050a10 100%)!important;background-size:42px 42px,42px 42px,auto,auto!important}.onyx-erp-body .sidebar{background:linear-gradient(180deg,rgba(255,106,0,.075),transparent 22%),linear-gradient(180deg,#07111a 0%,#050a10 100%)!important;border-right-color:rgba(255,106,0,.2)!important}.main-topbar{background:linear-gradient(90deg,rgba(255,106,0,.13),transparent 32%),#07111a!important;border-bottom-color:rgba(255,106,0,.22)!important}.sidebar-logo-plate,.topbar-brand img,.topbar-user-avatar,.sidebar-user-avatar,.topbar-sidebar-toggle{background:var(--onyx-accent)!important;border-color:var(--onyx-accent)!important;color:#050506!important}.nav-dropdown-toggle.active,.nav-dropdown-toggle:hover,.nav-link-onyx:hover,.nav-link-onyx.active{background:rgba(255,106,0,.1)!important;border-left-color:var(--onyx-accent)!important;color:#fff!important}.nav-link-onyx.active i,.nav-dropdown-toggle.active i,.nav-dropdown-toggle:hover i,.nav-link-onyx:hover i{color:var(--onyx-accent)!important}.topbar-search,.topbar-action,.topbar-icon,.topbar-chip,.topbar-user,.logout-btn{background:rgba(16,25,35,.82)!important;border-color:rgba(255,106,0,.18)!important}.panel,.onyx-erp-body .stat-card,.ops-card,.ops-action,.ops-check,.ops-report-card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),var(--onyx-surface)!important;border-color:rgba(255,106,0,.18)!important;box-shadow:0 10px 28px rgba(0,0,0,.24)!important}.ops-btn,.ops-action.primary,.action-btn:hover{background:var(--onyx-accent)!important;border-color:var(--onyx-accent)!important;color:#050506!important}.ops-btn.ghost,.ops-action,.action-btn{background:rgba(255,255,255,.025)!important;border-color:rgba(255,106,0,.2)!important;color:#f5f7fa!important}.ops-field input,.ops-field select,.ops-field textarea,.ops-filters input,.ops-filters select{background:#0b141e!important;border-color:rgba(255,106,0,.18)!important;color:#fff!important}.ops-field input:focus,.ops-field select:focus,.ops-field textarea:focus{border-color:var(--onyx-accent)!important;box-shadow:0 0 0 3px rgba(255,106,0,.13)!important;outline:0}.onyx-erp-body .table tbody tr:hover{background:rgba(255,106,0,.055)!important}.accent-text,.action-btn i,.panel-title i,.currency-badge,.badge,.topbar-chip i,.topbar-action i{color:var(--onyx-accent)!important}@media(max-width:1180px){.stat-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.span-3,.span-4,.span-5,.span-6,.span-7,.span-8{grid-column:span 12}.main-topbar{align-items:stretch;flex-direction:column}.topbar-left,.topbar-right{width:100%}.topbar-brand{flex-basis:auto;width:100%}.topbar-search{width:100%}}@media(max-width:760px){.onyx-erp-body .sidebar{height:auto;position:static;width:100%}.main-content{margin-left:0;padding:20px}.main-topbar{margin:-20px -20px 24px;width:calc(100% + 40px)}.page-header{flex-direction:column}.stat-grid{grid-template-columns:1fr}.topbar-right{justify-content:flex-start}}
     </style>
 </head>
 <body class="onyx-erp-body">
+    <div class="mobile-appbar">
+        <a class="mobile-brand" href="<?= url('dashboard') ?>" aria-label="Onyx dashboard">
+            <img src="<?= asset('assets/onxy logo.jpeg') ?>" alt="">
+            <span>
+                <strong>Onyx BCS</strong>
+                <small><?= htmlspecialchars($context['company_name']) ?></small>
+            </span>
+        </a>
+        <div class="mobile-appbar-actions">
+            <a href="<?= url('notifications.php') ?>" aria-label="Notifications"><i class="fa-solid fa-bell"></i></a>
+            <button type="button" data-mobile-more aria-label="Open menu"><i class="fa-solid fa-grip"></i></button>
+        </div>
+    </div>
+
+    <div class="mobile-more-panel" data-mobile-more-panel aria-hidden="true">
+        <div class="mobile-more-head">
+            <strong>Modules</strong>
+            <button type="button" data-mobile-more-close aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="mobile-more-grid">
+            <a href="<?= url('customers.php') ?>"><i class="fa-solid fa-users"></i><span>Customers</span></a>
+            <a href="<?= url('suppliers.php') ?>"><i class="fa-solid fa-truck"></i><span>Suppliers</span></a>
+            <a href="<?= url('purchases.php') ?>"><i class="fa-solid fa-cart-shopping"></i><span>Purchases</span></a>
+            <a href="<?= url('reports.php') ?>"><i class="fa-solid fa-chart-column"></i><span>Reports</span></a>
+            <a href="<?= url('settings.php') ?>"><i class="fa-solid fa-sliders"></i><span>Settings</span></a>
+            <a href="<?= route('settings.users') ?>"><i class="fa-solid fa-users-gear"></i><span>Users</span></a>
+            <a href="<?= url('document_templates.php') ?>"><i class="fa-solid fa-file-lines"></i><span>Documents</span></a>
+            <a href="<?= url('payroll.php') ?>"><i class="fa-solid fa-money-check-dollar"></i><span>Payroll</span></a>
+        </div>
+    </div>
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <a class="sidebar-logo-plate" href="<?= url('dashboard') ?>" aria-label="Onyx dashboard">
@@ -638,6 +669,39 @@ if (! function_exists('onyx_page_start')) {
                     });
                 }
             }
+
+            function enhanceMobileTables() {
+                document.querySelectorAll('table').forEach(function (table) {
+                    if (table.dataset.mobileEnhanced === '1') return;
+                    const headers = Array.from(table.querySelectorAll('thead th')).map(function (th) {
+                        return th.textContent.trim();
+                    });
+                    table.querySelectorAll('tbody tr').forEach(function (row) {
+                        Array.from(row.children).forEach(function (cell, index) {
+                            if (headers[index]) cell.setAttribute('data-label', headers[index]);
+                        });
+                    });
+                    table.dataset.mobileEnhanced = '1';
+                });
+            }
+
+            const morePanel = document.querySelector('[data-mobile-more-panel]');
+            document.querySelectorAll('[data-mobile-more]').forEach(function (trigger) {
+                trigger.addEventListener('click', function () {
+                    if (!morePanel) return;
+                    morePanel.classList.add('open');
+                    morePanel.setAttribute('aria-hidden', 'false');
+                });
+            });
+            document.querySelectorAll('[data-mobile-more-close]').forEach(function (trigger) {
+                trigger.addEventListener('click', function () {
+                    if (!morePanel) return;
+                    morePanel.classList.remove('open');
+                    morePanel.setAttribute('aria-hidden', 'true');
+                });
+            });
+
+            enhanceMobileTables();
         });
     </script>
     <main class="main-content">
@@ -659,7 +723,7 @@ if (! function_exists('onyx_page_start')) {
                 </label>
             </div>
             <div class="topbar-right">
-                <a class="topbar-action" href="<?= url('pos.php') ?>" style="background:transparent!important;color:#fff!important">
+                <a class="topbar-action" href="<?= url('pos.php') ?>">
                     <i class="fa-solid fa-plus"></i>
                     <span>New Sale</span>
                 </a>
@@ -704,7 +768,19 @@ if (! function_exists('onyx_page_start')) {
 if (! function_exists('onyx_page_end')) {
     function onyx_page_end(): void
     {
-        echo '</main></body></html>';
+        ?>
+        </main>
+        <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
+            <a href="<?= url('dashboard.php') ?>" class="<?= onyx_current_page() === 'dashboard.php' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high"></i><span>Home</span></a>
+            <a href="<?= url('sales.php') ?>" class="<?= in_array(onyx_current_page(), ['sales.php', 'sales_action.php', 'pos.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-cash-register"></i><span>Sales</span></a>
+            <a href="<?= url('products.php') ?>" class="<?= in_array(onyx_current_page(), ['products.php', 'products_action.php', 'inventory.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-boxes-stacked"></i><span>Stock</span></a>
+            <a href="<?= url('accounting.php') ?>" class="<?= in_array(onyx_current_page(), ['accounting.php', 'banking.php', 'budgets.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-scale-balanced"></i><span>Finance</span></a>
+            <a href="<?= url('human_resources.php') ?>" class="<?= str_starts_with(onyx_current_page(), 'hr_') || onyx_current_page() === 'human_resources.php' ? 'active' : '' ?>"><i class="fa-solid fa-users-gear"></i><span>HR</span></a>
+            <button type="button" data-mobile-more><i class="fa-solid fa-ellipsis"></i><span>More</span></button>
+        </nav>
+        <a class="mobile-fab" href="<?= url('pos.php') ?>" aria-label="New sale"><i class="fa-solid fa-plus"></i><span>Sale</span></a>
+        </body></html>
+        <?php
     }
 }
 
