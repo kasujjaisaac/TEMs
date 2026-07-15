@@ -116,7 +116,7 @@
             border: 1px solid var(--line);
             display: grid;
             gap: 11px;
-            grid-template-columns: 18px 1fr;
+            grid-template-columns: 18px 1fr 32px;
             min-height: 44px;
             padding: 0 12px;
         }
@@ -143,6 +143,36 @@
             min-width: 0;
             outline: 0;
             width: 100%;
+        }
+
+        .password-toggle {
+            background: transparent;
+            border: 0;
+            color: var(--muted);
+            cursor: pointer;
+            display: inline-flex;
+            font: inherit;
+            height: 32px;
+            justify-content: center;
+            padding: 0;
+            text-transform: none;
+            width: 32px;
+        }
+
+        .password-toggle:hover,
+        .password-toggle:focus {
+            background: transparent;
+            color: #fff;
+            outline: 0;
+        }
+
+        .password-toggle:hover i,
+        .password-toggle:focus i {
+            color: #fff;
+        }
+
+        .password-toggle:focus-visible {
+            box-shadow: 0 0 0 3px rgba(255,106,0,.18);
         }
 
         .note {
@@ -213,6 +243,9 @@
                 <div class="input-wrap">
                     <i class="fa-solid fa-key"></i>
                     <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+                    <button class="password-toggle" type="button" data-target="current_password" aria-label="Show current password" aria-pressed="false">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
 
@@ -221,6 +254,9 @@
                 <div class="input-wrap">
                     <i class="fa-solid fa-lock"></i>
                     <input id="password" name="password" type="password" autocomplete="new-password" required>
+                    <button class="password-toggle" type="button" data-target="password" aria-label="Show new password" aria-pressed="false">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
 
@@ -229,6 +265,9 @@
                 <div class="input-wrap">
                     <i class="fa-solid fa-shield-halved"></i>
                     <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required>
+                    <button class="password-toggle" type="button" data-target="password_confirmation" aria-label="Show password confirmation" aria-pressed="false">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
 
@@ -244,5 +283,21 @@
             <button class="logout" type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
         </form>
     </main>
+
+    <script>
+        document.querySelectorAll('.password-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const input = document.getElementById(toggle.dataset.target);
+                const icon = toggle.querySelector('i');
+                const isVisible = input.type === 'text';
+
+                input.type = isVisible ? 'password' : 'text';
+                toggle.setAttribute('aria-pressed', String(! isVisible));
+                toggle.setAttribute('aria-label', `${isVisible ? 'Show' : 'Hide'} ${input.labels[0].textContent.toLowerCase()}`);
+                icon.classList.toggle('fa-eye', isVisible);
+                icon.classList.toggle('fa-eye-slash', ! isVisible);
+            });
+        });
+    </script>
 </body>
 </html>

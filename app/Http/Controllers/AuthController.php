@@ -300,7 +300,7 @@ class AuthController extends Controller
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        if (app()->runningUnitTests()) {
+        if (app()->runningUnitTests() || app()->environment('local') || config('mail.default') === 'log') {
             $request->session()->put('login_otp_test_code', $otp);
         }
 

@@ -14,8 +14,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/login/otp', [AuthController::class, 'showOtp'])->name('login.otp');
 Route::post('/login/otp', [AuthController::class, 'verifyOtp'])->name('login.otp.verify');
 Route::post('/login/otp/resend', [AuthController::class, 'resendOtp'])->name('login.otp.resend');
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::get('/register', fn () => redirect()->route('login'));
+Route::post('/register', fn () => redirect()->route('login'));
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {

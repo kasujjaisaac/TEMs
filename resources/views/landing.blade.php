@@ -361,7 +361,7 @@
 
             <div class="site-actions">
                 <a href="{{ route('login') }}" class="header-login">Login</a>
-                <a href="{{ route('register') }}" class="header-cta">Get Started</a>
+                <a href="mailto:sales@onyxtechpay.com" class="header-cta">Contact Sales</a>
             </div>
 
             <button class="mobile-trigger" type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" aria-label="Open menu">
@@ -375,7 +375,7 @@
             <a href="#services">Services</a>
             <a href="#pricing">Pricing</a>
             <a href="{{ route('login') }}">Login</a>
-            <a href="{{ route('register') }}">Get Started</a>
+            <a href="mailto:sales@onyxtechpay.com">Contact Sales</a>
         </div>
     </header>
 
@@ -392,8 +392,8 @@
                     </p>
 
                     <div class="hero-actions">
-                        <a href="{{ route('register') }}" class="hero-button btn-cyan">
-                            Get Started
+                        <a href="mailto:sales@onyxtechpay.com" class="hero-button btn-cyan">
+                            Contact Sales
                         </a>
                         <a href="#services" class="hero-button btn-outline-light">
                             View Services
@@ -417,7 +417,7 @@
                         </div>
                         <h2 class="mt-6 text-lg font-extrabold text-slate-900">{{ $service['title'] }}</h2>
                         <p class="mx-auto mt-4 max-w-xs text-sm font-medium leading-7 text-slate-500">{{ $service['copy'] }}</p>
-                        <a href="{{ route('register') }}" class="mt-7 inline-flex bg-[#211b85] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#120f58]">
+                        <a href="#services" class="mt-7 inline-flex bg-[#211b85] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#120f58]">
                             Learn more
                         </a>
                     </div>
@@ -448,7 +448,7 @@
                     <p class="mt-6 text-base font-medium leading-8 text-slate-600">
                         Replace disconnected spreadsheets and manual follow-ups with one connected system for quotes, sales, purchases, inventory, customer records, supplier balances, and reporting.
                     </p>
-                    <a href="{{ route('register') }}" class="mt-8 inline-flex bg-[#211b85] px-7 py-4 text-sm font-extrabold text-white hover:bg-[#120f58]">
+                    <a href="#services" class="mt-8 inline-flex bg-[#211b85] px-7 py-4 text-sm font-extrabold text-white hover:bg-[#120f58]">
                         Learn more
                     </a>
                 </div>
@@ -497,7 +497,7 @@
                             <li><i class="fa-solid fa-check mr-2 text-cyan-500"></i>Customer and supplier records</li>
                             <li><i class="fa-solid fa-check mr-2 text-cyan-500"></i>Dashboard and reports</li>
                         </ul>
-                        <a href="{{ route('register') }}" class="mt-8 block bg-[#211b85] px-6 py-4 text-center text-sm font-extrabold text-white hover:bg-[#120f58]">Start Free Trial</a>
+                        <a href="mailto:sales@onyxtechpay.com" class="mt-8 block bg-[#211b85] px-6 py-4 text-center text-sm font-extrabold text-white hover:bg-[#120f58]">Contact Sales</a>
                     </div>
 
                     <div class="border border-[#211b85] bg-[#211b85] p-8 text-white square-shadow">
@@ -539,7 +539,7 @@
                 <ul class="mt-4 grid gap-3 text-sm font-semibold">
                     <li><a href="mailto:sales@onyxtechpay.com" class="hover:text-white">sales@onyxtechpay.com</a></li>
                     <li><a href="mailto:support@onyxtechpay.com" class="hover:text-white">support@onyxtechpay.com</a></li>
-                    <li><a href="{{ route('register') }}" class="hover:text-white">Create Account</a></li>
+                    <li><a href="{{ route('login') }}" class="hover:text-white">Login</a></li>
                 </ul>
             </div>
         </div>

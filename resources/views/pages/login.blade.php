@@ -378,6 +378,10 @@
             padding: 0 12px;
         }
 
+        .input-wrap.has-password-toggle {
+            grid-template-columns: 18px 1fr 32px;
+        }
+
         .input-wrap i {
             color: var(--muted);
             font-size: 12px;
@@ -417,6 +421,35 @@
             transition: background-color 9999s ease-out;
         }
 
+        .password-toggle {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            color: var(--muted);
+            cursor: pointer;
+            display: inline-flex;
+            font: inherit;
+            height: 32px;
+            justify-content: center;
+            padding: 0;
+            width: 32px;
+        }
+
+        .password-toggle:hover,
+        .password-toggle:focus {
+            color: #fff;
+            outline: 0;
+        }
+
+        .password-toggle:hover i,
+        .password-toggle:focus i {
+            color: #fff;
+        }
+
+        .password-toggle:focus-visible {
+            box-shadow: 0 0 0 3px rgba(255,106,0,.18);
+        }
+
         .primary-button {
             align-items: center;
             background: var(--accent);
@@ -438,38 +471,6 @@
         .primary-button:hover {
             background: #0b141e;
             color: #fff;
-        }
-
-        .login-foot {
-            align-items: center;
-            border-top: 1px solid var(--line);
-            display: flex;
-            gap: 12px;
-            justify-content: space-between;
-            margin-top: 26px;
-            padding-top: 16px;
-        }
-
-        .login-foot span {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .login-foot a {
-            border: 1px solid var(--line);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 900;
-            min-height: 34px;
-            padding: 9px 11px;
-            text-decoration: none;
-            text-transform: uppercase;
-        }
-
-        .login-foot a:hover {
-            background: var(--accent);
-            color: #050506;
         }
 
         @media (max-width: 820px) {
@@ -514,11 +515,6 @@
         @media (max-width: 460px) {
             .login-title {
                 font-size: 24px;
-            }
-
-            .login-foot {
-                align-items: stretch;
-                flex-direction: column;
             }
 
             .brand-side {
@@ -637,9 +633,12 @@
 
                         <div class="field-group">
                             <label for="password">Password</label>
-                            <div class="input-wrap">
+                            <div class="input-wrap has-password-toggle">
                                 <i class="fa-solid fa-lock"></i>
                                 <input id="password" name="password" type="password" class="input" placeholder="Enter password" autocomplete="current-password" required>
+                                <button class="password-toggle" type="button" data-target="password" aria-label="Show password" aria-pressed="false">
+                                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -648,14 +647,25 @@
                             Sign In
                         </button>
                     </form>
-
-                    <footer class="login-foot">
-                        <span>New workspace?</span>
-                        <a href="{{ route('register') }}">Register</a>
-                    </footer>
                 </div>
             </section>
         </section>
     </main>
+
+    <script>
+        document.querySelectorAll('.password-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const input = document.getElementById(toggle.dataset.target);
+                const icon = toggle.querySelector('i');
+                const isVisible = input.type === 'text';
+
+                input.type = isVisible ? 'password' : 'text';
+                toggle.setAttribute('aria-pressed', String(! isVisible));
+                toggle.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+                icon.classList.toggle('fa-eye', isVisible);
+                icon.classList.toggle('fa-eye-slash', ! isVisible);
+            });
+        });
+    </script>
 </body>
 </html>

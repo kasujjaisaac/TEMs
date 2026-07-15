@@ -211,6 +211,9 @@
         @if(session('success'))
             <div class="alert success">{{ session('success') }}</div>
         @endif
+        @if(session('login_otp_test_code'))
+            <div class="alert success">Local OTP: {{ session('login_otp_test_code') }}</div>
+        @endif
 
         <form id="otp-verify-form" method="POST" action="{{ route('login.otp.verify') }}">
             @csrf
