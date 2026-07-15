@@ -22,6 +22,21 @@
         <div class="access-alert error">{{ $errors->first() }}</div>
     @endif
 
+    @php
+        $currentTenant = $tenants->firstWhere('id', $currentTenantId) ?? $tenants->first();
+        $selectedWorkspace = old('workspace_slug', $currentTenant->slug ?? '');
+        $selectedTenant = $tenants->firstWhere('slug', $selectedWorkspace) ?? $currentTenant;
+        $selectedRoles = $selectedTenant ? $rolesByTenant->get($selectedTenant->id, collect()) : collect();
+        $roleOptionsByWorkspace = $tenants->mapWithKeys(function ($tenant) use ($rolesByTenant) {
+            return [
+                $tenant->slug => $rolesByTenant->get($tenant->id, collect())->map(fn ($role) => [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ])->values(),
+            ];
+        });
+    @endphp
+
     <form class="access-form" method="POST" action="{{ route('settings.users.store') }}">
         @csrf
         <section class="access-panel">
@@ -30,6 +45,19 @@
                 <span class="access-badge">New User</span>
             </div>
             <div class="security-grid">
+                <div class="access-field">
+                    <label for="workspace_slug">Workspace</label>
+                    <select id="workspace_slug" name="workspace_slug" required @disabled(! $canManageAllWorkspaces)>
+                        @foreach($tenants as $tenant)
+                            <option value="{{ $tenant->slug }}" @selected($selectedWorkspace === $tenant->slug)>
+                                {{ $tenant->company_name }} ({{ $tenant->slug }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @unless($canManageAllWorkspaces)
+                        <input type="hidden" name="workspace_slug" value="{{ $selectedWorkspace }}">
+                    @endunless
+                </div>
                 <div class="access-field">
                     <label for="name">Full Name</label>
                     <input id="name" name="name" value="{{ old('name') }}" required>
@@ -49,7 +77,7 @@
                 <div class="access-field">
                     <label for="role_id">Role</label>
                     <select id="role_id" name="role_id" required>
-                        @foreach($roles as $role)
+                        @foreach($selectedRoles as $role)
                             <option value="{{ $role->id }}" @selected((string) old('role_id') === (string) $role->id)>{{ $role->name }}</option>
                         @endforeach
                     </select>
@@ -72,4 +100,37 @@
         </div>
     </form>
 </section>
+
+<script>
+    (() => {
+        const rolesByWorkspace = @json($roleOptionsByWorkspace);
+        const workspace = document.getElementById('workspace_slug');
+        const role = document.getElementById('role_id');
+        const selectedRole = @json((string) old('role_id'));
+
+        if (!workspace || !role) {
+            return;
+        }
+
+        const renderRoles = () => {
+            const options = rolesByWorkspace[workspace.value] || [];
+            role.innerHTML = '';
+
+            options.forEach((item) => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+
+                if (selectedRole && selectedRole === String(item.id)) {
+                    option.selected = true;
+                }
+
+                role.appendChild(option);
+            });
+        };
+
+        workspace.addEventListener('change', renderRoles);
+        renderRoles();
+    })();
+</script>
 @endsection

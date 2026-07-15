@@ -49,7 +49,7 @@ class AccessControlFlowTest extends TestCase
         $this->actingAs($admin);
 
         $this->get('/settings/users')->assertOk()->assertSee('Users');
-        $this->get('/settings/users/create')->assertOk()->assertSee('Add User');
+        $this->get('/settings/users/create')->assertOk()->assertSee('Add User')->assertSee('Workspace');
         $this->get('/settings/roles')->assertOk()->assertSee('Role Register');
         $this->get('/settings/roles/create')->assertOk()->assertSee('Create Role');
         $this->get('/settings/security')->assertOk()->assertSee('Security Settings');
@@ -81,5 +81,69 @@ class AccessControlFlowTest extends TestCase
         ]);
 
         $this->assertSame(2, AuditLog::where('tenant_id', $tenantId)->where('module', 'roles')->count());
+    }
+
+    public function test_super_admin_can_create_user_for_selected_workspace(): void
+    {
+        $primaryTenantId = DB::table('tenants')->insertGetId([
+            'company_name' => 'Primary Company',
+            'slug' => 'primary-company',
+            'currency' => 'UGX',
+            'fiscal_year_start' => '2026-01-01',
+            'status' => 'trial',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $branchTenantId = DB::table('tenants')->insertGetId([
+            'company_name' => 'Branch Company',
+            'slug' => 'branch-company',
+            'currency' => 'UGX',
+            'fiscal_year_start' => '2026-01-01',
+            'status' => 'trial',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Role::ensureDefaultsForTenant($primaryTenantId);
+        Role::ensureDefaultsForTenant($branchTenantId);
+
+        $adminRole = Role::where('tenant_id', $primaryTenantId)->where('slug', 'super_admin')->firstOrFail();
+        $branchRole = Role::where('tenant_id', $branchTenantId)->where('slug', 'admin')->firstOrFail();
+
+        $admin = User::create([
+            'tenant_id' => $primaryTenantId,
+            'role_id' => $adminRole->id,
+            'name' => 'System Admin',
+            'email' => 'owner@example.test',
+            'password' => Hash::make('Password#12345'),
+            'role' => 'super_admin',
+            'is_active' => true,
+            'password_changed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->post(route('settings.users.store'), [
+            'workspace_slug' => 'branch-company',
+            'name' => 'Branch User',
+            'email' => 'branch-user@example.test',
+            'phone' => '',
+            'department' => 'Operations',
+            'role_id' => $branchRole->id,
+            'password' => '123',
+            'is_active' => '1',
+        ])->assertRedirect(route('settings.users'));
+
+        $this->assertDatabaseHas('users', [
+            'tenant_id' => $branchTenantId,
+            'role_id' => $branchRole->id,
+            'email' => 'branch-user@example.test',
+            'role' => 'admin',
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'tenant_id' => $branchTenantId,
+            'module' => 'users',
+            'description' => 'Created user branch-user@example.test',
+        ]);
     }
 }

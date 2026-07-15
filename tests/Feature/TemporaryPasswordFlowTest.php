@@ -19,6 +19,7 @@ class TemporaryPasswordFlowTest extends TestCase
         $role = Role::where('tenant_id', $tenantId)->where('slug', 'admin')->firstOrFail();
 
         $this->actingAs($admin)->post(route('settings.users.store'), [
+            'workspace_slug' => 'smoke-test-company',
             'name' => 'Cashier User',
             'email' => 'cashier@example.test',
             'phone' => '',

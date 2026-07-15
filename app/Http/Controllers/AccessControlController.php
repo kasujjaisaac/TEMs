@@ -10,6 +10,7 @@ use App\Support\PermissionCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -21,12 +22,26 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $tenantId = $this->tenantId();
-        Role::ensureDefaultsForTenant($tenantId);
+        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
+        $tenants = $this->accessibleTenants();
+        $tenantIds = $tenants->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        foreach ($tenantIds as $availableTenantId) {
+            Role::ensureDefaultsForTenant($availableTenantId);
+        }
+
+        $roles = Role::whereIn('tenant_id', $tenantIds)->where('is_active', true)->orderBy('name')->get();
 
         return view('settings.users', [
             'page_title' => 'Users | Onyx BCS',
-            'users' => User::with('assignedRole')->where('tenant_id', $tenantId)->orderBy('name')->get(),
-            'roles' => Role::where('tenant_id', $tenantId)->where('is_active', true)->orderBy('name')->get(),
+            'users' => User::with('assignedRole')
+                ->when(! $canManageAllWorkspaces, fn ($query) => $query->where('tenant_id', $tenantId))
+                ->orderBy('name')
+                ->get(),
+            'roles' => $roles,
+            'rolesByTenant' => $roles->groupBy('tenant_id'),
+            'tenantsById' => $tenants->keyBy('id'),
+            'canManageAllWorkspaces' => $canManageAllWorkspaces,
         ]);
     }
 
@@ -34,27 +49,49 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $tenantId = $this->tenantId();
-        Role::ensureDefaultsForTenant($tenantId);
+        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
+        $tenants = $this->accessibleTenants();
+
+        foreach ($tenants as $tenant) {
+            Role::ensureDefaultsForTenant((int) $tenant->id);
+        }
+
+        $roles = Role::whereIn('tenant_id', $tenants->pluck('id')->map(fn ($id) => (int) $id)->all())
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('settings.users_create', [
             'page_title' => 'Add User | Onyx BCS',
-            'roles' => Role::where('tenant_id', $tenantId)->where('is_active', true)->orderBy('name')->get(),
+            'roles' => $roles,
+            'rolesByTenant' => $roles->groupBy('tenant_id'),
+            'tenants' => $tenants,
+            'currentTenantId' => $tenantId,
+            'canManageAllWorkspaces' => $canManageAllWorkspaces,
         ]);
     }
 
     public function storeUser(Request $request): RedirectResponse
     {
         $this->authorizeAdmin('users.manage');
-        $tenantId = $this->tenantId();
+        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
 
         $data = $request->validate([
+            'workspace_slug' => [Rule::requiredIf($canManageAllWorkspaces), 'nullable', 'string', 'max:80', Rule::exists('tenants', 'slug')],
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
             'phone' => ['nullable', 'string', 'max:40'],
             'department' => ['nullable', 'string', 'max:120'],
-            'role_id' => ['required', Rule::exists('roles', 'id')->where('tenant_id', $tenantId)],
+            'role_id' => ['required', 'integer'],
             'password' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $tenantId = $this->selectedTenantId($data['workspace_slug'] ?? null);
+        Role::ensureDefaultsForTenant($tenantId);
+
+        $request->validate([
+            'role_id' => ['required', Rule::exists('roles', 'id')->where('tenant_id', $tenantId)],
         ]);
 
         $role = Role::where('tenant_id', $tenantId)->findOrFail($data['role_id']);
@@ -72,7 +109,7 @@ class AccessControlController extends Controller
             'password_changed_at' => null,
         ]);
 
-        $this->audit($request, 'created', 'users', $user, 'Created user ' . $user->email);
+        $this->audit($request, 'created', 'users', $user, 'Created user ' . $user->email, [], $tenantId);
 
         return redirect()->route('settings.users')->with('success', 'User created successfully.');
     }
@@ -81,7 +118,7 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $this->ensureTenantRecord($user);
-        $tenantId = $this->tenantId();
+        $tenantId = $this->canManageAllWorkspaces() ? (int) $user->tenant_id : $this->tenantId();
 
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
@@ -284,6 +321,30 @@ class AccessControlController extends Controller
         abort_unless($user && $user->hasPermission($permission), 403);
     }
 
+    private function canManageAllWorkspaces(): bool
+    {
+        $role = str_replace([' ', '-'], '_', strtolower(trim((string) Auth::user()?->role)));
+
+        return in_array($role, ['super_admin', 'superadmin'], true);
+    }
+
+    private function accessibleTenants()
+    {
+        return DB::table('tenants')
+            ->when(! $this->canManageAllWorkspaces(), fn ($query) => $query->where('id', $this->tenantId()))
+            ->orderBy('company_name')
+            ->get();
+    }
+
+    private function selectedTenantId(?string $workspaceSlug): ?int
+    {
+        if (! $this->canManageAllWorkspaces()) {
+            return $this->tenantId();
+        }
+
+        return DB::table('tenants')->where('slug', $workspaceSlug)->value('id');
+    }
+
     private function tenantId(): ?int
     {
         return Auth::user()?->tenant_id;
@@ -291,13 +352,13 @@ class AccessControlController extends Controller
 
     private function ensureTenantRecord(object $record): void
     {
-        abort_unless((int) $record->tenant_id === (int) $this->tenantId(), 404);
+        abort_unless($this->canManageAllWorkspaces() || (int) $record->tenant_id === (int) $this->tenantId(), 404);
     }
 
-    private function audit(Request $request, string $action, string $module, ?object $subject, string $description, array $metadata = []): void
+    private function audit(Request $request, string $action, string $module, ?object $subject, string $description, array $metadata = [], ?int $tenantId = null): void
     {
         AuditLog::create([
-            'tenant_id' => $this->tenantId(),
+            'tenant_id' => $tenantId ?? $this->tenantId(),
             'user_id' => Auth::id(),
             'action' => $action,
             'module' => $module,
