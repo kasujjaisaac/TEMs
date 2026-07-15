@@ -11,11 +11,19 @@ Route::get('/index.php', [AuthController::class, 'showLogin'])->name('home.legac
 // Auth
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login/otp', [AuthController::class, 'showOtp'])->name('login.otp');
+Route::post('/login/otp', [AuthController::class, 'verifyOtp'])->name('login.otp.verify');
+Route::post('/login/otp/resend', [AuthController::class, 'resendOtp'])->name('login.otp.resend');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/password/change', [AuthController::class, 'showChangePassword'])->name('password.change');
+    Route::post('/password/change', [AuthController::class, 'changePassword'])->name('password.update');
+});
+
+Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('/settings/users', [AccessControlController::class, 'users'])->name('settings.users');
     Route::get('/settings/users/create', [AccessControlController::class, 'createUser'])->name('settings.users.create');
     Route::post('/settings/users', [AccessControlController::class, 'storeUser'])->name('settings.users.store');
@@ -39,11 +47,13 @@ Route::middleware('auth')->group(function () {
 foreach (onyx_legacy_pages() as $page) {
     if ($page !== 'assets') {
         Route::match(['GET', 'POST'], '/' . $page, [LegacyPageController::class, 'show'])
+            ->middleware('password.changed')
             ->defaults('page', $page)
             ->name('erp.' . $page);
     }
 
     Route::match(['GET', 'POST'], '/' . $page . '.php', [LegacyPageController::class, 'show'])
+        ->middleware('password.changed')
         ->defaults('page', $page)
         ->name('erp.' . $page . '.legacy');
 }

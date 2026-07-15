@@ -57,4 +57,9 @@ class User extends Authenticatable
             || $this->hasPermission('roles.manage')
             || $this->hasPermission('security.manage');
     }
+
+    public function mustChangePassword(): bool
+    {
+        return $this->password_changed_at === null;
+    }
 }

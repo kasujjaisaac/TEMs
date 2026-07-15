@@ -614,6 +614,15 @@
                                 @error('company_name')<div class="field-error">{{ $message }}</div>@enderror
                             </div>
 
+                            <div class="field-group full">
+                                <label for="workspace">Workspace</label>
+                                <div class="input-wrap">
+                                    <i class="fa-solid fa-fingerprint"></i>
+                                    <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization-title" required>
+                                </div>
+                                @error('workspace')<div class="field-error">{{ $message }}</div>@enderror
+                            </div>
+
                             <div class="field-group">
                                 <label for="name">Admin Name</label>
                                 <div class="input-wrap">

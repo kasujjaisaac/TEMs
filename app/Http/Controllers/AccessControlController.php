@@ -53,11 +53,12 @@ class AccessControlController extends Controller
             'phone' => ['nullable', 'string', 'max:40'],
             'department' => ['nullable', 'string', 'max:120'],
             'role_id' => ['required', Rule::exists('roles', 'id')->where('tenant_id', $tenantId)],
-            'password' => ['required', $this->passwordRule()],
+            'password' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
         $role = Role::where('tenant_id', $tenantId)->findOrFail($data['role_id']);
+        $temporaryPassword = $data['password'] ?: '123';
         $user = User::create([
             'tenant_id' => $tenantId,
             'role_id' => $role->id,
@@ -65,10 +66,10 @@ class AccessControlController extends Controller
             'email' => strtolower($data['email']),
             'phone' => $data['phone'] ?? null,
             'department' => $data['department'] ?? null,
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make($temporaryPassword),
             'role' => $role->slug,
             'is_active' => (bool) ($data['is_active'] ?? true),
-            'password_changed_at' => now(),
+            'password_changed_at' => null,
         ]);
 
         $this->audit($request, 'created', 'users', $user, 'Created user ' . $user->email);
@@ -88,7 +89,7 @@ class AccessControlController extends Controller
             'phone' => ['nullable', 'string', 'max:40'],
             'department' => ['nullable', 'string', 'max:120'],
             'role_id' => ['required', Rule::exists('roles', 'id')->where('tenant_id', $tenantId)],
-            'password' => ['nullable', $this->passwordRule()],
+            'password' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -105,7 +106,7 @@ class AccessControlController extends Controller
 
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
-            $user->password_changed_at = now();
+            $user->password_changed_at = null;
         }
 
         $user->save();

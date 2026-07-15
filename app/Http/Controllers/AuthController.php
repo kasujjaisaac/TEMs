@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -23,16 +24,22 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->merge([
+            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
+            'email' => Str::lower((string) $request->input('email', '')),
+        ]);
+
+        $data = $request->validate([
+            'workspace' => ['required', 'string', 'max:80'],
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required'],
         ]);
 
-        $credentials['email'] = Str::lower($credentials['email']);
-        $credentials['is_active'] = true;
-        $candidate = User::where('email', $credentials['email'])->first();
-        $security = SecuritySetting::forTenant($candidate?->tenant_id);
-        $throttleKey = 'login:' . $credentials['email'] . '|' . $request->ip();
+        $workspace = $this->normalizeWorkspace($data['workspace']);
+        $email = Str::lower(trim($data['email']));
+        $tenant = DB::table('tenants')->where('slug', $workspace)->first();
+        $security = SecuritySetting::forTenant($tenant?->id);
+        $throttleKey = 'login:' . $workspace . '|' . $email . '|' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, (int) $security['login_attempt_limit'])) {
             $seconds = RateLimiter::availableIn($throttleKey);
@@ -42,18 +49,122 @@ class AuthController extends Controller
             ]);
         }
 
-        if (Auth::attempt($credentials)) {
-            RateLimiter::clear($throttleKey);
-            $request->session()->regenerate();
-            $request->user()->forceFill(['last_login_at' => now()])->save();
-            $this->hydrateLegacySession($request, Auth::user());
+        if (! $tenant) {
+            RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
 
-            return redirect()->intended('/dashboard');
+            return back()
+                ->withErrors(['workspace' => 'Workspace not found. Check the workspace code from registration.'])
+                ->onlyInput('workspace', 'email');
         }
 
-        RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
+        $user = User::where('tenant_id', $tenant->id)->where('email', $email)->first();
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+        if (! $user) {
+            RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
+
+            return back()
+                ->withErrors(['email' => 'Email address is not registered in this workspace.'])
+                ->onlyInput('workspace', 'email');
+        }
+
+        if (! $user->is_active) {
+            RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
+
+            return back()
+                ->withErrors(['email' => 'This user account is inactive. Contact the workspace administrator.'])
+                ->onlyInput('workspace', 'email');
+        }
+
+        if (! Hash::check($data['password'], $user->password)) {
+            RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
+
+            return back()
+                ->withErrors(['password' => 'Password is incorrect for this workspace account.'])
+                ->onlyInput('workspace', 'email');
+        }
+
+        RateLimiter::clear($throttleKey);
+        $this->sendLoginOtp($request, $user, $workspace);
+
+        return redirect()->route('login.otp');
+    }
+
+    public function showOtp()
+    {
+        if (! session()->has('login_otp.user_id')) {
+            return redirect()->route('login');
+        }
+
+        return view('pages.login-otp');
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $data = $request->validate([
+            'otp' => ['required', 'digits:6'],
+        ]);
+
+        $pending = $request->session()->get('login_otp');
+        if (! is_array($pending) || empty($pending['user_id']) || empty($pending['hash'])) {
+            return redirect()->route('login')->withErrors(['email' => 'Login session expired. Sign in again.']);
+        }
+
+        if (now()->greaterThan($pending['expires_at'])) {
+            $request->session()->forget(['login_otp', 'login_otp_test_code']);
+
+            return redirect()->route('login')->withErrors(['email' => 'OTP expired. Sign in again.']);
+        }
+
+        if ((int) ($pending['attempts'] ?? 0) >= 5) {
+            $request->session()->forget(['login_otp', 'login_otp_test_code']);
+
+            return redirect()->route('login')->withErrors(['email' => 'Too many OTP attempts. Sign in again.']);
+        }
+
+        if (! Hash::check($data['otp'], $pending['hash'])) {
+            $pending['attempts'] = (int) ($pending['attempts'] ?? 0) + 1;
+            $request->session()->put('login_otp', $pending);
+
+            return back()->withErrors(['otp' => 'OTP code is incorrect.']);
+        }
+
+        $user = User::find($pending['user_id']);
+        if (! $user || ! $user->is_active) {
+            $request->session()->forget(['login_otp', 'login_otp_test_code']);
+
+            return redirect()->route('login')->withErrors(['email' => 'This login can no longer be completed.']);
+        }
+
+        $request->session()->forget(['login_otp', 'login_otp_test_code']);
+        Auth::login($user);
+        $request->session()->regenerate();
+        $user->forceFill(['last_login_at' => now()])->save();
+        $this->hydrateLegacySession($request, $user);
+
+        if ($user->mustChangePassword()) {
+            return redirect()->route('password.change');
+        }
+
+        return redirect()->intended('/dashboard');
+    }
+
+    public function resendOtp(Request $request)
+    {
+        $pending = $request->session()->get('login_otp');
+        if (! is_array($pending) || empty($pending['user_id']) || empty($pending['workspace'])) {
+            return redirect()->route('login');
+        }
+
+        $user = User::find($pending['user_id']);
+        if (! $user || ! $user->is_active) {
+            $request->session()->forget(['login_otp', 'login_otp_test_code']);
+
+            return redirect()->route('login')->withErrors(['email' => 'This login can no longer be completed.']);
+        }
+
+        $this->sendLoginOtp($request, $user, (string) $pending['workspace']);
+
+        return back()->with('success', 'A new OTP has been sent to your email.');
     }
 
     public function showRegister()
@@ -61,25 +172,67 @@ class AuthController extends Controller
         return view('pages.register');
     }
 
-    public function register(Request $request)
+    public function showChangePassword()
     {
+        return view('pages.change-password');
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
         $data = $request->validate([
-            'company_name' => ['required', 'string', 'min:2', 'max:255'],
-            'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(10)->mixedCase()->numbers()->symbols(),
-            ],
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', $this->passwordRule($user?->tenant_id)],
         ]);
 
-        $data['email'] = Str::lower($data['email']);
+        if (! $user || ! Hash::check($data['current_password'], $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        }
+
+        if (Hash::check($data['password'], $user->password)) {
+            return back()->withErrors(['password' => 'New password must be different from the temporary password.']);
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($data['password']),
+            'password_changed_at' => now(),
+        ])->save();
+
+        $request->session()->regenerate();
+
+        return redirect('/dashboard')->with('success', 'Password changed successfully.');
+    }
+
+    public function register(Request $request)
+    {
+        $request->merge([
+            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
+            'email' => Str::lower((string) $request->input('email', '')),
+        ]);
+
+        $data = $request->validate(
+            [
+                'company_name' => ['required', 'string', 'min:2', 'max:255'],
+                'workspace' => ['required', 'string', 'min:3', 'max:80', 'regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$/', 'unique:tenants,slug'],
+                'name' => ['required', 'string', 'min:2', 'max:255'],
+                'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
+                'password' => [
+                    'required',
+                    'confirmed',
+                    Password::min(10)->mixedCase()->numbers()->symbols(),
+                ],
+            ],
+            [
+                'workspace.regex' => 'Workspace must use lowercase letters, numbers, and hyphens, and must start and end with a letter or number.',
+                'workspace.unique' => 'This workspace is already registered.',
+            ]
+        );
 
         $user = DB::transaction(function () use ($data): User {
             $tenantId = DB::table('tenants')->insertGetId([
                 'company_name' => $data['company_name'],
-                'slug' => $this->uniqueTenantSlug($data['company_name']),
+                'slug' => $data['workspace'],
                 'currency' => 'UGX',
                 'fiscal_year_start' => now()->startOfYear()->toDateString(),
                 'status' => 'trial',
@@ -102,11 +255,9 @@ class AuthController extends Controller
             ]);
         });
 
-        Auth::login($user);
-        $request->session()->regenerate();
-        $this->hydrateLegacySession($request, $user);
+        $this->sendLoginOtp($request, $user, $data['workspace']);
 
-        return redirect('/dashboard');
+        return redirect()->route('login.otp');
     }
 
     public function logout(Request $request)
@@ -131,17 +282,53 @@ class AuthController extends Controller
         ]);
     }
 
-    private function uniqueTenantSlug(string $companyName): string
+    private function normalizeWorkspace(string $workspace): string
     {
-        $base = Str::slug($companyName) ?: 'workspace';
-        $slug = $base;
-        $counter = 2;
+        return Str::slug(Str::lower(trim($workspace)));
+    }
 
-        while (DB::table('tenants')->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter;
-            $counter++;
+    private function sendLoginOtp(Request $request, User $user, string $workspace): void
+    {
+        $otp = (string) random_int(100000, 999999);
+
+        $request->session()->put('login_otp', [
+            'user_id' => $user->id,
+            'workspace' => $workspace,
+            'email' => $user->email,
+            'hash' => Hash::make($otp),
+            'attempts' => 0,
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        if (app()->runningUnitTests()) {
+            $request->session()->put('login_otp_test_code', $otp);
         }
 
-        return $slug;
+        Mail::raw(
+            "Your Onyx login OTP is {$otp}. It expires in 10 minutes.",
+            fn ($message) => $message
+                ->to($user->email)
+                ->subject('Your Onyx login OTP')
+        );
+    }
+
+    private function passwordRule(?int $tenantId): Password
+    {
+        $settings = SecuritySetting::forTenant($tenantId);
+        $rule = Password::min((int) $settings['password_min_length']);
+
+        if ((bool) $settings['password_require_uppercase'] || (bool) $settings['password_require_lowercase']) {
+            $rule->mixedCase();
+        }
+
+        if ((bool) $settings['password_require_number']) {
+            $rule->numbers();
+        }
+
+        if ((bool) $settings['password_require_symbol']) {
+            $rule->symbols();
+        }
+
+        return $rule;
     }
 }

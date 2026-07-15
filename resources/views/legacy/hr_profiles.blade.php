@@ -12,12 +12,46 @@ function hr_profile_h(mixed $value): string
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
+function hr_profile_create_user_for_employee(PDO $pdo, int $tenantId, array $employee, string $temporaryPassword): array
+{
+    \App\Models\Role::ensureDefaultsForTenant($tenantId);
+
+    $email = strtolower(trim((string) $employee['email']));
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new RuntimeException('A valid employee email is required to create a login account.');
+    }
+
+    $existing = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+    $existing->execute([$email]);
+    if ($existing->fetch(PDO::FETCH_ASSOC)) {
+        throw new RuntimeException('A user account already exists for this employee email.');
+    }
+
+    $role = onyx_row('SELECT id, slug FROM roles WHERE tenant_id = :tenant_id AND slug = :slug LIMIT 1', ['tenant_id' => $tenantId, 'slug' => 'viewer']);
+
+    $stmt = $pdo->prepare('INSERT INTO users (tenant_id, role_id, name, email, phone, department, password, role, is_active, password_changed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())');
+    $stmt->execute([
+        $tenantId,
+        $role['id'] ?? null,
+        $employee['full_name'],
+        $email,
+        $employee['phone'],
+        $employee['department'],
+        password_hash($temporaryPassword !== '' ? $temporaryPassword : '123', PASSWORD_BCRYPT),
+        $role['slug'] ?? 'viewer',
+        in_array($employee['status'], ['Active', 'Onboarding'], true) ? 1 : 0,
+    ]);
+
+    return ['email' => $email, 'temporary_password' => $temporaryPassword !== '' ? $temporaryPassword : '123'];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_employee') {
     require_permission('hr.manage');
 
     $id = (int) ($_POST['id'] ?? 0);
     $employeeCode = trim($_POST['employee_code'] ?? '');
     $fullName = trim($_POST['full_name'] ?? '');
+    $temporaryPassword = trim($_POST['temporary_password'] ?? '123');
 
     if ($employeeCode === '' || $fullName === '') {
         header('Location: ' . onyx_legacy_url('hr_profiles.php?error=' . urlencode('Employee code and full name are required.')));
@@ -52,12 +86,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             exit();
         }
 
+        $pdo->beginTransaction();
         $stmt = $pdo->prepare('INSERT INTO hr_employees (tenant_id, employee_code, full_name, gender, date_of_birth, department, job_title, employment_type, phone, email, national_id, bank_wallet, address, next_of_kin, kin_phone, basic_pay, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
         $stmt->execute(array_merge([$tenant_id], $data));
 
-        header('Location: ' . onyx_legacy_url('human_resources.php?success=' . urlencode('Employee added successfully.')));
+        $login = hr_profile_create_user_for_employee($pdo, $tenant_id, [
+            'employee_code' => $employeeCode,
+            'full_name' => $fullName,
+            'email' => trim($_POST['email'] ?? ''),
+            'phone' => trim($_POST['phone'] ?? ''),
+            'department' => trim($_POST['department'] ?? ''),
+            'status' => trim($_POST['status'] ?? 'Active'),
+        ], $temporaryPassword);
+
+        $pdo->commit();
+
+        header('Location: ' . onyx_legacy_url('human_resources.php?success=' . urlencode('Employee added. Login email: ' . $login['email'] . ' / temporary password: ' . $login['temporary_password'])));
         exit();
     } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         $message = str_contains(strtolower($e->getMessage()), 'duplicate') ? 'Employee code already exists.' : 'Unable to save employee profile.';
         header('Location: ' . onyx_legacy_url('hr_profiles.php?error=' . urlencode($message) . ($id > 0 ? '&edit=' . $id : '&action=create')));
         exit();
@@ -107,11 +156,21 @@ $title = $editing ? 'Edit Employee' : 'Add Employee';
             </div>
         </section>
 
+        <?php if (! $editing): ?>
+        <section class="hr-form-panel">
+            <h3 class="hr-section-title"><i class="fa-solid fa-right-to-bracket"></i> System Login</h3>
+            <div class="hr-form-grid">
+                <div class="hr-field"><label>Temporary Password</label><input name="temporary_password" value="<?= hr_profile_h($_POST['temporary_password'] ?? '123') ?>"></div>
+                <div class="hr-field wide"><label>Default Access</label><input value="Email login / OTP required / Viewer role / must change password on first login" disabled></div>
+            </div>
+        </section>
+        <?php endif; ?>
+
         <section class="hr-form-panel">
             <h3 class="hr-section-title"><i class="fa-solid fa-address-book"></i> Contacts and Payroll</h3>
             <div class="hr-form-grid">
                 <div class="hr-field"><label>Phone</label><input name="phone" value="<?= hr_profile_h($editing['phone'] ?? '') ?>" placeholder="Primary phone"></div>
-                <div class="hr-field"><label>Email</label><input name="email" type="email" value="<?= hr_profile_h($editing['email'] ?? '') ?>" placeholder="Work or personal email"></div>
+                <div class="hr-field"><label>Email</label><input name="email" type="email" value="<?= hr_profile_h($editing['email'] ?? '') ?>" placeholder="Work or personal email" <?= $editing ? '' : 'required' ?>></div>
                 <div class="hr-field"><label>National ID</label><input name="national_id" value="<?= hr_profile_h($editing['national_id'] ?? '') ?>" placeholder="NIN / ID number"></div>
                 <div class="hr-field"><label>Bank / Wallet</label><input name="bank_wallet" value="<?= hr_profile_h($editing['bank_wallet'] ?? '') ?>" placeholder="Bank account or mobile money"></div>
                 <div class="hr-field"><label>Basic Pay</label><input name="basic_pay" type="number" step="0.01" value="<?= hr_profile_h($editing['basic_pay'] ?? '0') ?>"></div>

@@ -623,7 +623,7 @@
                             <label for="workspace">Workspace</label>
                             <div class="input-wrap">
                                 <i class="fa-solid fa-building"></i>
-                                <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization">
+                                <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization" required>
                             </div>
                         </div>
 

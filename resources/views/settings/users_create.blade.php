@@ -56,7 +56,7 @@
                 </div>
                 <div class="access-field">
                     <label for="password">Temporary Password</label>
-                    <input id="password" name="password" type="password" required>
+                    <input id="password" name="password" type="text" value="{{ old('password', '123') }}" required>
                 </div>
             </div>
             <label class="access-check access-check-box">
