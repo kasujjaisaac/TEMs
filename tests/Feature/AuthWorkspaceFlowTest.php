@@ -16,8 +16,7 @@ class AuthWorkspaceFlowTest extends TestCase
     public function test_public_registration_is_currently_disabled(): void
     {
         $response = $this->post('/register', [
-            'company_name' => 'Onyx Technologies',
-            'workspace' => 'Onyx Tech',
+            'company_name' => 'Texaro Technologies Limited',
             'name' => 'Admin User',
             'email' => 'ADMIN@EXAMPLE.TEST',
             'password' => 'Password#12345',
@@ -31,10 +30,9 @@ class AuthWorkspaceFlowTest extends TestCase
 
     public function test_user_can_reset_password_from_email_link(): void
     {
-        $user = $this->createWorkspaceUser();
+        $user = $this->createCompanyUser();
 
         $this->from(route('password.request'))->post(route('password.email'), [
-            'workspace' => 'onyx-tech',
             'email' => 'admin@example.test',
         ])->assertRedirect(route('password.request'))->assertSessionHas('success');
 
@@ -46,7 +44,6 @@ class AuthWorkspaceFlowTest extends TestCase
         $token = basename((string) $path);
 
         $this->post(route('password.reset.update'), [
-            'workspace' => $query['workspace'],
             'email' => $query['email'],
             'token' => $token,
             'password' => 'NewPassword#12345',
@@ -58,12 +55,11 @@ class AuthWorkspaceFlowTest extends TestCase
         $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'admin@example.test']);
     }
 
-    public function test_login_requires_matching_workspace_email_and_password(): void
+    public function test_login_requires_email_and_password(): void
     {
-        $this->createWorkspaceUser();
+        $this->createCompanyUser();
 
         $this->post('/login', [
-            'workspace' => 'onyx-tech',
             'email' => 'admin@example.test',
             'password' => 'Password#12345',
         ])->assertRedirect(route('login.otp'));
@@ -79,10 +75,9 @@ class AuthWorkspaceFlowTest extends TestCase
 
     public function test_login_rejects_incorrect_otp(): void
     {
-        $this->createWorkspaceUser();
+        $this->createCompanyUser();
 
         $this->post('/login', [
-            'workspace' => 'onyx-tech',
             'email' => 'admin@example.test',
             'password' => 'Password#12345',
         ])->assertRedirect(route('login.otp'));
@@ -94,24 +89,16 @@ class AuthWorkspaceFlowTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_login_reports_invalid_workspace_email_and_password_separately(): void
+    public function test_login_reports_invalid_email_and_password_separately(): void
     {
-        $this->createWorkspaceUser();
+        $this->createCompanyUser();
 
         $this->from('/login')->post('/login', [
-            'workspace' => 'unknown-workspace',
-            'email' => 'admin@example.test',
-            'password' => 'Password#12345',
-        ])->assertRedirect('/login')->assertSessionHasErrors('workspace');
-
-        $this->from('/login')->post('/login', [
-            'workspace' => 'onyx-tech',
             'email' => 'missing@example.test',
             'password' => 'Password#12345',
         ])->assertRedirect('/login')->assertSessionHasErrors('email');
 
         $this->from('/login')->post('/login', [
-            'workspace' => 'onyx-tech',
             'email' => 'admin@example.test',
             'password' => 'WrongPassword#12345',
         ])->assertRedirect('/login')->assertSessionHasErrors('password');
@@ -119,11 +106,11 @@ class AuthWorkspaceFlowTest extends TestCase
         $this->assertGuest();
     }
 
-    private function createWorkspaceUser(array $overrides = []): User
+    private function createCompanyUser(array $overrides = []): User
     {
         $tenantId = DB::table('tenants')->insertGetId([
-            'company_name' => 'Onyx Technologies',
-            'slug' => 'onyx-tech',
+            'company_name' => 'Texaro Technologies Limited',
+            'slug' => 'texaro-technologies',
             'currency' => 'UGX',
             'fiscal_year_start' => '2026-01-01',
             'status' => 'trial',

@@ -90,6 +90,8 @@ function ensure_sales_tables(PDO $pdo): void
     ensure_column($pdo, 'invoices', 'discount', 'DECIMAL(15,2) NOT NULL DEFAULT 0.00');
     ensure_column($pdo, 'invoices', 'delivery_charge', 'DECIMAL(15,2) NOT NULL DEFAULT 0.00');
     ensure_column($pdo, 'invoices', 'source_invoice_id', 'BIGINT(20) DEFAULT NULL');
+    ensure_column($pdo, 'invoices', 'commercial_opportunity_id', 'BIGINT(20) DEFAULT NULL');
+    ensure_column($pdo, 'invoices', 'commercial_handoff_id', 'BIGINT(20) DEFAULT NULL');
     ensure_column($pdo, 'invoices', 'stock_posted', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'invoices', 'accounting_posted', 'TINYINT(1) NOT NULL DEFAULT 0');
     ensure_column($pdo, 'invoice_lines', 'tenant_id', 'BIGINT(20) NOT NULL DEFAULT 0');
@@ -818,6 +820,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $newNumber = invoice_number_prefix('invoice') . '-' . strtoupper(uniqid());
         $stmt = $pdo->prepare('UPDATE invoices SET invoice_type = ?, invoice_number = ?, status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ? AND invoice_type = ?');
         $stmt->execute(['invoice', $newNumber, 'draft', $invoice_id, $tenant_id, 'quotation']);
+        try {
+            $invoice = onyx_row('SELECT commercial_opportunity_id, commercial_handoff_id FROM invoices WHERE id = :id AND tenant_id = :tenant_id', ['id' => $invoice_id, 'tenant_id' => $tenant_id]);
+            if ($invoice && (int) ($invoice['commercial_opportunity_id'] ?? 0) > 0) {
+                $pdo->prepare('UPDATE commercial_opportunities SET legacy_invoice_id = ?, sales_handoff_status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?')
+                    ->execute([$invoice_id, 'Invoice Drafted', (int) $invoice['commercial_opportunity_id'], $tenant_id]);
+            }
+            if ($invoice && (int) ($invoice['commercial_handoff_id'] ?? 0) > 0) {
+                $pdo->prepare('UPDATE commercial_sales_handoffs SET invoice_id = ?, status = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?')
+                    ->execute([$invoice_id, 'Invoice Drafted', (int) $invoice['commercial_handoff_id'], $tenant_id]);
+            }
+        } catch (Throwable) {
+            // Commercial bridge updates are skipped if the Commercial module has not been migrated yet.
+        }
         sales_post_stock($pdo, $invoice_id, $tenant_id);
         redirect_back('Quotation converted to invoice.');
     }
@@ -935,7 +950,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                             $settings[$settingRow['setting_key']] = $settingRow['setting_value'];
                         }
                         $company_name = $ctx['company_name'] ?? 'Company';
-                        $company_logo = trim((string) ($settings['company_logo'] ?? '')) ?: asset('assets/onxy logo.jpeg');
+                        $company_logo = trim((string) ($settings['company_logo'] ?? '')) ?: asset('assets/texaro-logo.png');
                         $company_email = $settings['email_address'] ?? ($_SESSION['email_address'] ?? '');
                         $company_phone = $settings['phone_number'] ?? ($_SESSION['phone_number'] ?? '');
                         $company_address = $settings['physical_address'] ?? ($_SESSION['physical_address'] ?? '');

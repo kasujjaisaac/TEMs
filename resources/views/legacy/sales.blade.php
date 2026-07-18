@@ -68,10 +68,26 @@ if (! function_exists('sales_document_actions')) {
     }
 }
 
+if (! function_exists('sales_source_marker')) {
+    function sales_source_marker(array $row): string
+    {
+        if (empty($row['commercial_reference'])) {
+            return '';
+        }
+
+        $title = $row['commercial_title'] ?: 'Commercial opportunity';
+
+        return '<span>Commercial: ' . sales_h($row['commercial_reference']) . ' / ' . sales_h($title) . '</span>';
+    }
+}
+
 $quotation_rows = onyx_rows(
-    'SELECT i.id, i.invoice_number, c.name AS customer_name, c.company_name, i.invoice_date, i.due_date, i.total, i.status
+    'SELECT i.id, i.invoice_number, c.name AS customer_name, c.company_name, i.invoice_date, i.due_date, i.total, i.status,
+            co.reference AS commercial_reference, co.title AS commercial_title, csh.status AS commercial_handoff_status
      FROM invoices i
      LEFT JOIN customers c ON c.id = i.customer_id AND c.tenant_id = i.tenant_id
+     LEFT JOIN commercial_opportunities co ON co.id = i.commercial_opportunity_id AND co.tenant_id = i.tenant_id
+     LEFT JOIN commercial_sales_handoffs csh ON csh.id = i.commercial_handoff_id AND csh.tenant_id = i.tenant_id
      WHERE i.tenant_id = :tenant_id AND i.invoice_type = :type
      ORDER BY i.invoice_date DESC, i.id DESC',
     ['tenant_id' => $tenant_id, 'type' => 'quotation']
@@ -79,12 +95,15 @@ $quotation_rows = onyx_rows(
 
 $invoice_rows = onyx_rows(
     'SELECT i.id, i.invoice_number, c.name AS customer_name, c.company_name, i.invoice_date, i.due_date,
-            i.subtotal, i.tax, i.total, i.status, COALESCE(SUM(p.amount), 0) AS paid_amount
+            i.subtotal, i.tax, i.total, i.status, COALESCE(SUM(p.amount), 0) AS paid_amount,
+            co.reference AS commercial_reference, co.title AS commercial_title, csh.status AS commercial_handoff_status
      FROM invoices i
      LEFT JOIN customers c ON c.id = i.customer_id AND c.tenant_id = i.tenant_id
      LEFT JOIN invoice_payments p ON p.invoice_id = i.id AND p.tenant_id = i.tenant_id
+     LEFT JOIN commercial_opportunities co ON co.id = i.commercial_opportunity_id AND co.tenant_id = i.tenant_id
+     LEFT JOIN commercial_sales_handoffs csh ON csh.id = i.commercial_handoff_id AND csh.tenant_id = i.tenant_id
      WHERE i.tenant_id = :tenant_id AND i.invoice_type = :type
-     GROUP BY i.id, i.invoice_number, c.name, c.company_name, i.invoice_date, i.due_date, i.subtotal, i.tax, i.total, i.status
+     GROUP BY i.id, i.invoice_number, c.name, c.company_name, i.invoice_date, i.due_date, i.subtotal, i.tax, i.total, i.status, co.reference, co.title, csh.status
      ORDER BY i.invoice_date DESC, i.id DESC',
     ['tenant_id' => $tenant_id, 'type' => 'invoice']
 );
@@ -510,7 +529,7 @@ $conversion_rate = $quotation_count > 0 ? round(($invoice_count / $quotation_cou
                             <?php foreach ($recent_documents as $row): ?>
                                 <?php $type = str_starts_with((string) ($row['invoice_number'] ?? ''), 'QT-') ? 'quotation' : 'invoice'; ?>
                                 <tr>
-                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span><?= sales_h(ucfirst($type)) ?></span></div></td>
+                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span><?= sales_h(ucfirst($type)) ?></span><?= sales_source_marker($row) ?></div></td>
                                     <td><div class="sales-customer"><strong><?= sales_h($row['customer_name'] ?: '-') ?></strong><span><?= sales_h($row['company_name'] ?? 'No company') ?></span></div></td>
                                     <td><?= sales_h($row['invoice_date'] ?: '-') ?></td>
                                     <td><?= sales_money_badge((float) ($row['total'] ?? 0), $currency) ?></td>
@@ -543,7 +562,7 @@ $conversion_rate = $quotation_count > 0 ? round(($invoice_count / $quotation_cou
                         <?php else: ?>
                             <?php foreach ($quotation_rows as $row): ?>
                                 <tr>
-                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span>Quotation</span></div></td>
+                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span>Quotation</span><?= sales_source_marker($row) ?></div></td>
                                     <td><div class="sales-customer"><strong><?= sales_h($row['customer_name'] ?: '-') ?></strong><span><?= sales_h($row['company_name'] ?? 'No company') ?></span></div></td>
                                     <td><?= sales_h($row['invoice_date'] ?: '-') ?></td>
                                     <td><?= sales_money_badge((float) ($row['total'] ?? 0), $currency) ?></td>
@@ -577,7 +596,7 @@ $conversion_rate = $quotation_count > 0 ? round(($invoice_count / $quotation_cou
                             <?php foreach ($invoice_rows as $row): ?>
                                 <?php $balance = max(0, (float) ($row['total'] ?? 0) - (float) ($row['paid_amount'] ?? 0)); ?>
                                 <tr>
-                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span>Invoice</span></div></td>
+                                    <td><div class="sales-document"><strong><?= sales_h($row['invoice_number'] ?: '-') ?></strong><span>Invoice</span><?= sales_source_marker($row) ?></div></td>
                                     <td><div class="sales-customer"><strong><?= sales_h($row['customer_name'] ?: '-') ?></strong><span><?= sales_h($row['company_name'] ?? 'No company') ?></span></div></td>
                                     <td><?= sales_h($row['invoice_date'] ?: '-') ?></td>
                                     <td><?= sales_h($row['due_date'] ?: '-') ?></td>

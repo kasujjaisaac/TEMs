@@ -4,6 +4,24 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\LegacyPageController;
+use App\Http\Controllers\Commercial\ActivityController as CommercialActivityController;
+use App\Http\Controllers\Commercial\DashboardController as CommercialDashboardController;
+use App\Http\Controllers\Commercial\LeadController as CommercialLeadController;
+use App\Http\Controllers\Commercial\MeetingController as CommercialMeetingController;
+use App\Http\Controllers\Commercial\OpportunityController as CommercialOpportunityController;
+use App\Http\Controllers\Commercial\OrganizationController as CommercialOrganizationController;
+use App\Http\Controllers\Commercial\SiteVisitController as CommercialSiteVisitController;
+use App\Http\Controllers\Commercial\StakeholderController as CommercialStakeholderController;
+use App\Http\Controllers\Finance\AccountController as FinanceAccountController;
+use App\Http\Controllers\Finance\BudgetController as FinanceBudgetController;
+use App\Http\Controllers\Finance\DashboardController as FinanceDashboardController;
+use App\Http\Controllers\Finance\TransactionController as FinanceTransactionController;
+use App\Http\Controllers\HR\CommandCentreController as HrCommandCentreController;
+use App\Http\Controllers\HR\DepartmentController as HrDepartmentController;
+use App\Http\Controllers\HR\PositionController as HrPositionController;
+use App\Http\Controllers\Planning\DashboardController as PlanningDashboardController;
+use App\Http\Controllers\Planning\ObjectiveController as PlanningObjectiveController;
+use App\Http\Controllers\Planning\WorkplanController as PlanningWorkplanController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('home');
 Route::get('/index.php', [AuthController::class, 'showLogin'])->name('home.legacy');
@@ -28,6 +46,46 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
+    Route::prefix('commercial')->name('commercial.')->group(function () {
+        Route::get('/', CommercialDashboardController::class)->name('dashboard');
+        Route::post('/leads/{lead}/convert', [CommercialLeadController::class, 'convert'])->name('leads.convert');
+        Route::resource('leads', CommercialLeadController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::resource('organizations', CommercialOrganizationController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::resource('stakeholders', CommercialStakeholderController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::patch('/opportunities/{opportunity}/stage', [CommercialOpportunityController::class, 'updateStage'])->name('opportunities.stage.update');
+        Route::post('/opportunities/{opportunity}/handoff-to-sales', [CommercialOpportunityController::class, 'handoffToSales'])->name('opportunities.handoff_to_sales');
+        Route::resource('opportunities', CommercialOpportunityController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('activities', CommercialActivityController::class)->only(['index', 'create', 'store']);
+        Route::resource('meetings', CommercialMeetingController::class)->only(['index', 'create', 'store']);
+        Route::resource('site-visits', CommercialSiteVisitController::class)->only(['index', 'create', 'store'])->names('site_visits');
+    });
+
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/', FinanceDashboardController::class)->name('dashboard');
+        Route::post('/sync', [FinanceDashboardController::class, 'sync'])->name('sync');
+        Route::get('/accounts', [FinanceAccountController::class, 'index'])->name('accounts.index');
+        Route::get('/budgets', [FinanceBudgetController::class, 'index'])->name('budgets.index');
+        Route::post('/budgets', [FinanceBudgetController::class, 'store'])->name('budgets.store');
+        Route::get('/transactions', [FinanceTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/transactions/{transaction}', [FinanceTransactionController::class, 'show'])->name('transactions.show');
+    });
+
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::get('/', HrCommandCentreController::class)->name('command');
+        Route::resource('departments', HrDepartmentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::resource('positions', HrPositionController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    });
+
+    Route::prefix('planning')->name('planning.')->group(function () {
+        Route::get('/', PlanningDashboardController::class)->name('dashboard');
+        Route::get('/objectives', [PlanningObjectiveController::class, 'index'])->name('objectives.index');
+        Route::post('/objectives', [PlanningObjectiveController::class, 'store'])->name('objectives.store');
+        Route::get('/workplans', [PlanningWorkplanController::class, 'index'])->name('workplans.index');
+        Route::get('/workplans/{workplan}', [PlanningWorkplanController::class, 'show'])->name('workplans.show');
+        Route::post('/workplans/{workplan}/items', [PlanningWorkplanController::class, 'storeItem'])->name('workplans.items.store');
+        Route::post('/workplans/{workplan}/approve', [PlanningWorkplanController::class, 'approve'])->name('workplans.approve');
+    });
+
     Route::get('/settings/users', [AccessControlController::class, 'users'])->name('settings.users');
     Route::get('/settings/users/create', [AccessControlController::class, 'createUser'])->name('settings.users.create');
     Route::post('/settings/users', [AccessControlController::class, 'storeUser'])->name('settings.users.store');

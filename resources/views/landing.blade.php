@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Onyx Business Control System</title>
-    <meta name="description" content="Onyx brings accounting, inventory, sales, purchases, customers, suppliers, POS, and reporting into one business control workspace.">
+    <title>Texaro Technologies Limited</title>
+    <meta name="description" content="Texaro brings accounting, inventory, sales, purchases, customers, suppliers, POS, and reporting into one business control workspace.">
 
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -347,8 +347,8 @@
 <body class="bg-white">
     <header class="site-header">
         <div class="site-header-inner">
-            <a href="{{ url('/') }}" aria-label="Onyx home">
-                <img src="{{ asset('assets/logo.png') }}" alt="Onyx logo" class="site-logo">
+            <a href="{{ url('/') }}" aria-label="Texaro home">
+                <img src="{{ asset('assets/texaro-logo.png') }}" alt="Texaro logo" class="site-logo">
             </a>
 
             <nav class="site-nav">
@@ -383,7 +383,7 @@
         <section class="hero-shell" id="platform">
             <div class="hero-inner mx-auto max-w-7xl px-5 lg:px-8">
                 <div class="hero-copy">
-                    <p class="hero-eyebrow">Welcome to Onyx</p>
+                    <p class="hero-eyebrow">Welcome to Texaro</p>
                     <h1 class="hero-title">
                         We solve business problems with one operating workspace.
                     </h1>
@@ -443,7 +443,7 @@
             <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.82fr_1fr]">
                 <div class="bg-white p-8 square-shadow">
                     <h2 class="text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl">
-                        Let Onyx handle the workflow, so you can focus on what matters.
+                        Let Texaro handle the workflow, so you can focus on what matters.
                     </h2>
                     <p class="mt-6 text-base font-medium leading-8 text-slate-600">
                         Replace disconnected spreadsheets and manual follow-ups with one connected system for quotes, sales, purchases, inventory, customer records, supplier balances, and reporting.
@@ -520,9 +520,9 @@
     <footer class="bg-[#120f58] px-5 py-12 text-white/70 lg:px-8">
         <div class="mx-auto grid max-w-7xl gap-10 border-b border-white/10 pb-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
             <div>
-                <img src="{{ asset('assets/logo.png') }}" alt="Onyx logo" class="h-14 w-14 bg-white object-contain">
+                <img src="{{ asset('assets/texaro-logo.png') }}" alt="Texaro logo" class="h-14 w-14 bg-white object-contain">
                 <p class="mt-5 max-w-sm text-sm font-medium leading-7">
-                    Multi-tenant business management and accounting workspace developed by Onyx Technology Solutions Ltd.
+                    Multi-tenant business management and accounting workspace developed by Texaro Technologies Limited.
                 </p>
             </div>
             <div>
@@ -544,7 +544,7 @@
             </div>
         </div>
         <div class="mx-auto mt-6 flex max-w-7xl flex-col justify-between gap-4 text-sm font-semibold md:flex-row">
-            <p>&copy; 2026 Onyx Technology Solutions Ltd. All rights reserved.</p>
+            <p>&copy; 2026 Texaro Technologies Limited. All rights reserved.</p>
             <div class="flex gap-6">
                 <a href="mailto:support@onyxtechpay.com?subject=Privacy%20Policy" class="hover:text-white">Privacy Policy</a>
                 <a href="mailto:support@onyxtechpay.com?subject=Terms%20of%20Service" class="hover:text-white">Terms of Service</a>

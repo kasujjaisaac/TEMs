@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Reset Password | Onyx Business Control System</title>
+    <title>Reset Password | Texaro Technologies Limited</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -232,7 +232,7 @@
         <header>
             <div class="eyebrow">Password reset</div>
             <h1 id="reset-password-title">Create a new password</h1>
-            <p>Set a private password for your workspace account. This reset link can only be used once.</p>
+            <p>Set a private password for your account. This reset link can only be used once.</p>
         </header>
 
         <form method="POST" action="{{ route('password.reset.update') }}">
@@ -243,14 +243,6 @@
             @endif
 
             <input type="hidden" name="token" value="{{ $token }}">
-
-            <div class="field">
-                <label for="workspace">Workspace</label>
-                <div class="input-wrap">
-                    <i class="fa-solid fa-building"></i>
-                    <input id="workspace" name="workspace" type="text" value="{{ old('workspace', $workspace) }}" placeholder="onyx-tech" autocomplete="organization" required>
-                </div>
-            </div>
 
             <div class="field">
                 <label for="email">Email Address</label>

@@ -247,7 +247,7 @@ $posSettings = [];
 foreach ($settingsRows as $settingRow) {
     $posSettings[$settingRow['setting_key']] = $settingRow['setting_value'];
 }
-$posCompanyLogo = trim((string) ($posSettings['company_logo'] ?? '')) ?: asset('assets/onxy logo.jpeg');
+$posCompanyLogo = trim((string) ($posSettings['company_logo'] ?? '')) ?: asset('assets/texaro-logo.png');
 $posCompanyAddress = trim((string) ($posSettings['physical_address'] ?? 'Kampala, Uganda'));
 $posCompanyPhone = trim((string) ($posSettings['phone_number'] ?? '+256 700 000 000'));
 $posReceiptFooter = trim((string) ($posSettings['receipt_footer'] ?? 'Goods sold are subject to company policy.'));
@@ -485,7 +485,7 @@ $customerPayload = array_map(static fn (array $customer): array => [
                 <div class="pos-receipt-head">
                     <div class="pos-receipt-brand">
                         <div class="pos-receipt-logo"><img src="<?= pos_h($posCompanyLogo) ?>" alt="Company logo"></div>
-                        <div><h3><?= pos_h(session('company_name', 'Onyx BCS')) ?></h3><small><?= pos_h($posCompanyAddress) ?><br><?= pos_h($posCompanyPhone) ?></small></div>
+                        <div><h3><?= pos_h(session('company_name', 'Texaro Technologies Limited')) ?></h3><small><?= pos_h($posCompanyAddress) ?><br><?= pos_h($posCompanyPhone) ?></small></div>
                     </div>
                     <div class="pos-receipt-meta"><strong><?= pos_h($receipt['invoice_number']) ?></strong><br><small>POS Receipt<br><?= pos_h($receipt['invoice_date']) ?></small></div>
                 </div>

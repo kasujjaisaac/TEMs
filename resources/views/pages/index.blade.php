@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="card">
-    <h2>Welcome to Onyx Hub</h2>
+    <h2>Welcome to Texaro Technologies Limited</h2>
     <p>Quick counts:</p>
     <ul>
         <li>Customers: {{ $counts['customers'] }}</li>

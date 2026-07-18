@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Forgot Password | Onyx Business Control System</title>
+    <title>Forgot Password | Texaro Technologies Limited</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -198,7 +198,7 @@
         <header>
             <div class="eyebrow">Password reset</div>
             <h1 id="forgot-password-title">Forgot your password?</h1>
-            <p>Enter your workspace and email address. If the account exists, we will send a secure reset link.</p>
+            <p>Enter your email address. If the account exists, we will send a secure reset link.</p>
         </header>
 
         <form method="POST" action="{{ route('password.email') }}">
@@ -215,18 +215,10 @@
             @endif
 
             <div class="field">
-                <label for="workspace">Workspace</label>
-                <div class="input-wrap">
-                    <i class="fa-solid fa-building"></i>
-                    <input id="workspace" name="workspace" type="text" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization" required autofocus>
-                </div>
-            </div>
-
-            <div class="field">
                 <label for="email">Email Address</label>
                 <div class="input-wrap">
                     <i class="fa-solid fa-envelope"></i>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="admin@company.test" autocomplete="email" required>
+                    <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="admin@company.test" autocomplete="email" required autofocus>
                 </div>
             </div>
 

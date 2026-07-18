@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Register | Onyx Business Control System</title>
+    <title>Register | Texaro Technologies Limited</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -529,15 +529,15 @@
         <a class="back-link" href="{{ route('login') }}"><i class="fa-solid fa-arrow-left"></i> Sign In</a>
 
         <section class="register-frame">
-            <aside class="brand-side" aria-label="Onyx system overview">
+            <aside class="brand-side" aria-label="Texaro system overview">
                 <div class="brand-panel">
                     <div class="brand-heading">
                         <div class="brand-lockup">
-                            <div class="brand-mark" aria-label="Onyx Business Control System">
-                                <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+                            <div class="brand-mark" aria-label="Texaro Technologies Limited">
+                                <img src="{{ asset('assets/texaro-logo.png') }}" alt="">
                             </div>
                             <div class="brand-name">
-                                <strong>Onyx Business Control System</strong>
+                                <strong>Texaro Technologies Limited</strong>
                                 <span>Secure company workspace</span>
                             </div>
                         </div>
@@ -609,7 +609,7 @@
                                 <label for="company_name">Company Name</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-building"></i>
-                                    <input id="company_name" name="company_name" type="text" class="input" value="{{ old('company_name') }}" placeholder="Onyx Technologies" autocomplete="organization" required>
+                                    <input id="company_name" name="company_name" type="text" class="input" value="{{ old('company_name') }}" placeholder="Texaro Technologies Limited" autocomplete="organization" required>
                                 </div>
                                 @error('company_name')<div class="field-error">{{ $message }}</div>@enderror
                             </div>
@@ -618,7 +618,7 @@
                                 <label for="workspace">Workspace</label>
                                 <div class="input-wrap">
                                     <i class="fa-solid fa-fingerprint"></i>
-                                    <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization-title" required>
+                                    <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="texaro-technologies" autocomplete="organization-title" required>
                                 </div>
                                 @error('workspace')<div class="field-error">{{ $message }}</div>@enderror
                             </div>

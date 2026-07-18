@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Login | Onyx Business Control System</title>
+    <title>Login | Texaro Technologies Limited</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -536,16 +536,16 @@
         <a class="back-link" href="{{ url('/') }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
 
         <section class="login-frame">
-            <aside class="brand-side" aria-label="Onyx system overview">
+            <aside class="brand-side" aria-label="Texaro system overview">
                 <div class="brand-panel">
                     <div class="brand-heading">
                         <div class="brand-lockup">
-                            <div class="brand-mark" aria-label="Onyx Business Control System">
-                                <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+                            <div class="brand-mark" aria-label="Texaro Technologies Limited">
+                                <img src="{{ asset('assets/texaro-logo.png') }}" alt="">
                             </div>
                             <div class="brand-name">
-                                <strong>Onyx Business Control System</strong>
-                                <span>Secure company workspace</span>
+                                <strong>Texaro Technologies Limited</strong>
+                                <span>Secure company access</span>
                             </div>
                         </div>
 
@@ -576,7 +576,7 @@
                             <div class="feature-icon team"><i class="fa-solid fa-users-gear"></i></div>
                             <div>
                                 <strong>Customers, teams, and access</strong>
-                                <span>Organize customer records and keep workspace access under administrator control.</span>
+                                <span>Organize customer records and keep system access under administrator control.</span>
                             </div>
                         </div>
                     </div>
@@ -587,8 +587,8 @@
             <section class="form-side">
                 <div class="login-card">
                     <div class="login-eyebrow">Authorized access</div>
-                    <h1 class="login-title" id="login-title">Sign in to your workspace</h1>
-                    <p class="login-subtitle">Use your company workspace and administrator credentials to continue.</p>
+                    <h1 class="login-title" id="login-title">Sign in to your account</h1>
+                    <p class="login-subtitle">Use your email address and password to continue.</p>
 
                     <form class="login-form" method="POST" action="{{ route('login') }}">
                         @csrf
@@ -601,18 +601,10 @@
                         @endif
 
                         <div class="field-group">
-                            <label for="workspace">Workspace</label>
-                            <div class="input-wrap">
-                                <i class="fa-solid fa-building"></i>
-                                <input id="workspace" name="workspace" type="text" class="input" value="{{ old('workspace') }}" placeholder="onyx-tech" autocomplete="organization" required>
-                            </div>
-                        </div>
-
-                        <div class="field-group">
                             <label for="email">Email Address</label>
                             <div class="input-wrap">
                                 <i class="fa-solid fa-envelope"></i>
-                                <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="admin@clinic.test" autocomplete="email" required>
+                                <input id="email" name="email" type="email" class="input" value="{{ old('email') }}" placeholder="superadmin@texaro.local" autocomplete="email" required>
                             </div>
                         </div>
 

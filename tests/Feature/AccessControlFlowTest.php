@@ -16,8 +16,8 @@ class AccessControlFlowTest extends TestCase
 
     public function test_public_auth_pages_render(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Secure company workspace');
-        $this->get('/register')->assertOk()->assertSee('Secure company workspace');
+        $this->get('/login')->assertOk()->assertSee('Secure company access');
+        $this->get('/register')->assertRedirect(route('login'));
     }
 
     public function test_admin_can_open_security_pages_and_manage_role_flow(): void
@@ -49,7 +49,7 @@ class AccessControlFlowTest extends TestCase
         $this->actingAs($admin);
 
         $this->get('/settings/users')->assertOk()->assertSee('Users');
-        $this->get('/settings/users/create')->assertOk()->assertSee('Add User')->assertSee('Workspace');
+        $this->get('/settings/users/create')->assertOk()->assertSee('Add User')->assertSee('Create a staff account');
         $this->get('/settings/roles')->assertOk()->assertSee('Role Register');
         $this->get('/settings/roles/create')->assertOk()->assertSee('Create Role');
         $this->get('/settings/security')->assertOk()->assertSee('Security Settings');
@@ -83,7 +83,7 @@ class AccessControlFlowTest extends TestCase
         $this->assertSame(2, AuditLog::where('tenant_id', $tenantId)->where('module', 'roles')->count());
     }
 
-    public function test_super_admin_can_create_user_for_selected_workspace(): void
+    public function test_admin_can_create_user_for_current_company(): void
     {
         $primaryTenantId = DB::table('tenants')->insertGetId([
             'company_name' => 'Primary Company',
@@ -95,21 +95,10 @@ class AccessControlFlowTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $branchTenantId = DB::table('tenants')->insertGetId([
-            'company_name' => 'Branch Company',
-            'slug' => 'branch-company',
-            'currency' => 'UGX',
-            'fiscal_year_start' => '2026-01-01',
-            'status' => 'trial',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         Role::ensureDefaultsForTenant($primaryTenantId);
-        Role::ensureDefaultsForTenant($branchTenantId);
 
         $adminRole = Role::where('tenant_id', $primaryTenantId)->where('slug', 'super_admin')->firstOrFail();
-        $branchRole = Role::where('tenant_id', $branchTenantId)->where('slug', 'admin')->firstOrFail();
+        $userRole = Role::where('tenant_id', $primaryTenantId)->where('slug', 'admin')->firstOrFail();
 
         $admin = User::create([
             'tenant_id' => $primaryTenantId,
@@ -123,27 +112,26 @@ class AccessControlFlowTest extends TestCase
         ]);
 
         $this->actingAs($admin)->post(route('settings.users.store'), [
-            'workspace_slug' => 'branch-company',
-            'name' => 'Branch User',
-            'email' => 'branch-user@example.test',
+            'name' => 'Staff User',
+            'email' => 'staff-user@example.test',
             'phone' => '',
             'department' => 'Operations',
-            'role_id' => $branchRole->id,
+            'role_id' => $userRole->id,
             'password' => '123',
             'is_active' => '1',
         ])->assertRedirect(route('settings.users'));
 
         $this->assertDatabaseHas('users', [
-            'tenant_id' => $branchTenantId,
-            'role_id' => $branchRole->id,
-            'email' => 'branch-user@example.test',
+            'tenant_id' => $primaryTenantId,
+            'role_id' => $userRole->id,
+            'email' => 'staff-user@example.test',
             'role' => 'admin',
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
-            'tenant_id' => $branchTenantId,
+            'tenant_id' => $primaryTenantId,
             'module' => 'users',
-            'description' => 'Created user branch-user@example.test',
+            'description' => 'Created user staff-user@example.test',
         ]);
     }
 }

@@ -2,11 +2,11 @@
 
 <main>
     <div class="mobile-appbar">
-        <a class="mobile-brand" href="{{ url('dashboard') }}" aria-label="Onyx dashboard">
-            <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="">
+        <a class="mobile-brand" href="{{ url('dashboard') }}" aria-label="Texaro dashboard">
+            <img src="{{ asset('assets/texaro-logo.png') }}" alt="">
             <span>
-                <strong>Onyx BCS</strong>
-                <small>{{ config('app.name', 'Onyx Hub') }}</small>
+                <strong>Texaro Technologies Limited</strong>
+                <small>{{ config('app.name', 'Texaro Technologies Limited') }}</small>
             </span>
         </a>
         <div class="mobile-appbar-actions">
@@ -37,11 +37,11 @@
             <button class="topbar-sidebar-toggle" type="button" data-sidebar-collapse aria-label="Toggle sidebar" aria-pressed="false" title="Toggle sidebar">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <a class="topbar-brand" href="{{ url('dashboard') }}" aria-label="Onyx dashboard">
-                <img src="{{ asset('assets/onxy logo.jpeg') }}" alt="Onyx logo">
+            <a class="topbar-brand" href="{{ url('dashboard') }}" aria-label="Texaro dashboard">
+                <img src="{{ asset('assets/texaro-logo.png') }}" alt="Texaro logo">
                 <span>
-                    <strong>Onyx BCS</strong>
-                    <small>{{ config('app.name', 'Onyx Hub') }}</small>
+                    <strong>Texaro Technologies Limited</strong>
+                    <small>{{ config('app.name', 'Texaro Technologies Limited') }}</small>
                 </span>
             </a>
             <label class="topbar-search" for="topbar-module-search">
@@ -70,7 +70,7 @@
                 <div class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</div>
                 <div>
                     <strong>{{ auth()->user()->name ?? 'Admin User' }}</strong>
-                    <span>{{ auth()->user()->email ?? 'admin@onyx.local' }}</span>
+                    <span>{{ auth()->user()->email ?? 'admin@texaro.local' }}</span>
                 </div>
             </div>
         </div>

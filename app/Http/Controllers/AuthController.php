@@ -25,21 +25,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->merge([
-            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
             'email' => Str::lower((string) $request->input('email', '')),
         ]);
 
         $data = $request->validate([
-            'workspace' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required'],
         ]);
 
-        $workspace = $this->normalizeWorkspace($data['workspace']);
         $email = Str::lower(trim($data['email']));
-        $tenant = DB::table('tenants')->where('slug', $workspace)->first();
-        $security = SecuritySetting::forTenant($tenant?->id);
-        $throttleKey = 'login:' . $workspace . '|' . $email . '|' . $request->ip();
+        $user = User::where('email', $email)->first();
+        $security = SecuritySetting::forTenant($user?->tenant_id);
+        $throttleKey = 'login:' . $email . '|' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, (int) $security['login_attempt_limit'])) {
             $seconds = RateLimiter::availableIn($throttleKey);
@@ -49,42 +46,32 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! $tenant) {
-            RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
-
-            return back()
-                ->withErrors(['workspace' => 'Workspace not found. Check the workspace code from registration.'])
-                ->onlyInput('workspace', 'email');
-        }
-
-        $user = User::where('tenant_id', $tenant->id)->where('email', $email)->first();
-
         if (! $user) {
             RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
 
             return back()
-                ->withErrors(['email' => 'Email address is not registered in this workspace.'])
-                ->onlyInput('workspace', 'email');
+                ->withErrors(['email' => 'Email address is not registered.'])
+                ->onlyInput('email');
         }
 
         if (! $user->is_active) {
             RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
 
             return back()
-                ->withErrors(['email' => 'This user account is inactive. Contact the workspace administrator.'])
-                ->onlyInput('workspace', 'email');
+                ->withErrors(['email' => 'This user account is inactive. Contact the administrator.'])
+                ->onlyInput('email');
         }
 
         if (! Hash::check($data['password'], $user->password)) {
             RateLimiter::hit($throttleKey, max(60, (int) $security['account_lockout_minutes'] * 60));
 
             return back()
-                ->withErrors(['password' => 'Password is incorrect for this workspace account.'])
-                ->onlyInput('workspace', 'email');
+                ->withErrors(['password' => 'Password is incorrect for this account.'])
+                ->onlyInput('email');
         }
 
         RateLimiter::clear($throttleKey);
-        $this->sendLoginOtp($request, $user, $workspace);
+        $this->sendLoginOtp($request, $user);
 
         return redirect()->route('login.otp');
     }
@@ -151,7 +138,7 @@ class AuthController extends Controller
     public function resendOtp(Request $request)
     {
         $pending = $request->session()->get('login_otp');
-        if (! is_array($pending) || empty($pending['user_id']) || empty($pending['workspace'])) {
+        if (! is_array($pending) || empty($pending['user_id'])) {
             return redirect()->route('login');
         }
 
@@ -162,7 +149,7 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'This login can no longer be completed.']);
         }
 
-        $this->sendLoginOtp($request, $user, (string) $pending['workspace']);
+        $this->sendLoginOtp($request, $user);
 
         return back()->with('success', 'A new OTP has been sent to your email.');
     }
@@ -175,36 +162,29 @@ class AuthController extends Controller
     public function sendPasswordResetLink(Request $request)
     {
         $request->merge([
-            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
             'email' => Str::lower((string) $request->input('email', '')),
         ]);
 
         $data = $request->validate([
-            'workspace' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email', 'max:255'],
         ]);
 
-        $workspace = $this->normalizeWorkspace($data['workspace']);
         $email = Str::lower(trim($data['email']));
-        $tenant = DB::table('tenants')->where('slug', $workspace)->first();
-        $user = $tenant
-            ? User::where('tenant_id', $tenant->id)->where('email', $email)->where('is_active', true)->first()
-            : null;
+        $user = User::where('email', $email)->where('is_active', true)->first();
 
         if ($user) {
-            $this->sendPasswordResetEmail($request, $user, $workspace);
+            $this->sendPasswordResetEmail($request, $user);
         }
 
         return back()
             ->with('success', 'If that account exists, a password reset link has been sent.')
-            ->onlyInput('workspace', 'email');
+            ->onlyInput('email');
     }
 
     public function showResetPassword(Request $request, string $token)
     {
         return view('pages.reset-password', [
             'token' => $token,
-            'workspace' => $request->query('workspace', ''),
             'email' => $request->query('email', ''),
         ]);
     }
@@ -212,33 +192,27 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->merge([
-            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
             'email' => Str::lower((string) $request->input('email', '')),
         ]);
 
         $data = $request->validate([
-            'workspace' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email', 'max:255'],
             'token' => ['required', 'string'],
             'password' => ['required', 'confirmed'],
         ]);
 
-        $workspace = $this->normalizeWorkspace($data['workspace']);
         $email = Str::lower(trim($data['email']));
-        $tenant = DB::table('tenants')->where('slug', $workspace)->first();
-        $user = $tenant
-            ? User::where('tenant_id', $tenant->id)->where('email', $email)->where('is_active', true)->first()
-            : null;
+        $user = User::where('email', $email)->where('is_active', true)->first();
         $tokenRecord = DB::table('password_reset_tokens')->where('email', $email)->first();
 
         if (! $user || ! $tokenRecord || ! Hash::check($data['token'], $tokenRecord->token)) {
-            return back()->withErrors(['email' => 'This password reset link is invalid.'])->withInput($request->only('workspace', 'email'));
+            return back()->withErrors(['email' => 'This password reset link is invalid.'])->withInput($request->only('email'));
         }
 
         if (! $tokenRecord->created_at || now()->diffInMinutes($tokenRecord->created_at) > 60) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
 
-            return back()->withErrors(['email' => 'This password reset link has expired.'])->withInput($request->only('workspace', 'email'));
+            return back()->withErrors(['email' => 'This password reset link has expired.'])->withInput($request->only('email'));
         }
 
         $request->validate([
@@ -294,58 +268,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->merge([
-            'workspace' => $this->normalizeWorkspace((string) $request->input('workspace', '')),
-            'email' => Str::lower((string) $request->input('email', '')),
-        ]);
-
-        $data = $request->validate(
-            [
-                'company_name' => ['required', 'string', 'min:2', 'max:255'],
-                'workspace' => ['required', 'string', 'min:3', 'max:80', 'regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$/', 'unique:tenants,slug'],
-                'name' => ['required', 'string', 'min:2', 'max:255'],
-                'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-                'password' => [
-                    'required',
-                    'confirmed',
-                    Password::min(10)->mixedCase()->numbers()->symbols(),
-                ],
-            ],
-            [
-                'workspace.regex' => 'Workspace must use lowercase letters, numbers, and hyphens, and must start and end with a letter or number.',
-                'workspace.unique' => 'This workspace is already registered.',
-            ]
-        );
-
-        $user = DB::transaction(function () use ($data): User {
-            $tenantId = DB::table('tenants')->insertGetId([
-                'company_name' => $data['company_name'],
-                'slug' => $data['workspace'],
-                'currency' => 'UGX',
-                'fiscal_year_start' => now()->startOfYear()->toDateString(),
-                'status' => 'trial',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            Role::ensureDefaultsForTenant($tenantId);
-            $role = Role::where('tenant_id', $tenantId)->where('slug', 'super_admin')->first();
-
-            return User::create([
-                'tenant_id' => $tenantId,
-                'role_id' => $role?->id,
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
-                'role' => 'super_admin',
-                'is_active' => true,
-                'password_changed_at' => now(),
-            ]);
-        });
-
-        $this->sendLoginOtp($request, $user, $data['workspace']);
-
-        return redirect()->route('login.otp');
+        return redirect()->route('login');
     }
 
     public function logout(Request $request)
@@ -364,24 +287,18 @@ class AuthController extends Controller
             'tenant_id' => $user->tenant_id ?: ($tenant->id ?? 1),
             'user_id' => $user->id,
             'user_name' => $user->name,
-            'company_name' => $tenant->company_name ?? config('app.name', 'Onyx Hub'),
+            'company_name' => $tenant->company_name ?? config('app.name', 'Texaro Technologies Limited'),
             'currency' => $tenant->currency ?? 'UGX',
             'role' => $user->role ?: 'super_admin',
         ]);
     }
 
-    private function normalizeWorkspace(string $workspace): string
-    {
-        return Str::slug(Str::lower(trim($workspace)));
-    }
-
-    private function sendLoginOtp(Request $request, User $user, string $workspace): void
+    private function sendLoginOtp(Request $request, User $user): void
     {
         $otp = (string) random_int(100000, 999999);
 
         $request->session()->put('login_otp', [
             'user_id' => $user->id,
-            'workspace' => $workspace,
             'email' => $user->email,
             'hash' => Hash::make($otp),
             'attempts' => 0,
@@ -393,14 +310,14 @@ class AuthController extends Controller
         }
 
         Mail::raw(
-            "Your Onyx login OTP is {$otp}. It expires in 10 minutes.",
+            "Your Texaro login OTP is {$otp}. It expires in 10 minutes.",
             fn ($message) => $message
                 ->to($user->email)
-                ->subject('Your Onyx login OTP')
+                ->subject('Your Texaro login OTP')
         );
     }
 
-    private function sendPasswordResetEmail(Request $request, User $user, string $workspace): void
+    private function sendPasswordResetEmail(Request $request, User $user): void
     {
         $token = Str::random(64);
 
@@ -414,7 +331,6 @@ class AuthController extends Controller
 
         $resetUrl = route('password.reset', [
             'token' => $token,
-            'workspace' => $workspace,
             'email' => $user->email,
         ]);
 
@@ -423,10 +339,10 @@ class AuthController extends Controller
         }
 
         Mail::raw(
-            "Use this link to reset your Onyx password: {$resetUrl}\n\nThis link expires in 60 minutes.",
+            "Use this link to reset Your Texaro password: {$resetUrl}\n\nThis link expires in 60 minutes.",
             fn ($message) => $message
                 ->to($user->email)
-                ->subject('Reset your Onyx password')
+                ->subject('Reset Your Texaro password')
         );
     }
 

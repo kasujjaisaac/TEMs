@@ -58,7 +58,7 @@ if (! function_exists('onyx_start_session')) {
             'tenant_id' => $tenantId,
             'user_id' => Auth::id() ?: session('user_id', 1),
             'user_name' => Auth::user()->name ?? session('user_name', 'Operator'),
-            'company_name' => session('company_name', config('app.name', 'Onyx Hub')),
+            'company_name' => session('company_name', config('app.name', 'Texaro Technologies Limited')),
             'currency' => session('currency', config('app.currency', 'UGX')),
             'role' => Auth::user()->role ?? session('role', 'user'),
         ]);
@@ -78,7 +78,7 @@ if (! function_exists('onyx_context')) {
         onyx_start_session();
 
         return [
-            'company_name' => session('company_name', 'Onyx Hub'),
+            'company_name' => session('company_name', 'Texaro Technologies Limited'),
             'user_name' => session('user_name', 'Operator'),
             'currency' => session('currency', config('app.currency', 'UGX')),
         ];
@@ -238,7 +238,7 @@ if (! function_exists('onyx_hr_seed_employees')) {
 
         $stmt = $pdo->prepare('INSERT INTO hr_employees (tenant_id, employee_code, full_name, gender, department, job_title, employment_type, phone, email, national_id, bank_wallet, address, next_of_kin, kin_phone, basic_pay, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
         foreach ([
-            ['EMP-001', 'Super Admin', 'Prefer not to say', 'Administration', 'Super Admin', 'Full time', '+256 700 000 001', 'superadmin@clinic.test', '', '', 'Kampala', '', '', 0, 'Active', 'System administration profile.'],
+            ['EMP-001', 'Super Admin', 'Prefer not to say', 'Administration', 'Super Admin', 'Full time', '+256 700 000 001', 'superadmin@texaro.local', '', '', 'Kampala', '', '', 0, 'Active', 'System administration profile.'],
             ['EMP-002', 'Cashier', 'Female', 'Sales', 'Cashier', 'Full time', '+256 700 000 002', 'cashier@clinic.test', '', '', 'Kampala', 'Jane Cashier', '+256 701 111 222', 0, 'Active', 'Bank details pending review.'],
             ['EMP-003', 'Store Manager', 'Male', 'Inventory', 'Store Manager', 'Full time', '+256 700 000 003', 'store@clinic.test', '', '', 'Kampala', 'Michael Store', '+256 702 222 333', 0, 'Onboarding', 'Next of kin pending confirmation.'],
         ] as $row) {
@@ -320,108 +320,14 @@ if (! function_exists('onyx_nav_items')) {
 if (! function_exists('onyx_nav_groups')) {
     function onyx_nav_groups(): array
     {
-        return [
-            [
-                'label' => 'Dashboard',
-                'icon' => 'fa-gauge-high',
-                'items' => [
-                    ['file' => 'dashboard.php', 'icon' => 'fa-chart-pie', 'label' => 'Dashboard'],
-                ],
-            ],
-            [
-                'label' => 'Sales',
-                'icon' => 'fa-cash-register',
-                'items' => [
-                    ['file' => 'pos.php', 'icon' => 'fa-store', 'label' => 'POS'],
-                    ['file' => 'sales.php', 'icon' => 'fa-file-invoice-dollar', 'label' => 'Sales'],
-                    ['file' => 'customers.php', 'icon' => 'fa-users', 'label' => 'Customers'],
-                    ['file' => 'crm.php', 'icon' => 'fa-handshake', 'label' => 'CRM'],
-                ],
-            ],
-            [
-                'label' => 'Inventory',
-                'icon' => 'fa-boxes-stacked',
-                'items' => [
-                    ['file' => 'products.php', 'icon' => 'fa-box', 'label' => 'Products'],
-                    ['file' => 'inventory.php', 'icon' => 'fa-warehouse', 'label' => 'Inventory'],
-                    ['file' => 'purchases.php', 'icon' => 'fa-cart-shopping', 'label' => 'Purchases'],
-                    ['file' => 'suppliers.php', 'icon' => 'fa-truck', 'label' => 'Suppliers'],
-                ],
-            ],
-            [
-                'label' => 'Finance',
-                'icon' => 'fa-scale-balanced',
-                'items' => [
-                    ['file' => 'accounting.php', 'icon' => 'fa-calculator', 'label' => 'Accounting'],
-                    ['file' => 'document_templates.php', 'icon' => 'fa-file-lines', 'label' => 'Document Templates'],
-                    ['file' => 'banking.php', 'icon' => 'fa-building-columns', 'label' => 'Banking'],
-                    ['file' => 'budgets.php', 'icon' => 'fa-wallet', 'label' => 'Budgets'],
-                    ['file' => 'assets.php', 'icon' => 'fa-laptop-file', 'label' => 'Assets'],
-                    ['file' => 'reports.php', 'icon' => 'fa-chart-column', 'label' => 'Reports'],
-                ],
-            ],
-            [
-                'label' => 'Human Resource',
-                'icon' => 'fa-users-gear',
-                'items' => [
-                    ['file' => 'human_resources.php', 'icon' => 'fa-users', 'label' => 'Employees'],
-                    ['file' => 'hr_contracts.php', 'icon' => 'fa-file-signature', 'label' => 'Contracts & Roles'],
-                    ['file' => 'hr_attendance.php', 'icon' => 'fa-clock', 'label' => 'Attendance'],
-                    ['file' => 'hr_leave.php', 'icon' => 'fa-calendar-check', 'label' => 'Leave'],
-                    ['file' => 'hr_advances.php', 'icon' => 'fa-hand-holding-dollar', 'label' => 'Advances & Loans'],
-                    ['file' => 'hr_documents.php', 'icon' => 'fa-folder-open', 'label' => 'Documents'],
-                    ['file' => 'hr_performance.php', 'icon' => 'fa-chart-line', 'label' => 'Performance'],
-                    ['file' => 'hr_payroll_readiness.php', 'icon' => 'fa-clipboard-check', 'label' => 'Payroll Readiness'],
-                    ['file' => 'payroll.php', 'icon' => 'fa-money-check-dollar', 'label' => 'Payroll'],
-                ],
-            ],
-            [
-                'label' => 'Operations',
-                'icon' => 'fa-briefcase',
-                'items' => [
-                    ['file' => 'mobile_app.php', 'icon' => 'fa-mobile-screen-button', 'label' => 'Mobile App'],
-                    ['file' => 'notifications.php', 'icon' => 'fa-bell', 'label' => 'Notifications'],
-                ],
-            ],
-            [
-                'label' => 'Reports',
-                'icon' => 'fa-file-lines',
-                'items' => [
-                    ['file' => 'reports.php', 'icon' => 'fa-chart-column', 'label' => 'Reports'],
-                ],
-            ],
-            [
-                'label' => 'Users & Roles Management',
-                'icon' => 'fa-users-gear',
-                'items' => [
-                    ['file' => 'users.php', 'href' => route('settings.users'), 'icon' => 'fa-users-gear', 'label' => 'Users'],
-                    ['file' => 'roles.php', 'href' => route('settings.roles'), 'icon' => 'fa-shield-halved', 'label' => 'Roles & Permissions'],
-                    ['file' => 'security.php', 'href' => route('settings.security'), 'icon' => 'fa-lock', 'label' => 'Security Settings'],
-                    ['file' => 'audit-logs.php', 'href' => route('settings.audit_logs'), 'icon' => 'fa-clock-rotate-left', 'label' => 'Audit Logs'],
-                ],
-            ],
-            [
-                'label' => 'Settings',
-                'icon' => 'fa-sliders',
-                'items' => [
-                    ['file' => 'settings.php', 'icon' => 'fa-gear', 'label' => 'Overview'],
-                ],
-            ],
-        ];
+        return \App\Support\Navigation::visibleGroups(auth()->user());
     }
 }
 
 if (! function_exists('onyx_current_page')) {
     function onyx_current_page(): string
     {
-        $path = request()->path();
-        if ($path === '/') {
-            return 'dashboard.php';
-        }
-
-        $page = basename($path);
-
-        return str_ends_with($page, '.php') ? $page : $page . '.php';
+        return \App\Support\Navigation::currentPage();
     }
 }
 
@@ -466,10 +372,10 @@ if (! function_exists('onyx_page_start')) {
 </head>
 <body class="onyx-erp-body">
     <div class="mobile-appbar">
-        <a class="mobile-brand" href="<?= url('dashboard') ?>" aria-label="Onyx dashboard">
-            <img src="<?= asset('assets/onxy logo.jpeg') ?>" alt="">
+        <a class="mobile-brand" href="<?= url('dashboard') ?>" aria-label="Texaro dashboard">
+            <img src="<?= asset('assets/texaro-logo.png') ?>" alt="">
             <span>
-                <strong>Onyx BCS</strong>
+                <strong>Texaro Technologies Limited</strong>
                 <small><?= htmlspecialchars($context['company_name']) ?></small>
             </span>
         </a>
@@ -498,11 +404,11 @@ if (! function_exists('onyx_page_start')) {
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <a class="sidebar-logo-plate" href="<?= url('dashboard') ?>" aria-label="Onyx dashboard">
-                <img src="<?= asset('assets/onxy logo.jpeg') ?>" alt="Onyx logo">
+            <a class="sidebar-logo-plate" href="<?= url('dashboard') ?>" aria-label="Texaro dashboard">
+                <img src="<?= asset('assets/texaro-logo.png') ?>" alt="Texaro logo">
             </a>
             <div title="<?= htmlspecialchars($context['company_name']) ?>">
-                <h4 class="brand-title">Onyx BCS <small><?= htmlspecialchars($context['company_name']) ?></small></h4>
+                <h4 class="brand-title">Texaro Technologies Limited <small><?= htmlspecialchars($context['company_name']) ?></small></h4>
             </div>
         </div>
         <div class="sidebar-menu-wrapper">
@@ -511,7 +417,12 @@ if (! function_exists('onyx_page_start')) {
                     <?php
                         $groupActive = false;
                         foreach ($group['items'] as $item) {
-                            if ($current_page === $item['file']) {
+                            $itemActive = $current_page === ($item['file'] ?? '');
+                            foreach (($item['patterns'] ?? []) as $pattern) {
+                                $itemActive = $itemActive || request()->is($pattern);
+                            }
+
+                            if ($itemActive) {
                                 $groupActive = true;
                                 break;
                             }
@@ -527,7 +438,7 @@ if (! function_exists('onyx_page_start')) {
                     <div class="nav-group" data-nav-group>
                         <?php if (($group['label'] ?? '') === 'Dashboard'): ?>
                             <?php $dashboardItem = $group['items'][0]; ?>
-                            <a class="nav-link-onyx nav-direct-link <?= $groupActive ? 'active' : '' ?>" href="<?= url($dashboardItem['file']) ?>" data-nav-link>
+                            <a class="nav-link-onyx nav-direct-link <?= $groupActive ? 'active' : '' ?>" href="<?= htmlspecialchars($dashboardItem['url'] ?? $dashboardItem['href'] ?? url($dashboardItem['file'])) ?>" data-nav-link>
                                 <i class="fa-solid <?= htmlspecialchars($group['icon']) ?>"></i>
                                 <span><?= htmlspecialchars($group['label']) ?></span>
                             </a>
@@ -542,8 +453,11 @@ if (! function_exists('onyx_page_start')) {
                         <div class="nav-dropdown-menu <?= $groupActive ? 'open' : '' ?>" id="<?= htmlspecialchars($groupId) ?>">
                             <?php foreach ($group['items'] as $item): ?>
                                 <?php
-                                    $itemHref = $item['href'] ?? url($item['file']);
-                                    $itemActive = $current_page === $item['file'];
+                                    $itemHref = $item['url'] ?? $item['href'] ?? url($item['file']);
+                                    $itemActive = $current_page === ($item['file'] ?? '');
+                                    foreach (($item['patterns'] ?? []) as $pattern) {
+                                        $itemActive = $itemActive || request()->is($pattern);
+                                    }
                                     if (($group['label'] ?? '') === 'Users & Roles Management') {
                                         $itemActive = match ($item['file']) {
                                             'users.php' => request()->is('settings/users*'),
@@ -558,23 +472,6 @@ if (! function_exists('onyx_page_start')) {
                                     <i class="fa-solid <?= htmlspecialchars($item['icon']) ?>"></i>
                                     <span><?= htmlspecialchars($item['label']) ?></span>
                                 </a>
-                                <?php if (($item['file'] ?? '') === 'settings.php'): ?>
-                                <?php foreach ([
-                                    'company' => ['label' => 'Company', 'icon' => 'fa-building'],
-                                    'finance' => ['label' => 'Finance', 'icon' => 'fa-coins'],
-                                    'organization' => ['label' => 'Organization', 'icon' => 'fa-users-gear'],
-                                    'operations' => ['label' => 'Operations', 'icon' => 'fa-diagram-project'],
-                                    'documents' => ['label' => 'Documents', 'icon' => 'fa-file-invoice'],
-                                    'communications' => ['label' => 'Communications', 'icon' => 'fa-envelope-open-text'],
-                                    'security_data' => ['label' => 'Security & Data', 'icon' => 'fa-shield-halved'],
-                                    'system' => ['label' => 'System', 'icon' => 'fa-server'],
-                                ] as $anchor => $section): ?>
-                                    <a class="nav-link-onyx" href="<?= url('settings.php') ?>?section=<?= htmlspecialchars($anchor) ?>" data-nav-link>
-                                        <i class="fa-solid <?= htmlspecialchars($section['icon']) ?>"></i>
-                                        <span><?= htmlspecialchars($section['label']) ?></span>
-                                    </a>
-                                <?php endforeach; ?>
-                                <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
                         <?php endif; ?>
@@ -710,10 +607,10 @@ if (! function_exists('onyx_page_start')) {
                 <button class="topbar-sidebar-toggle" type="button" data-sidebar-collapse aria-label="Toggle sidebar" aria-pressed="false" title="Toggle sidebar">
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
-                <a class="topbar-brand" href="<?= url('dashboard') ?>" aria-label="Onyx dashboard">
-                    <img src="<?= asset('assets/onxy logo.jpeg') ?>" alt="Onyx logo">
+                <a class="topbar-brand" href="<?= url('dashboard') ?>" aria-label="Texaro dashboard">
+                    <img src="<?= asset('assets/texaro-logo.png') ?>" alt="Texaro logo">
                     <span>
-                        <strong>Onyx BCS</strong>
+                        <strong>Texaro Technologies Limited</strong>
                         <small><?= htmlspecialchars($context['company_name']) ?></small>
                     </span>
                 </a>

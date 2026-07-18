@@ -22,7 +22,6 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $tenantId = $this->tenantId();
-        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
         $tenants = $this->accessibleTenants();
         $tenantIds = $tenants->pluck('id')->map(fn ($id) => (int) $id)->all();
 
@@ -33,15 +32,14 @@ class AccessControlController extends Controller
         $roles = Role::whereIn('tenant_id', $tenantIds)->where('is_active', true)->orderBy('name')->get();
 
         return view('settings.users', [
-            'page_title' => 'Users | Onyx BCS',
+            'page_title' => 'Users | Texaro Technologies Limited',
             'users' => User::with('assignedRole')
-                ->when(! $canManageAllWorkspaces, fn ($query) => $query->where('tenant_id', $tenantId))
+                ->where('tenant_id', $tenantId)
                 ->orderBy('name')
                 ->get(),
             'roles' => $roles,
             'rolesByTenant' => $roles->groupBy('tenant_id'),
             'tenantsById' => $tenants->keyBy('id'),
-            'canManageAllWorkspaces' => $canManageAllWorkspaces,
         ]);
     }
 
@@ -49,7 +47,6 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $tenantId = $this->tenantId();
-        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
         $tenants = $this->accessibleTenants();
 
         foreach ($tenants as $tenant) {
@@ -62,22 +59,19 @@ class AccessControlController extends Controller
             ->get();
 
         return view('settings.users_create', [
-            'page_title' => 'Add User | Onyx BCS',
+            'page_title' => 'Add User | Texaro Technologies Limited',
             'roles' => $roles,
             'rolesByTenant' => $roles->groupBy('tenant_id'),
             'tenants' => $tenants,
             'currentTenantId' => $tenantId,
-            'canManageAllWorkspaces' => $canManageAllWorkspaces,
         ]);
     }
 
     public function storeUser(Request $request): RedirectResponse
     {
         $this->authorizeAdmin('users.manage');
-        $canManageAllWorkspaces = $this->canManageAllWorkspaces();
 
         $data = $request->validate([
-            'workspace_slug' => [Rule::requiredIf($canManageAllWorkspaces), 'nullable', 'string', 'max:80', Rule::exists('tenants', 'slug')],
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -87,7 +81,7 @@ class AccessControlController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        $tenantId = $this->selectedTenantId($data['workspace_slug'] ?? null);
+        $tenantId = $this->tenantId();
         Role::ensureDefaultsForTenant($tenantId);
 
         $request->validate([
@@ -118,7 +112,7 @@ class AccessControlController extends Controller
     {
         $this->authorizeAdmin('users.manage');
         $this->ensureTenantRecord($user);
-        $tenantId = $this->canManageAllWorkspaces() ? (int) $user->tenant_id : $this->tenantId();
+        $tenantId = $this->tenantId();
 
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
@@ -160,7 +154,7 @@ class AccessControlController extends Controller
         Role::ensureDefaultsForTenant($tenantId);
 
         return view('settings.roles', [
-            'page_title' => 'Roles & Permissions | Onyx BCS',
+            'page_title' => 'Roles & Permissions | Texaro Technologies Limited',
             'roles' => Role::withCount('users')->where('tenant_id', $tenantId)->orderBy('is_system', 'desc')->orderBy('name')->get(),
             'permissionGroups' => PermissionCatalog::groups(),
         ]);
@@ -171,7 +165,7 @@ class AccessControlController extends Controller
         $this->authorizeAdmin('roles.manage');
 
         return view('settings.roles_create', [
-            'page_title' => 'Create Role | Onyx BCS',
+            'page_title' => 'Create Role | Texaro Technologies Limited',
             'permissionGroups' => PermissionCatalog::groups(),
         ]);
     }
@@ -194,7 +188,7 @@ class AccessControlController extends Controller
         $this->ensureTenantRecord($role);
 
         return view('settings.roles_edit', [
-            'page_title' => 'Edit ' . $role->name . ' | Onyx BCS',
+            'page_title' => 'Edit ' . $role->name . ' | Texaro Technologies Limited',
             'role' => $role->loadCount('users'),
             'permissionGroups' => PermissionCatalog::groups(),
         ]);
@@ -265,7 +259,7 @@ class AccessControlController extends Controller
         $this->authorizeAdmin('security.manage');
 
         return view('settings.security', [
-            'page_title' => 'Security Settings | Onyx BCS',
+            'page_title' => 'Security Settings | Texaro Technologies Limited',
             'settings' => SecuritySetting::forTenant($this->tenantId()),
         ]);
     }
@@ -309,7 +303,7 @@ class AccessControlController extends Controller
         $this->authorizeAdmin('audit.view');
 
         return view('settings.audit_logs', [
-            'page_title' => 'Audit Logs | Onyx BCS',
+            'page_title' => 'Audit Logs | Texaro Technologies Limited',
             'logs' => AuditLog::with('user')->where('tenant_id', $this->tenantId())->latest()->limit(150)->get(),
         ]);
     }
@@ -323,26 +317,20 @@ class AccessControlController extends Controller
 
     private function canManageAllWorkspaces(): bool
     {
-        $role = str_replace([' ', '-'], '_', strtolower(trim((string) Auth::user()?->role)));
-
-        return in_array($role, ['super_admin', 'superadmin'], true);
+        return false;
     }
 
     private function accessibleTenants()
     {
         return DB::table('tenants')
-            ->when(! $this->canManageAllWorkspaces(), fn ($query) => $query->where('id', $this->tenantId()))
+            ->where('id', $this->tenantId())
             ->orderBy('company_name')
             ->get();
     }
 
     private function selectedTenantId(?string $workspaceSlug): ?int
     {
-        if (! $this->canManageAllWorkspaces()) {
-            return $this->tenantId();
-        }
-
-        return DB::table('tenants')->where('slug', $workspaceSlug)->value('id');
+        return $this->tenantId();
     }
 
     private function tenantId(): ?int

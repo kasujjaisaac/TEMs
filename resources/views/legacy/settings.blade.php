@@ -75,7 +75,7 @@ function admin_ensure_schema(PDO $pdo, int $tenantId): void
     $exists = (int) onyx_scalar('SELECT COUNT(*) FROM tenants WHERE id = :id', ['id' => $tenantId], 0);
     if ($exists === 0) {
         $pdo->prepare('INSERT INTO tenants (id, company_name, slug, currency, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())')
-            ->execute([$tenantId, 'Onyx BCS', 'onyx-bcs', 'UGX', 'active']);
+            ->execute([$tenantId, 'Texaro Technologies Limited', 'onyx-bcs', 'UGX', 'active']);
     }
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS tenant_settings (

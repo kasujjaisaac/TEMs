@@ -12,8 +12,8 @@ foreach ($settingsRows as $row) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
 
-$companyName = session('company_name', config('app.name', 'Onyx Business Control System'));
-$companyLogo = trim((string) ($settings['company_logo'] ?? '')) ?: asset('assets/onxy logo.jpeg');
+$companyName = session('company_name', config('app.name', 'Texaro Technologies Limited'));
+$companyLogo = trim((string) ($settings['company_logo'] ?? '')) ?: asset('assets/texaro-logo.png');
 $companyAddress = trim((string) ($settings['physical_address'] ?? 'Kampala, Uganda'));
 $companyPhone = trim((string) ($settings['phone_number'] ?? '+256 700 000 000'));
 $companyEmail = trim((string) ($settings['email_address'] ?? 'accounts@company.test'));

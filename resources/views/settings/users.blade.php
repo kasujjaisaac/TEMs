@@ -45,9 +45,6 @@
                 <thead>
                     <tr>
                         <th>User</th>
-                        @if($canManageAllWorkspaces)
-                            <th>Workspace</th>
-                        @endif
                         <th>Contact</th>
                         <th>Role</th>
                         <th>Status</th>
@@ -62,13 +59,6 @@
                                 <strong class="access-table-title">{{ $user->name }}</strong>
                                 <span class="access-muted">{{ $user->department ?: 'No department' }}</span>
                             </td>
-                            @if($canManageAllWorkspaces)
-                                @php($tenant = $tenantsById->get($user->tenant_id))
-                                <td>
-                                    <strong class="access-table-title">{{ $tenant->company_name ?? 'Unknown workspace' }}</strong>
-                                    <span class="access-muted">{{ $tenant->slug ?? 'No workspace' }}</span>
-                                </td>
-                            @endif
                             <td>
                                 <strong class="access-table-title">{{ $user->email }}</strong>
                                 <span class="access-muted">{{ $user->phone ?: 'No phone' }}</span>
@@ -104,7 +94,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $canManageAllWorkspaces ? 7 : 6 }}">No users found.</td>
+                            <td colspan="6">No users found.</td>
                         </tr>
                     @endforelse
                 </tbody>

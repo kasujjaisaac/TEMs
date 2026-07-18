@@ -37,7 +37,7 @@ class Role extends Model
         }
 
         foreach (PermissionCatalog::defaultRoles() as $role) {
-            self::firstOrCreate(
+            $systemRole = self::firstOrCreate(
                 ['tenant_id' => $tenantId, 'slug' => $role['slug']],
                 [
                     'name' => $role['name'],
@@ -47,6 +47,15 @@ class Role extends Model
                     'is_active' => true,
                 ]
             );
+
+            if ($systemRole->is_system) {
+                $systemRole->forceFill([
+                    'name' => $role['name'],
+                    'description' => $role['description'],
+                    'permissions' => PermissionCatalog::defaultRolePermissions($role['slug']),
+                    'is_active' => true,
+                ])->save();
+            }
         }
 
         User::where('tenant_id', $tenantId)
