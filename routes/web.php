@@ -22,6 +22,7 @@ use App\Http\Controllers\HR\PositionController as HrPositionController;
 use App\Http\Controllers\Planning\DashboardController as PlanningDashboardController;
 use App\Http\Controllers\Planning\ObjectiveController as PlanningObjectiveController;
 use App\Http\Controllers\Planning\WorkplanController as PlanningWorkplanController;
+use App\Http\Controllers\Enterprise\FoundationController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('home');
 Route::get('/index.php', [AuthController::class, 'showLogin'])->name('home.legacy');
@@ -84,6 +85,14 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/workplans/{workplan}', [PlanningWorkplanController::class, 'show'])->name('workplans.show');
         Route::post('/workplans/{workplan}/items', [PlanningWorkplanController::class, 'storeItem'])->name('workplans.items.store');
         Route::post('/workplans/{workplan}/approve', [PlanningWorkplanController::class, 'approve'])->name('workplans.approve');
+    });
+
+    Route::prefix('foundation')->name('foundation.')->group(function () {
+        Route::get('/', [FoundationController::class, 'index'])->name('dashboard');
+        Route::put('/company', [FoundationController::class, 'updateCompany'])->name('company.update');
+        Route::post('/approvals', [FoundationController::class, 'storeApproval'])->name('approvals.store');
+        Route::post('/approvals/{approval}/decision', [FoundationController::class, 'decideApproval'])->name('approvals.decision');
+        Route::post('/notifications/{notification}/read', [FoundationController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
     Route::get('/settings/users', [AccessControlController::class, 'users'])->name('settings.users');

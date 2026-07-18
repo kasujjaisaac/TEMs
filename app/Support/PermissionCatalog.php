@@ -11,6 +11,14 @@ class PermissionCatalog
                 'dashboard.view' => 'View dashboard',
                 'dashboard.sensitive' => 'View sensitive figures',
             ],
+            'Enterprise Foundation' => [
+                'foundation.view' => 'View enterprise foundation workspace',
+                'foundation.company.manage' => 'Manage company configuration',
+                'foundation.approvals.manage' => 'Manage approval requests',
+                'foundation.notifications.view' => 'View system notifications',
+                'foundation.events.view' => 'View domain event ledger',
+                'foundation.documents.view' => 'View document foundation register',
+            ],
             'Sales & POS' => [
                 'pos.access' => 'Access POS',
                 'sales.view' => 'View sales',
@@ -121,6 +129,9 @@ class PermissionCatalog
             'super_admin', 'admin' => self::allKeys(),
             'manager' => [
                 'dashboard.view',
+                'foundation.view',
+                'foundation.notifications.view',
+                'foundation.events.view',
                 'commercial.dashboard.view',
                 'commercial.leads.view',
                 'commercial.leads.create',
@@ -176,6 +187,8 @@ class PermissionCatalog
             ],
             'accountant' => [
                 'dashboard.view',
+                'foundation.view',
+                'foundation.notifications.view',
                 'sales.view',
                 'finance.dashboard.view',
                 'finance.accounts.view',

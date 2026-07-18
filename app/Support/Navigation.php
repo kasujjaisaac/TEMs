@@ -128,6 +128,7 @@ class Navigation
                 'label' => 'Settings',
                 'icon' => 'fa-sliders',
                 'items' => [
+                    ['file' => 'foundation.php', 'label' => 'Enterprise Foundation', 'icon' => 'fa-diagram-project', 'url' => route('foundation.dashboard'), 'patterns' => ['foundation*'], 'permission' => 'foundation.view'],
                     ['file' => 'settings.php', 'label' => 'Overview', 'icon' => 'fa-gear', 'url' => url('settings') . '?section=overview', 'patterns' => ['settings'], 'section' => 'overview'],
                     ['file' => 'settings.php', 'label' => 'Company', 'icon' => 'fa-building', 'url' => url('settings') . '?section=company', 'patterns' => ['settings'], 'section' => 'company'],
                     ['file' => 'settings.php', 'label' => 'Finance', 'icon' => 'fa-coins', 'url' => url('settings') . '?section=finance', 'patterns' => ['settings'], 'section' => 'finance'],
