@@ -377,6 +377,26 @@ $target_cards = [
     ['label' => 'Execution target', 'value' => number_format($planning_company_achievement, 1) . '%', 'target' => $execution_goal . '%', 'progress' => $execution_progress],
     ['label' => 'Profit target', 'value' => onyx_money($gross_margin_estimate, $currency), 'target' => onyx_money($profit_goal, $currency), 'progress' => $profit_progress],
 ];
+$net_month_position = ($finance_revenue_month ?: $sales_month) - ($finance_expense_month ?: $purchase_month);
+$operational_load = $implementation_projects + $project_milestones_pending + $maintenance_due + $support_tickets_open;
+$coverage_sources = [
+    $customer_count,
+    $commercial_active_leads + $commercial_active_opportunities,
+    $invoice_count_month,
+    $finance_transactions,
+    $product_count,
+    $employee_profiles,
+    $planning_targets,
+    $document_records + $knowledge_articles + $analytics_reports,
+];
+$coverage_score = round((count(array_filter($coverage_sources, static fn ($value): bool => (int) $value > 0)) / max(1, count($coverage_sources))) * 100);
+$conversion_health = $commercial_active_leads > 0 ? round(($commercial_active_opportunities / max(1, $commercial_active_leads + $commercial_active_opportunities)) * 100) : ($commercial_active_opportunities > 0 ? 100 : 0);
+$board_answer_cards = [
+    ['label' => 'Cash posture', 'value' => onyx_money($net_month_position, $currency), 'note' => 'Revenue less spend this month', 'progress' => $net_month_position > 0 ? 82 : 28, 'href' => route('finance.dashboard')],
+    ['label' => 'Growth quality', 'value' => $conversion_health . '%', 'note' => $commercial_active_opportunities . ' opportunities from ' . $commercial_active_leads . ' leads', 'progress' => $conversion_health, 'href' => route('commercial.dashboard')],
+    ['label' => 'Workload pressure', 'value' => (string) $operational_load, 'note' => 'Projects, milestones, jobs, tickets', 'progress' => max(8, min(100, $operational_load * 10)), 'href' => route('delivery.dashboard')],
+    ['label' => 'System coverage', 'value' => $coverage_score . '%', 'note' => 'Active data across core modules', 'progress' => $coverage_score, 'href' => onyx_legacy_url('reports.php')],
+];
 $operating_clusters = [
     [
         'title' => 'Growth Engine',
@@ -469,17 +489,17 @@ $operating_clusters = [
     .dash-board .system-kpi i,.dash-board .dash-kpi i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:11px!important;height:24px!important;justify-content:center!important;width:24px!important}
     .dash-board .system-kpi span,.dash-board .dash-kpi span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.05!important;text-transform:uppercase!important}.dash-board .system-kpi strong,.dash-board .dash-kpi strong{display:block!important;font-size:12px!important;font-weight:900!important;line-height:1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .system-kpi small,.dash-board .dash-kpi small{color:#d8d8de!important;display:block!important;font-size:8px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
     .dash-board .dash-grid{align-items:start!important;display:grid!important;gap:7px!important;grid-auto-rows:max-content!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;min-width:0!important}.dash-board .span-2x{grid-column:span 2!important}.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x{grid-column:span 4!important}.dash-board .span-5x{grid-column:span 5!important}.dash-board .span-6x{grid-column:span 6!important}.dash-board .span-8x{grid-column:span 8!important}.dash-board .span-12x{grid-column:1/-1!important}
-    .dash-board .dash-panel{align-self:start!important;background:#101923!important;border:1px solid var(--dash-line)!important;height:auto!important;min-height:0!important;overflow:hidden!important;padding:8px!important}.dash-board .dash-title{align-items:center!important;display:flex!important;gap:6px!important;justify-content:space-between!important;margin-bottom:6px!important;min-width:0!important}.dash-board .dash-title strong{font-size:10px!important;font-weight:900!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-title i{color:#fff!important}.dash-board .dash-title a,.dash-board .dash-tabs span{border:1px solid var(--dash-line)!important;color:#fff!important;font-size:8px!important;font-weight:900!important;line-height:1!important;padding:5px 7px!important;text-decoration:none!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-tabs span:first-child{background:#fff!important;color:#050506!important}
+    .dash-board .dash-panel{align-self:stretch!important;background:#101923!important;border:1px solid var(--dash-line)!important;display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;overflow:hidden!important;padding:8px!important}.dash-board .dash-title{align-items:center!important;display:flex!important;gap:6px!important;justify-content:space-between!important;margin-bottom:6px!important;min-width:0!important}.dash-board .dash-title strong{font-size:10px!important;font-weight:900!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-title i{color:#fff!important}.dash-board .dash-title a,.dash-board .dash-tabs span{border:1px solid var(--dash-line)!important;color:#fff!important;font-size:8px!important;font-weight:900!important;line-height:1!important;padding:5px 7px!important;text-decoration:none!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-tabs span:first-child{background:#fff!important;color:#050506!important}
     .dash-board .cluster-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-card{background:rgba(255,255,255,.025)!important;border:1px solid var(--dash-line)!important;color:#fff!important;display:grid!important;gap:9px!important;grid-template-columns:76px minmax(0,1fr)!important;min-height:116px!important;padding:8px!important;text-decoration:none!important}.dash-board .cluster-card:hover{background:rgba(255,255,255,.07)!important;text-decoration:none!important}.dash-board .cluster-donut{display:block!important;height:72px!important;width:72px!important}.dash-board .cluster-donut-value{fill:#fff!important;font-size:12px!important;font-weight:900!important}.dash-board .cluster-donut-label{fill:#8d99a8!important;font-size:7px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .cluster-head{align-items:center!important;display:flex!important;gap:7px!important;justify-content:space-between!important;margin-bottom:5px!important}.dash-board .cluster-head strong{font-size:11px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-head i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:10px!important;height:20px!important;justify-content:center!important;width:20px!important}.dash-board .cluster-primary{display:block!important;font-size:14px!important;font-weight:900!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-note{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important;margin-top:3px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-metrics{display:grid!important;gap:4px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;margin-top:7px!important}.dash-board .cluster-metric{border-top:1px solid rgba(255,255,255,.07)!important;min-width:0!important;padding-top:4px!important}.dash-board .cluster-metric span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-metric strong{display:block!important;font-size:10px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-bar{background:rgba(255,255,255,.07)!important;height:4px!important;margin-top:7px!important;overflow:hidden!important}.dash-board .cluster-bar span{background:#fff!important;display:block!important;height:100%!important}
-    .dash-board .trend-pill{align-items:center!important;border:1px solid rgba(255,255,255,.1)!important;display:inline-flex!important;font-size:8px!important;font-weight:900!important;gap:4px!important;margin-top:4px!important;max-width:100%!important;padding:2px 4px!important;text-transform:uppercase!important}.dash-board .trend-pill.up{color:#8ff0c3!important}.dash-board .trend-pill.down{color:#ff8a8a!important}.dash-board .trend-pill.flat{color:#d8d8de!important}.dash-board .metric-progress,.dash-board .target-bar,.dash-board .mini-bar{background:rgba(255,255,255,.07)!important;height:4px!important;overflow:hidden!important}.dash-board .metric-progress{grid-column:1/-1!important}.dash-board .metric-progress span,.dash-board .target-bar span,.dash-board .mini-bar span{background:#fff!important;display:block!important;height:100%!important}.dash-board .visual-list{display:grid!important;gap:7px!important}.dash-board .visual-row{display:grid!important;gap:6px!important;grid-template-columns:minmax(0,1fr) auto!important}.dash-board .visual-row span{color:var(--onyx-muted)!important;font-size:9px!important;font-weight:800!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .visual-row strong{font-size:9px!important;white-space:nowrap!important}.dash-board .visual-row .mini-bar{grid-column:1/-1!important}.dash-board .target-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}.dash-board .target-card{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:grid!important;gap:5px!important;min-height:58px!important;padding:7px!important}.dash-board .target-card span{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .target-card strong{font-size:12px!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .target-card small{color:#d8d8de!important;font-size:8px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .command-list{display:grid!important;gap:6px!important}.dash-board .command-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;color:#fff!important;display:grid!important;gap:8px!important;grid-template-columns:28px minmax(0,1fr) auto!important;min-height:36px!important;padding:6px!important;text-decoration:none!important}.dash-board .command-priority{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:8px!important;font-weight:900!important;height:22px!important;justify-content:center!important;width:22px!important}.dash-board .command-item strong{display:block!important;font-size:10px!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .command-item span{color:var(--onyx-muted)!important;font-size:9px!important}.dash-board .command-value{color:#fff!important;font-size:9px!important;font-weight:900!important;white-space:nowrap!important}
+    .dash-board .trend-pill{align-items:center!important;border:1px solid rgba(255,255,255,.1)!important;display:inline-flex!important;font-size:8px!important;font-weight:900!important;gap:4px!important;margin-top:4px!important;max-width:100%!important;padding:2px 4px!important;text-transform:uppercase!important}.dash-board .trend-pill.up{color:#8ff0c3!important}.dash-board .trend-pill.down{color:#ff8a8a!important}.dash-board .trend-pill.flat{color:#d8d8de!important}.dash-board .metric-progress,.dash-board .target-bar,.dash-board .mini-bar{background:rgba(255,255,255,.07)!important;height:4px!important;overflow:hidden!important}.dash-board .metric-progress{grid-column:1/-1!important}.dash-board .metric-progress span,.dash-board .target-bar span,.dash-board .mini-bar span{background:#fff!important;display:block!important;height:100%!important}.dash-board .visual-list{display:grid!important;gap:7px!important}.dash-board .visual-row{display:grid!important;gap:6px!important;grid-template-columns:minmax(0,1fr) auto!important}.dash-board .visual-row span{color:var(--onyx-muted)!important;font-size:9px!important;font-weight:800!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .visual-row strong{font-size:9px!important;white-space:nowrap!important}.dash-board .visual-row .mini-bar{grid-column:1/-1!important}.dash-board .target-grid,.dash-board .answer-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}.dash-board .target-card,.dash-board .answer-card{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:grid!important;gap:5px!important;min-height:58px!important;padding:7px!important;text-decoration:none!important}.dash-board .target-card span,.dash-board .answer-card span{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .target-card strong,.dash-board .answer-card strong{font-size:12px!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .target-card small,.dash-board .answer-card small{color:#d8d8de!important;font-size:8px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .panel-foot{align-items:center!important;border-top:1px solid rgba(255,255,255,.06)!important;color:var(--onyx-muted)!important;display:flex!important;font-size:8px!important;font-weight:900!important;justify-content:space-between!important;line-height:1!important;margin-top:auto!important;padding-top:7px!important;text-transform:uppercase!important}.dash-board .panel-foot a{border:1px solid var(--dash-line)!important;color:#fff!important;padding:4px 6px!important;text-decoration:none!important}.dash-board .command-list{display:grid!important;gap:6px!important}.dash-board .command-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;color:#fff!important;display:grid!important;gap:8px!important;grid-template-columns:28px minmax(0,1fr) auto!important;min-height:36px!important;padding:6px!important;text-decoration:none!important}.dash-board .command-priority{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:8px!important;font-weight:900!important;height:22px!important;justify-content:center!important;width:22px!important}.dash-board .command-item strong{display:block!important;font-size:10px!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .command-item span{color:var(--onyx-muted)!important;font-size:9px!important}.dash-board .command-value{color:#fff!important;font-size:9px!important;font-weight:900!important;white-space:nowrap!important}
     .dash-board .system-strip{display:grid!important;gap:6px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .attention-grid,.dash-board .report-grid{display:grid!important;gap:7px!important}.dash-board .attention-item,.dash-board .report-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:flex!important;gap:8px!important;min-height:32px!important;overflow:hidden!important;padding:5px!important;text-decoration:none!important}.dash-board .attention-icon,.dash-board .report-icon{align-items:center!important;color:#fff!important;display:flex!important;flex:0 0 16px!important;font-size:10px!important;height:16px!important;justify-content:center!important;width:16px!important}.dash-board .attention-item strong,.dash-board .report-item strong{display:block!important;font-size:9px!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .attention-item span,.dash-board .report-item span{color:var(--onyx-muted)!important;display:block!important;font-size:10px!important;line-height:1.2!important;margin:1px 0 0!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
     .dash-board .chart-shell{height:94px!important;min-height:94px!important;overflow:hidden!important;padding:0!important}.dash-board .chart-svg{display:block!important;height:94px!important;width:100%!important}.dash-board .dash-chart-note{color:var(--onyx-muted)!important;font-size:10px!important;font-weight:900!important;margin-bottom:6px!important;text-transform:uppercase!important}.dash-board .dash-donut-wrap{align-items:center!important;display:grid!important;gap:10px!important;grid-template-columns:72px minmax(0,1fr)!important}.dash-board .revenue-pie{height:70px!important;width:70px!important}.dash-board .pie-total-label{fill:#8d8d98!important;font-size:8px!important;font-weight:900!important}.dash-board .pie-total-value{fill:#fff!important;font-size:7px!important;font-weight:900!important}.dash-board .revenue-pie-empty{align-items:center!important;border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;display:flex!important;font-size:10px!important;font-weight:900!important;height:70px!important;justify-content:center!important;text-align:center!important;width:70px!important}
     .dash-board .mini-list{display:grid!important;gap:4px!important}.dash-board .mini-row{align-items:center!important;border-bottom:1px solid rgba(255,255,255,.045)!important;display:grid!important;gap:8px!important;grid-template-columns:minmax(0,1fr) auto!important;padding:0 0 4px!important}.dash-board .mini-row span{color:var(--onyx-muted)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .mini-row strong{font-size:9px!important;line-height:1.18!important;white-space:nowrap!important}
     .dash-board .dash-table{border-collapse:collapse!important;table-layout:fixed!important;width:100%!important}.dash-board .dash-table th{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;padding:5px 4px!important;text-align:left!important;text-transform:uppercase!important}.dash-board .dash-table td{border-top:1px solid rgba(255,255,255,.045)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;padding:6px 5px!important;text-overflow:ellipsis!important;vertical-align:top!important}.dash-board .dash-empty{border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;font-size:11px!important;line-height:1.35!important;min-height:44px!important;padding:9px!important;text-align:center!important}.dash-board .dash-status{background:rgba(255,255,255,.08)!important;border:1px solid var(--dash-line)!important;color:#fff!important;font-size:9px!important;font-weight:900!important;padding:3px 5px!important;text-transform:uppercase!important;white-space:nowrap!important}
     .dash-board .activity-map{background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01))!important;border:1px solid rgba(255,255,255,.075)!important;height:68px!important;min-height:68px!important}.dash-board .activity-stats{display:grid!important;gap:5px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin-top:5px!important}.dash-board .activity-stat{align-items:center!important;display:flex!important;gap:6px!important;min-width:0!important}.dash-board .activity-stat i{color:#fff!important;font-size:11px!important}.dash-board .activity-stat strong{display:block!important;font-size:13px!important;line-height:1!important}.dash-board .activity-stat span{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important}
     @media(max-width:1180px){.dash-board .system-kpis,.dash-board .system-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .system-strip,.dash-board .target-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
-    @media(max-width:620px){.dash-board .system-kpis,.dash-board .cluster-grid,.dash-board .system-strip,.dash-board .activity-stats,.dash-board .target-grid{grid-template-columns:1fr!important}.dash-board .cluster-card{grid-template-columns:68px minmax(0,1fr)!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
+    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .system-strip,.dash-board .target-grid,.dash-board .answer-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
+    @media(max-width:620px){.dash-board .system-kpis,.dash-board .cluster-grid,.dash-board .system-strip,.dash-board .activity-stats,.dash-board .target-grid,.dash-board .answer-grid{grid-template-columns:1fr!important}.dash-board .cluster-card{grid-template-columns:68px minmax(0,1fr)!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
 </style>
 
 <div class="dash-board">
@@ -556,6 +576,23 @@ $operating_clusters = [
 
     <section class="dash-panel span-12x">
         <div class="dash-title">
+            <strong><i class="fa-solid fa-circle-question"></i> Board answers</strong>
+            <div class="dash-tabs"><span>Summary</span></div>
+        </div>
+        <div class="answer-grid">
+            <?php foreach ($board_answer_cards as $answer): ?>
+                <a class="answer-card" href="<?= htmlspecialchars($answer['href']) ?>">
+                    <span><?= htmlspecialchars($answer['label']) ?></span>
+                    <strong><?= htmlspecialchars((string) $answer['value']) ?></strong>
+                    <small><?= htmlspecialchars($answer['note']) ?></small>
+                    <div class="target-bar"><span style="width: <?= htmlspecialchars((string) max(0, min(100, (float) $answer['progress']))) ?>%"></span></div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="dash-panel span-12x">
+        <div class="dash-title">
             <strong><i class="fa-solid fa-triangle-exclamation"></i> Cross-system attention</strong>
             <div class="dash-tabs"><span>Live controls</span></div>
         </div>
@@ -577,6 +614,7 @@ $operating_clusters = [
             </div>
             <div class="dash-chart-note">Total revenue <?= htmlspecialchars(onyx_money($sales_month, $currency)) ?></div>
             <div class="chart-shell"><?= dashboard_chart_svg($sales_trend, '#ffffff', 'rgba(255,255,255,0.16)') ?></div>
+            <div class="panel-foot"><span>6 month trend</span><a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-4x">
@@ -590,6 +628,7 @@ $operating_clusters = [
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+            <div class="panel-foot"><span>Product mix</span><a href="<?= htmlspecialchars(onyx_legacy_url('products.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-4x">
@@ -608,6 +647,7 @@ $operating_clusters = [
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Stage value</span><a href="<?= htmlspecialchars(route('commercial.dashboard')) ?>">Open</a></div>
         </div>
 
     </section>
@@ -624,6 +664,7 @@ $operating_clusters = [
                 <div class="mini-row"><span>Cash today</span><strong><?= htmlspecialchars(onyx_money($payments_today, $currency)) ?></strong></div>
                 <div class="mini-row"><span>Open balance</span><strong><?= htmlspecialchars(onyx_money($open_invoice_balance, $currency)) ?></strong></div>
             </div>
+            <div class="panel-foot"><span>Collections</span><a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-6x">
@@ -639,6 +680,7 @@ $operating_clusters = [
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Cash pressure</span><a href="<?= htmlspecialchars(route('finance.dashboard')) ?>">Open</a></div>
         </div>
     </section>
 
@@ -656,6 +698,7 @@ $operating_clusters = [
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Status mix</span><a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-4x">
@@ -668,6 +711,7 @@ $operating_clusters = [
                     <?php endforeach; ?>
                 </div>
             </div>
+            <div class="panel-foot"><span>Account health</span><a href="<?= htmlspecialchars(route('crm.dashboard')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-4x">
@@ -683,6 +727,7 @@ $operating_clusters = [
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Inventory risk</span><a href="<?= htmlspecialchars(onyx_legacy_url('inventory.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-6x">
@@ -696,6 +741,7 @@ $operating_clusters = [
                     </a>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Priority actions</span><a href="<?= htmlspecialchars(route('foundation.dashboard')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-3x">
@@ -708,6 +754,7 @@ $operating_clusters = [
                     </a>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Reports hub</span><a href="<?= htmlspecialchars(onyx_legacy_url('reports.php')) ?>">Open</a></div>
         </div>
 
         <div class="dash-panel span-3x">
@@ -720,6 +767,7 @@ $operating_clusters = [
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="panel-foot"><span>Audit trail</span><a href="<?= htmlspecialchars(route('foundation.dashboard')) ?>">Open</a></div>
         </div>
     </section>
 </div>
