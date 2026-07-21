@@ -2964,3 +2964,481 @@ a:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* TEMS Compact Square Cloud System */
+:root {
+  --accent: #ffffff;
+  --accent-600: #d8d8de;
+  --onyx-accent: #ffffff;
+  --onyx-accent-2: #d8d8de;
+  --onyx-bg: #050506;
+  --onyx-surface: #121216;
+  --onyx-surface-2: #17171c;
+  --onyx-panel: rgba(255, 255, 255, 0.045);
+  --onyx-border: rgba(255, 255, 255, 0.14);
+  --onyx-border-strong: rgba(255, 255, 255, 0.52);
+  --onyx-text: #f7f7fa;
+  --onyx-muted: #a6a2bc;
+  --onyx-muted-2: #c6c1dc;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+body,
+.onyx-erp-body {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(180deg, #050506 0%, #0b0b10 50%, #050506 100%) !important;
+  background-size: 44px 44px, 44px 44px, auto !important;
+}
+
+.tems-command,
+.commercial-page,
+.planning-page,
+.finance-page,
+.hr-core,
+.access-page,
+.admin-page,
+.hr-register,
+.contract-register,
+.employee-file,
+.inventory-page,
+.purchase-page,
+.supplier-page,
+.customer-page,
+.crm-page,
+.product-page,
+.dash-page {
+  gap: 9px !important;
+}
+
+.tems-command-header,
+.commercial-header,
+.finance-header,
+.planning-header,
+.hr-core-header,
+.access-header,
+.admin-header,
+.hr-hero,
+.employee-hero,
+.dash-header,
+.page-header {
+  align-items: center !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)) !important;
+  border: 1px solid var(--onyx-border) !important;
+  box-shadow: none !important;
+  min-height: 58px !important;
+  padding: 10px 14px !important;
+}
+
+.tems-command-icon,
+.commercial-title-icon,
+.finance-icon,
+.hr-core-icon,
+.access-icon,
+.admin-icon,
+.page-title-icon {
+  background: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  color: var(--onyx-accent) !important;
+  flex: 0 0 36px !important;
+  font-size: 15px !important;
+  height: 36px !important;
+  width: 36px !important;
+}
+
+.tems-command h1,
+.commercial-title h1,
+.finance-title h1,
+.hr-core-title h1,
+.access-title h1,
+.admin-title h1,
+.page-title h1 {
+  color: #ffffff !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  margin: 0 0 3px !important;
+}
+
+.tems-command-subtitle,
+.commercial-muted,
+.finance-muted,
+.hr-core-muted,
+.access-muted,
+.admin-muted,
+.page-subtitle,
+.muted {
+  color: var(--onyx-muted-2) !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+.tems-command-eyebrow,
+.tems-kpi-card span,
+.tems-panel-kicker,
+.tems-list-label,
+.commercial-card span,
+.finance-card span,
+.planning-card span,
+.hr-core-card span,
+.access-kpi span,
+.admin-kpi span,
+.hr-stat span,
+.contract-stat span,
+.employee-stat span,
+.inventory-kpi span,
+.purchase-kpi span,
+.supplier-kpi span,
+.crm-kpi span,
+.product-kpi span,
+.dash-kpi span,
+.stat-label,
+.stat-card .label {
+  color: var(--onyx-muted) !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase !important;
+}
+
+.tems-kpi-grid,
+.commercial-grid,
+.finance-grid,
+.planning-grid,
+.hr-core-grid,
+.access-kpis,
+.admin-kpis,
+.hr-stats,
+.contract-stats,
+.employee-stats,
+.inventory-kpis,
+.purchase-kpis,
+.supplier-kpis,
+.crm-grid,
+.product-kpis,
+.stat-grid {
+  display: grid !important;
+  gap: 8px !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.tems-kpi-card,
+.commercial-card,
+.finance-card,
+.planning-card,
+.hr-core-card,
+.access-kpi,
+.admin-kpi,
+.hr-stat,
+.contract-stat,
+.employee-stat,
+.inventory-kpi,
+.purchase-kpi,
+.supplier-kpi,
+.customer-panel,
+.crm-panel,
+.crm-kpi,
+.product-kpi,
+.dash-kpi,
+.stat-card,
+.card {
+  align-self: start !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)) !important;
+  border: 1px solid var(--onyx-border) !important;
+  box-shadow: none !important;
+  min-height: 62px !important;
+  padding: 9px 10px !important;
+}
+
+.tems-kpi-card {
+  gap: 4px !important;
+}
+
+.tems-kpi-card strong,
+.commercial-card strong,
+.finance-card strong,
+.planning-card strong,
+.hr-core-card strong,
+.access-kpi strong,
+.admin-kpi strong,
+.hr-stat strong,
+.contract-stat strong,
+.employee-stat strong,
+.inventory-kpi strong,
+.purchase-kpi strong,
+.supplier-kpi strong,
+.crm-kpi strong,
+.product-kpi strong,
+.dash-kpi strong,
+.stat-value,
+.stat-card .value {
+  color: #ffffff !important;
+  display: block !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  margin-top: 5px !important;
+  overflow-wrap: anywhere !important;
+}
+
+.tems-kpi-card small,
+.tems-card-note,
+.stat-card .note {
+  color: var(--onyx-muted) !important;
+  font-size: 9px !important;
+  line-height: 1.25 !important;
+  margin-top: 2px !important;
+}
+
+.tems-panel,
+.commercial-panel,
+.finance-panel,
+.planning-panel,
+.hr-core-panel,
+.access-panel,
+.admin-panel,
+.hr-panel,
+.contract-panel,
+.employee-panel,
+.inventory-panel,
+.purchase-panel,
+.supplier-panel,
+.product-panel,
+.dash-panel,
+.card:not(.stat-card):not(.tems-kpi-card) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)) !important;
+  border: 1px solid var(--onyx-border) !important;
+  box-shadow: none !important;
+  padding: 12px 14px !important;
+}
+
+.tems-panel-head,
+.commercial-panel-head,
+.finance-panel-head,
+.planning-panel-head,
+.hr-core-panel-head,
+.access-panel-head,
+.admin-panel-head,
+.employee-panel-head {
+  align-items: center !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  margin-bottom: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.tems-panel h2,
+.tems-panel-title,
+.commercial-panel h2,
+.finance-panel h2,
+.planning-panel h2,
+.hr-core-panel h2,
+.access-panel h2,
+.admin-panel h2,
+.card-title {
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.tems-button,
+.tems-command a.tems-button,
+.btn,
+.commercial-button,
+.finance-button,
+.hr-core-button,
+.access-button,
+.admin-btn,
+.hr-btn,
+.contract-btn,
+.employee-btn,
+.inventory-btn,
+.purchase-btn,
+.supplier-btn,
+.customer-action,
+.crm-btn,
+.product-action,
+.sales-action,
+.pos-btn {
+  background: var(--onyx-accent) !important;
+  border: 1px solid var(--onyx-accent) !important;
+  color: #050506 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  gap: 7px !important;
+  min-height: 34px !important;
+  padding: 0 11px !important;
+  text-transform: uppercase !important;
+}
+
+.tems-button.secondary,
+.btn.secondary,
+.commercial-button.secondary,
+.finance-button.secondary,
+.hr-core-button.secondary,
+.access-button.secondary,
+.admin-btn.secondary,
+.employee-btn.secondary,
+.inventory-btn.secondary,
+.purchase-btn.secondary,
+.supplier-btn.secondary,
+.crm-btn.secondary {
+  background: transparent !important;
+  border-color: var(--onyx-border-strong) !important;
+  color: #ffffff !important;
+}
+
+.topbar-sidebar-toggle,
+.mobile-sidebar-toggle,
+.mobile-quick-add {
+  background: var(--onyx-accent) !important;
+  border-color: var(--onyx-accent) !important;
+  color: #050506 !important;
+}
+
+.menu-item.active,
+.sidebar-link.active,
+.sidebar-direct-link.active,
+.mobile-bottom-nav a.active,
+.mobile-bottom-nav button.active {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+  color: #ffffff !important;
+}
+
+.menu-item:hover,
+.sidebar-link:hover,
+.sidebar-direct-link:hover,
+.mobile-more-grid a:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+
+.tems-status,
+.commercial-badge,
+.finance-badge,
+.access-badge,
+.admin-badge,
+.hr-status,
+.contract-status,
+.employee-status,
+.supplier-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  text-transform: uppercase !important;
+}
+
+.tems-work-card,
+.tems-insight-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  gap: 4px !important;
+  padding: 8px 9px !important;
+}
+
+.tems-work-card strong,
+.tems-insight-card strong,
+.tems-list-value {
+  color: #ffffff !important;
+  font-size: 15px !important;
+}
+
+.tems-table th,
+.tems-table td,
+.commercial-table th,
+.commercial-table td,
+.finance-table th,
+.finance-table td,
+.admin-table th,
+.admin-table td,
+.supplier-table th,
+.supplier-table td,
+.employee-table th,
+.employee-table td,
+.table th,
+.table td {
+  font-size: 10px !important;
+  padding: 8px 9px !important;
+}
+
+.tems-table th,
+.commercial-table th,
+.finance-table th,
+.admin-table th,
+.supplier-table th,
+.employee-table th,
+.table th {
+  color: var(--onyx-muted) !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+}
+
+.chart-shell {
+  background: #0d0d11 !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  padding: 6px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus,
+a:focus {
+  outline: 2px solid var(--onyx-accent) !important;
+  outline-offset: 1px;
+}
+
+@media (max-width: 1100px) {
+  .tems-kpi-grid,
+  .commercial-grid,
+  .finance-grid,
+  .planning-grid,
+  .hr-core-grid,
+  .access-kpis,
+  .admin-kpis,
+  .hr-stats,
+  .contract-stats,
+  .employee-stats,
+  .inventory-kpis,
+  .purchase-kpis,
+  .supplier-kpis,
+  .crm-grid,
+  .product-kpis,
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .tems-kpi-grid,
+  .commercial-grid,
+  .finance-grid,
+  .planning-grid,
+  .hr-core-grid,
+  .access-kpis,
+  .admin-kpis,
+  .hr-stats,
+  .contract-stats,
+  .employee-stats,
+  .inventory-kpis,
+  .purchase-kpis,
+  .supplier-kpis,
+  .crm-grid,
+  .product-kpis,
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
