@@ -42,7 +42,7 @@ class DashboardController extends Controller
             $inventory_trend[] = round($inventory_value * (1 + ($i * 0.03) - 0.02), 2);
         }
 
-        $chartSvg = $this->chartSvg($inventory_trend, '#b56cff', 'rgba(181,108,255,0.16)');
+        $chartSvg = $this->chartSvg($inventory_trend, '#ffffff', 'rgba(255,255,255,0.16)');
 
         return view('pages.dashboard', compact(
             'currency', 'customer_count', 'supplier_count', 'product_count', 'inventory_value', 'low_stock_count',
@@ -83,7 +83,7 @@ class DashboardController extends Controller
         $areaPath = rtrim($path) . ' L ' . $lastPoint[0] . ',' . ($height - 12) . ' L ' . $firstPoint[0] . ',' . ($height - 12) . ' Z';
 
         $svg = '<svg class="chart-svg" viewBox="0 0 ' . $width . ' ' . $height . '" role="img" aria-label="Chart">';
-        $svg .= '<rect x="0" y="0" width="' . $width . '" height="' . $height . '" rx="12" fill="#16161f"></rect>';
+        $svg .= '<rect x="0" y="0" width="' . $width . '" height="' . $height . '" rx="0" fill="#16161f"></rect>';
         if ($fillColor !== '') {
             $svg .= '<path d="' . $areaPath . '" fill="' . $fillColor . '" opacity="0.35"></path>';
         }

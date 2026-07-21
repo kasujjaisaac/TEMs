@@ -205,6 +205,58 @@ $paid_invoice_count = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM invoice
 $completion_rate = $invoice_count_month > 0 ? round(($paid_invoice_count / $invoice_count_month) * 100, 1) : 0;
 $recent_customers = dashboard_rows($pdo, 'SELECT id, name, phone, email, credit_balance, created_at FROM customers WHERE tenant_id = :tenant_id ORDER BY created_at DESC, id DESC LIMIT 6', ['tenant_id' => $tenant_id]);
 
+$commercial_pipeline_value = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(estimated_value), 0) FROM commercial_opportunities WHERE tenant_id = :tenant_id AND current_stage NOT IN ("Won", "Lost")', ['tenant_id' => $tenant_id]);
+$commercial_active_leads = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_leads WHERE tenant_id = :tenant_id AND status NOT IN ("Converted", "Lost", "Archived")', ['tenant_id' => $tenant_id]);
+$commercial_active_opportunities = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_opportunities WHERE tenant_id = :tenant_id AND current_stage NOT IN ("Won", "Lost")', ['tenant_id' => $tenant_id]);
+$commercial_billing_requests = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_billing_requests WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$commercial_pending_controls = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_stage_controls WHERE tenant_id = :tenant_id AND status <> "Verified"', ['tenant_id' => $tenant_id]);
+$commercial_open_negotiations = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_negotiations WHERE tenant_id = :tenant_id AND status NOT IN ("Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$commercial_due_renewals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_renewals WHERE tenant_id = :tenant_id AND status NOT IN ("Converted", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$commercial_open_expansions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_expansion_opportunities WHERE tenant_id = :tenant_id AND status NOT IN ("Converted", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+
+$crm_account_plans = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_account_plans WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+$crm_at_risk_accounts = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_customer_health_snapshots WHERE tenant_id = :tenant_id AND health_status IN ("At Risk", "Critical", "Poor")', ['tenant_id' => $tenant_id]);
+$crm_branches = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_customer_branches WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+$crm_subscriptions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_customer_subscriptions WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+$crm_recurring_revenue = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(recurring_amount), 0) FROM crm_customer_subscriptions WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+
+$finance_transactions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM finance_transactions WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$finance_unclassified = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM finance_transactions WHERE tenant_id = :tenant_id AND account_id IS NULL', ['tenant_id' => $tenant_id]);
+$finance_budget_lines = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM finance_budget_lines WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$finance_revenue_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(amount), 0) FROM finance_transactions WHERE tenant_id = :tenant_id AND direction = "Inflow" AND transaction_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
+$finance_expense_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(amount), 0) FROM finance_transactions WHERE tenant_id = :tenant_id AND direction = "Outflow" AND transaction_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
+
+$hr_departments = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM hr_departments WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+$hr_positions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM hr_positions WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$hr_vacancies = (int) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(CASE WHEN approved_headcount > filled_headcount THEN approved_headcount - filled_headcount ELSE 0 END), 0) FROM hr_positions WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$employee_profiles = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM employee_profiles WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+
+$planning_company_achievement = (float) dashboard_scalar($pdo, 'SELECT COALESCE(AVG(achievement_percentage), 0) FROM workplan_items WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$planning_targets = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_items WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$planning_evidence_pending = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_evidence WHERE tenant_id = :tenant_id AND status = "Submitted"', ['tenant_id' => $tenant_id]);
+$planning_corrective_actions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_corrective_actions WHERE tenant_id = :tenant_id AND status IN ("Open", "In Progress")', ['tenant_id' => $tenant_id]);
+
+$pending_approvals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM approval_requests WHERE tenant_id = :tenant_id AND status = "Pending"', ['tenant_id' => $tenant_id]);
+$unread_notifications = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM system_notifications WHERE tenant_id = :tenant_id AND read_at IS NULL', ['tenant_id' => $tenant_id]);
+$domain_events_today = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM domain_events WHERE tenant_id = :tenant_id AND DATE(occurred_at) = :today', ['tenant_id' => $tenant_id, 'today' => $today]);
+$document_records = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM document_records WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id])
+    + (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM enterprise_generated_documents WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id])
+    + (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_generated_documents WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+
+$portfolio_products = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM products_portfolio WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
+$implementation_projects = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM implementation_projects WHERE tenant_id = :tenant_id AND status NOT IN ("Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$project_milestones_pending = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM project_milestones WHERE tenant_id = :tenant_id AND status NOT IN ("Completed", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$engineering_backlog = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM engineering_backlog_items WHERE tenant_id = :tenant_id AND status NOT IN ("Done", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$engineering_releases = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM engineering_releases WHERE tenant_id = :tenant_id AND status NOT IN ("Released", "Cancelled")', ['tenant_id' => $tenant_id]);
+$support_tickets_open = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM support_tickets WHERE tenant_id = :tenant_id AND status NOT IN ("Resolved", "Closed")', ['tenant_id' => $tenant_id]);
+$customer_success_risks = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM customer_success_accounts WHERE tenant_id = :tenant_id AND risk_level IN ("High", "Critical")', ['tenant_id' => $tenant_id]);
+$governance_open = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM compliance_obligations WHERE tenant_id = :tenant_id AND status NOT IN ("Completed", "Cancelled")', ['tenant_id' => $tenant_id])
+    + (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM board_governance_actions WHERE tenant_id = :tenant_id AND status NOT IN ("Completed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$critical_signals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM intelligence_signals WHERE tenant_id = :tenant_id AND severity IN ("High", "Critical") AND status = "Open"', ['tenant_id' => $tenant_id]);
+$intelligence_recommendations = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM intelligence_recommendations WHERE tenant_id = :tenant_id AND status = "Open"', ['tenant_id' => $tenant_id]);
+$knowledge_articles = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM knowledge_articles WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$analytics_reports = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM analytics_reports WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+
 $attention_items = [
     ['label' => 'Products near reorder', 'value' => $near_reorder . ' items', 'icon' => 'fa-boxes-stacked', 'href' => 'inventory.php'],
     ['label' => 'Customer balances due', 'value' => $credit_customer_count . ' accounts', 'icon' => 'fa-user-clock', 'href' => 'customers.php'],
@@ -232,6 +284,39 @@ $activity_stats = [
     ['label' => 'Low Stock', 'value' => $low_stock_count, 'icon' => 'fa-triangle-exclamation'],
     ['label' => 'Service Jobs', 'value' => $upcoming_maintenance, 'icon' => 'fa-screwdriver-wrench'],
 ];
+$executive_kpis = [
+    ['label' => 'Revenue MTD', 'value' => onyx_money(max($sales_month, $finance_revenue_month), $currency), 'note' => 'Sales and finance inflow', 'icon' => 'fa-chart-line'],
+    ['label' => 'Open Pipeline', 'value' => onyx_money($commercial_pipeline_value, $currency), 'note' => $commercial_active_opportunities . ' active opportunities', 'icon' => 'fa-briefcase'],
+    ['label' => 'Receivables', 'value' => onyx_money($open_invoice_balance, $currency), 'note' => $credit_customer_count . ' customer accounts due', 'icon' => 'fa-file-invoice-dollar'],
+    ['label' => 'Company Execution', 'value' => number_format($planning_company_achievement, 1) . '%', 'note' => $planning_targets . ' workplan targets', 'icon' => 'fa-bullseye'],
+    ['label' => 'Controls Pending', 'value' => (string) ($pending_approvals + $commercial_pending_controls + $planning_evidence_pending), 'note' => 'Approvals, stage gates, evidence', 'icon' => 'fa-clipboard-check'],
+    ['label' => 'Customer Risk', 'value' => (string) ($crm_at_risk_accounts + $customer_success_risks + $support_tickets_open), 'note' => 'CRM health, success and tickets', 'icon' => 'fa-headset'],
+];
+$module_cards = [
+    ['title' => 'CRM / Accounts', 'icon' => 'fa-address-book', 'href' => route('crm.dashboard'), 'primary' => $customer_count, 'primary_label' => 'active customers', 'secondary' => $crm_account_plans . ' plans | ' . $crm_subscriptions . ' subscriptions', 'money' => onyx_money($crm_recurring_revenue, $currency)],
+    ['title' => 'Commercial', 'icon' => 'fa-handshake', 'href' => route('commercial.dashboard'), 'primary' => $commercial_active_leads, 'primary_label' => 'active leads', 'secondary' => $commercial_active_opportunities . ' opportunities | ' . $commercial_billing_requests . ' billing requests', 'money' => onyx_money($commercial_pipeline_value, $currency)],
+    ['title' => 'Sales', 'icon' => 'fa-receipt', 'href' => onyx_legacy_url('sales.php'), 'primary' => $invoice_count_month, 'primary_label' => 'invoices this month', 'secondary' => $paid_invoice_count . ' paid | ' . $completion_rate . '% completion', 'money' => onyx_money($sales_month, $currency)],
+    ['title' => 'Finance', 'icon' => 'fa-chart-pie', 'href' => route('finance.dashboard'), 'primary' => $finance_transactions, 'primary_label' => 'transactions', 'secondary' => $finance_budget_lines . ' budgets | ' . $finance_unclassified . ' unclassified', 'money' => onyx_money($finance_revenue_month - $finance_expense_month, $currency)],
+    ['title' => 'Inventory', 'icon' => 'fa-boxes-stacked', 'href' => onyx_legacy_url('inventory.php'), 'primary' => $product_count, 'primary_label' => 'products', 'secondary' => $low_stock_count . ' low stock | ' . $near_reorder . ' near reorder', 'money' => onyx_money($inventory_value, $currency)],
+    ['title' => 'Procurement', 'icon' => 'fa-cart-shopping', 'href' => onyx_legacy_url('purchases.php'), 'primary' => $purchase_count, 'primary_label' => 'purchases this month', 'secondary' => $supplier_count . ' suppliers | ' . $credit_supplier_count . ' balances due', 'money' => onyx_money($purchase_month, $currency)],
+    ['title' => 'HR Command', 'icon' => 'fa-users-gear', 'href' => route('hr.command'), 'primary' => $employee_profiles, 'primary_label' => 'employee profiles', 'secondary' => $hr_departments . ' departments | ' . $hr_positions . ' positions', 'money' => $hr_vacancies . ' vacancies'],
+    ['title' => 'Planning', 'icon' => 'fa-calendar-check', 'href' => route('planning.dashboard'), 'primary' => $planning_targets, 'primary_label' => 'targets', 'secondary' => $planning_evidence_pending . ' evidence reviews | ' . $planning_corrective_actions . ' actions', 'money' => number_format($planning_company_achievement, 1) . '%'],
+    ['title' => 'Delivery', 'icon' => 'fa-diagram-project', 'href' => route('delivery.dashboard'), 'primary' => $implementation_projects, 'primary_label' => 'active projects', 'secondary' => $portfolio_products . ' products | ' . $project_milestones_pending . ' milestones', 'money' => 'Delivery'],
+    ['title' => 'Engineering', 'icon' => 'fa-code-branch', 'href' => route('engineering.dashboard'), 'primary' => $engineering_backlog, 'primary_label' => 'backlog items', 'secondary' => $engineering_releases . ' releases in motion', 'money' => 'Build'],
+    ['title' => 'Customer Success', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard'), 'primary' => $support_tickets_open, 'primary_label' => 'open tickets', 'secondary' => $customer_success_risks . ' high risk accounts', 'money' => 'Success'],
+    ['title' => 'Governance', 'icon' => 'fa-landmark', 'href' => route('governance.dashboard'), 'primary' => $governance_open, 'primary_label' => 'open obligations', 'secondary' => $pending_approvals . ' approvals pending', 'money' => 'Control'],
+    ['title' => 'Intelligence', 'icon' => 'fa-brain', 'href' => route('intelligence.dashboard'), 'primary' => $critical_signals, 'primary_label' => 'critical signals', 'secondary' => $intelligence_recommendations . ' recommendations', 'money' => 'Signals'],
+    ['title' => 'Knowledge', 'icon' => 'fa-folder-tree', 'href' => route('knowledge.dashboard'), 'primary' => $knowledge_articles, 'primary_label' => 'articles', 'secondary' => $document_records . ' document records', 'money' => 'Docs'],
+    ['title' => 'Analytics', 'icon' => 'fa-chart-simple', 'href' => route('analytics.dashboard'), 'primary' => $analytics_reports, 'primary_label' => 'reports', 'secondary' => $domain_events_today . ' events today', 'money' => 'Reports'],
+];
+$system_attention_items = [
+    ['label' => 'Pending approvals', 'value' => $pending_approvals . ' requests', 'icon' => 'fa-person-circle-check', 'href' => route('foundation.dashboard')],
+    ['label' => 'Stage controls', 'value' => $commercial_pending_controls . ' pending', 'icon' => 'fa-list-check', 'href' => route('commercial.dashboard')],
+    ['label' => 'Evidence reviews', 'value' => $planning_evidence_pending . ' awaiting review', 'icon' => 'fa-file-shield', 'href' => route('planning.dashboard')],
+    ['label' => 'Open support', 'value' => $support_tickets_open . ' tickets', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard')],
+    ['label' => 'Critical signals', 'value' => $critical_signals . ' open', 'icon' => 'fa-brain', 'href' => route('intelligence.dashboard')],
+    ['label' => 'Unread notifications', 'value' => $unread_notifications . ' unread', 'icon' => 'fa-bell', 'href' => route('foundation.dashboard')],
+];
 $sales_goal = max($sales_month, 10000000);
 $expense_goal = max($purchase_month, 6000000);
 $profit_goal = max($gross_margin_estimate, 4000000);
@@ -250,18 +335,80 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
     .dash-table{border-collapse:collapse;width:100%}.dash-table th{color:var(--onyx-muted);font-size:.55rem;font-weight:900;padding:7px 6px;text-align:left;text-transform:uppercase}.dash-table td{border-top:1px solid rgba(255,255,255,.045);font-size:.66rem;padding:7px 6px}.dash-empty{border:1px dashed var(--dash-line);color:var(--onyx-muted);font-size:.7rem;padding:13px;text-align:center}.dash-status{background:rgba(255,255,255,.08);border:1px solid var(--dash-line);color:#fff;font-size:.55rem;font-weight:900;padding:3px 6px;text-transform:uppercase;white-space:nowrap}
     .attention-grid,.report-grid{display:grid;gap:7px}.attention-item,.report-item{align-items:center;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.055);display:flex;gap:9px;min-height:44px;padding:7px;text-decoration:none}.attention-item:hover,.report-item:hover{background:rgba(255,255,255,.08);text-decoration:none}.attention-icon,.report-icon{align-items:center;background:transparent;color:#d8d8de;display:flex;flex:0 0 18px;font-size:.72rem;height:18px;justify-content:center;width:18px}.attention-item strong,.report-item strong{display:block;font-size:.66rem}.attention-item span,.report-item span{color:var(--onyx-muted);display:block;font-size:.6rem;margin-top:2px}
     .dash-goals{display:grid;gap:10px}.dash-goal-head{align-items:center;display:flex;justify-content:space-between}.dash-goal-head span{font-size:.64rem;font-weight:800}.dash-goal-head small{color:var(--onyx-muted);font-size:.58rem}.dash-progress{background:rgba(255,255,255,.07);height:5px;overflow:hidden}.dash-progress span{background:#fff;display:block;height:100%}.activity-map{background:radial-gradient(circle at 25% 30%,rgba(255,255,255,.22),transparent 8%),radial-gradient(circle at 70% 22%,rgba(255,255,255,.18),transparent 7%),radial-gradient(circle at 52% 70%,rgba(255,255,255,.16),transparent 8%),linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.055);min-height:110px}.activity-stats{display:grid;gap:8px;grid-template-columns:repeat(4,1fr);margin-top:8px}.activity-stat{align-items:center;display:flex;gap:7px}.activity-stat i{color:#fff}.activity-stat strong{display:block;font-size:.86rem}.activity-stat span{color:var(--onyx-muted);display:block;font-size:.58rem}
+    .system-kpis{display:grid;gap:9px;grid-template-columns:repeat(6,minmax(132px,1fr))}.system-kpi{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--dash-line);display:grid;gap:8px;grid-template-columns:34px minmax(0,1fr);min-height:72px;padding:9px}.system-kpi i{align-items:center;background:#fff;color:#050506;display:flex;height:34px;justify-content:center;width:34px}.system-kpi span{color:var(--onyx-muted);display:block;font-size:.54rem;font-weight:900;text-transform:uppercase}.system-kpi strong{display:block;font-size:.9rem;font-weight:900;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.system-kpi small{color:#d8d8de;display:block;font-size:.58rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .module-cards{display:grid;gap:8px;grid-template-columns:repeat(5,minmax(150px,1fr))}.module-card{background:rgba(255,255,255,.025);border:1px solid var(--dash-line);color:#fff;display:grid;gap:8px;min-height:118px;padding:10px;text-decoration:none}.module-card:hover{background:rgba(255,255,255,.07);text-decoration:none}.module-card-head{align-items:center;display:flex;gap:8px;justify-content:space-between}.module-card-head i{align-items:center;background:#fff;color:#050506;display:flex;height:28px;justify-content:center;width:28px}.module-card-head span{color:var(--onyx-muted);font-size:.52rem;font-weight:900;text-transform:uppercase}.module-card strong{font-size:1.18rem;line-height:1}.module-card small{color:var(--onyx-muted);display:block;font-size:.6rem;font-weight:800;margin-top:3px}.module-card em{border-top:1px solid rgba(255,255,255,.06);color:#d8d8de;font-size:.62rem;font-style:normal;font-weight:900;padding-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.system-strip{display:grid;gap:8px;grid-template-columns:repeat(6,minmax(132px,1fr))}
     .bottom-kpis{display:grid;gap:10px;grid-template-columns:repeat(3,1fr)}.bottom-card{align-items:center;background:#0a0a0c;border:1px solid var(--dash-line);display:flex;gap:12px;min-height:72px;padding:13px}.bottom-card i{align-items:center;background:#fff;color:#050506;display:flex;height:42px;justify-content:center;width:42px}.bottom-card strong{display:block;font-size:1.12rem}.bottom-card span{color:var(--onyx-muted);display:block;font-size:.64rem;text-transform:uppercase}
+    @media(max-width:1280px){.system-kpis,.system-strip{grid-template-columns:repeat(3,minmax(140px,1fr))}.module-cards{grid-template-columns:repeat(3,minmax(150px,1fr))}}
     @media(max-width:1080px){.dash-kpis{grid-template-columns:repeat(2,minmax(140px,1fr))}.span-2x,.span-3x,.span-4x,.span-5x,.span-6x,.span-8x{grid-column:span 12}.dash-donut-wrap{grid-template-columns:1fr}.bottom-kpis{grid-template-columns:1fr}}
-    @media(max-width:760px){.dash-hero{align-items:flex-start;flex-direction:column}.dash-kpis,.activity-stats{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.span-2x,.span-3x,.span-4x,.span-5x,.span-6x,.span-8x,.span-12x{grid-column:span 1}}
+    @media(max-width:760px){.dash-hero{align-items:flex-start;flex-direction:column}.dash-kpis,.system-kpis,.system-strip,.module-cards,.activity-stats{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.span-2x,.span-3x,.span-4x,.span-5x,.span-6x,.span-8x,.span-12x{grid-column:span 1}}
 </style>
 
 <div class="dash-board">
+    <section class="dash-hero" aria-label="Enterprise command centre">
+        <div>
+            <h2>Enterprise Command Centre</h2>
+            <p>One board for sales, CRM, commercial, finance, inventory, HR, planning, delivery, governance, intelligence, knowledge, and reports.</p>
+        </div>
+        <div class="dash-date"><?= htmlspecialchars(date('M d, Y')) ?></div>
+    </section>
+
+    <section class="system-kpis" aria-label="Executive system signals">
+        <?php foreach ($executive_kpis as $kpi): ?>
+            <div class="system-kpi">
+                <i class="fa-solid <?= htmlspecialchars($kpi['icon']) ?>"></i>
+                <div>
+                    <span><?= htmlspecialchars($kpi['label']) ?></span>
+                    <strong><?= htmlspecialchars((string) $kpi['value']) ?></strong>
+                    <small><?= htmlspecialchars($kpi['note']) ?></small>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </section>
+
     <section class="dash-kpis" aria-label="Business statistics">
         <div class="dash-kpi"><i class="fa-solid fa-dollar-sign"></i><div><span>Total Revenue</span><strong><?= htmlspecialchars(onyx_money($sales_month, $currency)) ?></strong><small>Month to date</small></div></div>
         <div class="dash-kpi"><i class="fa-solid fa-user-plus"></i><div><span>New Customers</span><strong><?= htmlspecialchars((string) $new_customers_month) ?></strong><small>This month</small></div></div>
         <div class="dash-kpi"><i class="fa-solid fa-file-invoice"></i><div><span>Total Invoices</span><strong><?= htmlspecialchars((string) $invoice_count_month) ?></strong><small><?= htmlspecialchars((string) $paid_invoice_count) ?> paid</small></div></div>
         <div class="dash-kpi"><i class="fa-solid fa-box-open"></i><div><span>Active Products</span><strong><?= htmlspecialchars((string) $product_count) ?></strong><small><?= htmlspecialchars(onyx_money($inventory_value, $currency)) ?> stock</small></div></div>
         <div class="dash-kpi"><i class="fa-solid fa-circle-check"></i><div><span>Completion Rate</span><strong><?= htmlspecialchars((string) $completion_rate) ?>%</strong><small>Paid invoice ratio</small></div></div>
+    </section>
+
+    <section class="dash-panel span-12x">
+        <div class="dash-title">
+            <strong><i class="fa-solid fa-table-cells-large"></i> System module coverage</strong>
+            <div class="dash-tabs"><span>All offices</span></div>
+        </div>
+        <div class="module-cards">
+            <?php foreach ($module_cards as $module): ?>
+                <a class="module-card" href="<?= htmlspecialchars($module['href']) ?>">
+                    <div class="module-card-head">
+                        <i class="fa-solid <?= htmlspecialchars($module['icon']) ?>"></i>
+                        <span><?= htmlspecialchars($module['money']) ?></span>
+                    </div>
+                    <div>
+                        <strong><?= htmlspecialchars((string) $module['primary']) ?></strong>
+                        <small><?= htmlspecialchars($module['primary_label']) ?></small>
+                    </div>
+                    <em><?= htmlspecialchars($module['secondary']) ?></em>
+                    <span><?= htmlspecialchars($module['title']) ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="dash-panel span-12x">
+        <div class="dash-title">
+            <strong><i class="fa-solid fa-triangle-exclamation"></i> Cross-system attention</strong>
+            <div class="dash-tabs"><span>Live controls</span></div>
+        </div>
+        <div class="system-strip">
+            <?php foreach ($system_attention_items as $item): ?>
+                <a class="attention-item" href="<?= htmlspecialchars($item['href']) ?>">
+                    <span class="attention-icon"><i class="fa-solid <?= htmlspecialchars($item['icon']) ?>"></i></span>
+                    <span><strong><?= htmlspecialchars($item['label']) ?></strong><span><?= htmlspecialchars($item['value']) ?></span></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
     </section>
 
     <section class="dash-grid">
