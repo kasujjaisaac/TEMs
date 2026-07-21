@@ -128,7 +128,7 @@ function dashboard_revenue_pie_svg(array $items, string $currency): string
         return '<div class="revenue-pie-empty">No revenue mix yet</div>';
     }
 
-    $strokes = ['#ffffff', '#d8d8de', '#ffb347', '#8d99a8', '#263241'];
+    $strokes = ['#ff6a00', '#ff8a1d', '#ffb347', '#8d99a8', '#263241'];
     $svg = '<svg class="revenue-pie" viewBox="0 0 120 120" role="img" aria-label="Revenue by product distribution">';
     $svg .= '<circle cx="60" cy="60" r="42" fill="none" stroke="rgba(255,255,255,.055)" stroke-width="18"></circle>';
 
@@ -271,7 +271,7 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
                 <div class="dash-tabs"><span>Monthly</span></div>
             </div>
             <div class="dash-chart-note">Total revenue <?= htmlspecialchars(onyx_money($sales_month, $currency)) ?></div>
-            <div class="chart-shell"><?= dashboard_chart_svg($sales_trend, '#ffffff', 'rgba(255,255,255,0.16)') ?></div>
+            <div class="chart-shell"><?= dashboard_chart_svg($sales_trend, '#ff6a00', 'rgba(255,106,0,0.16)') ?></div>
         </div>
 
         <div class="dash-panel span-4x">

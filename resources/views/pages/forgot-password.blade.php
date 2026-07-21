@@ -12,9 +12,9 @@
         :root {
             --bg: #07111a;
             --panel: #101923;
-            --accent: #ffffff;
-            --line: rgba(255,255,255,.18);
-            --line-strong: rgba(255,255,255,.42);
+            --accent: #ff6a00;
+            --line: rgba(255,106,0,.18);
+            --line-strong: rgba(255,106,0,.42);
             --text: #fff;
             --muted: #8d99a8;
             --soft: #dce3ec;
@@ -28,9 +28,9 @@
         body {
             align-items: center;
             background:
-                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
-                radial-gradient(circle at 80% 18%, rgba(255,255,255,.2), transparent 28%),
+                linear-gradient(rgba(255,106,0,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,106,0,.028) 1px, transparent 1px),
+                radial-gradient(circle at 80% 18%, rgba(255,106,0,.2), transparent 28%),
                 var(--bg);
             background-size: 40px 40px, 40px 40px, auto, auto;
             color: var(--text);
@@ -129,7 +129,7 @@
 
         .input-wrap:focus-within {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255,255,255,.12);
+            box-shadow: 0 0 0 3px rgba(255,106,0,.12);
         }
 
         .input-wrap i {
