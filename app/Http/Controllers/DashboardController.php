@@ -42,7 +42,7 @@ class DashboardController extends Controller
             $inventory_trend[] = round($inventory_value * (1 + ($i * 0.03) - 0.02), 2);
         }
 
-        $chartSvg = $this->chartSvg($inventory_trend, '#ffffff', 'rgba(255,255,255,0.12)');
+        $chartSvg = $this->chartSvg($inventory_trend, '#ffffff', 'rgba(255,255,255,0.10)');
 
         return view('pages.dashboard', compact(
             'currency', 'customer_count', 'supplier_count', 'product_count', 'inventory_value', 'low_stock_count',
