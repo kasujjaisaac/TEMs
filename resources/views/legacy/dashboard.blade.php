@@ -153,6 +153,22 @@ function dashboard_revenue_pie_svg(array $items, string $currency): string
     return $svg;
 }
 
+function dashboard_gauge_svg(float $percent, string $label): string
+{
+    $percent = max(0, min(100, $percent));
+    $label = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+    $value = htmlspecialchars(number_format($percent, 0) . '%', ENT_QUOTES, 'UTF-8');
+
+    $svg = '<svg class="cluster-donut" viewBox="0 0 80 80" role="img" aria-label="' . $label . ' ' . $value . '">';
+    $svg .= '<circle cx="40" cy="40" r="29" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"></circle>';
+    $svg .= '<circle cx="40" cy="40" r="29" fill="none" stroke="#ffffff" stroke-width="10" pathLength="100" stroke-dasharray="' . round($percent, 2) . ' ' . round(100 - $percent, 2) . '" transform="rotate(-90 40 40)"></circle>';
+    $svg .= '<text x="40" y="38" text-anchor="middle" class="cluster-donut-value">' . $value . '</text>';
+    $svg .= '<text x="40" y="50" text-anchor="middle" class="cluster-donut-label">' . $label . '</text>';
+    $svg .= '</svg>';
+
+    return $svg;
+}
+
 $context = onyx_page_start(
     'Dashboard',
     'Compact business control board with revenue, customers, invoices, stock, reports, and operational alerts.'
@@ -292,23 +308,6 @@ $executive_kpis = [
     ['label' => 'Controls Pending', 'value' => (string) ($pending_approvals + $commercial_pending_controls + $planning_evidence_pending), 'note' => 'Approvals, stage gates, evidence', 'icon' => 'fa-clipboard-check'],
     ['label' => 'Customer Risk', 'value' => (string) ($crm_at_risk_accounts + $customer_success_risks + $support_tickets_open), 'note' => 'CRM health, success and tickets', 'icon' => 'fa-headset'],
 ];
-$module_cards = [
-    ['title' => 'CRM / Accounts', 'icon' => 'fa-address-book', 'href' => route('crm.dashboard'), 'primary' => $customer_count, 'primary_label' => 'active customers', 'secondary' => $crm_account_plans . ' plans | ' . $crm_subscriptions . ' subscriptions', 'money' => onyx_money($crm_recurring_revenue, $currency)],
-    ['title' => 'Commercial', 'icon' => 'fa-handshake', 'href' => route('commercial.dashboard'), 'primary' => $commercial_active_leads, 'primary_label' => 'active leads', 'secondary' => $commercial_active_opportunities . ' opportunities | ' . $commercial_billing_requests . ' billing requests', 'money' => onyx_money($commercial_pipeline_value, $currency)],
-    ['title' => 'Sales', 'icon' => 'fa-receipt', 'href' => onyx_legacy_url('sales.php'), 'primary' => $invoice_count_month, 'primary_label' => 'invoices this month', 'secondary' => $paid_invoice_count . ' paid | ' . $completion_rate . '% completion', 'money' => onyx_money($sales_month, $currency)],
-    ['title' => 'Finance', 'icon' => 'fa-chart-pie', 'href' => route('finance.dashboard'), 'primary' => $finance_transactions, 'primary_label' => 'transactions', 'secondary' => $finance_budget_lines . ' budgets | ' . $finance_unclassified . ' unclassified', 'money' => onyx_money($finance_revenue_month - $finance_expense_month, $currency)],
-    ['title' => 'Inventory', 'icon' => 'fa-boxes-stacked', 'href' => onyx_legacy_url('inventory.php'), 'primary' => $product_count, 'primary_label' => 'products', 'secondary' => $low_stock_count . ' low stock | ' . $near_reorder . ' near reorder', 'money' => onyx_money($inventory_value, $currency)],
-    ['title' => 'Procurement', 'icon' => 'fa-cart-shopping', 'href' => onyx_legacy_url('purchases.php'), 'primary' => $purchase_count, 'primary_label' => 'purchases this month', 'secondary' => $supplier_count . ' suppliers | ' . $credit_supplier_count . ' balances due', 'money' => onyx_money($purchase_month, $currency)],
-    ['title' => 'HR Command', 'icon' => 'fa-users-gear', 'href' => route('hr.command'), 'primary' => $employee_profiles, 'primary_label' => 'employee profiles', 'secondary' => $hr_departments . ' departments | ' . $hr_positions . ' positions', 'money' => $hr_vacancies . ' vacancies'],
-    ['title' => 'Planning', 'icon' => 'fa-calendar-check', 'href' => route('planning.dashboard'), 'primary' => $planning_targets, 'primary_label' => 'targets', 'secondary' => $planning_evidence_pending . ' evidence reviews | ' . $planning_corrective_actions . ' actions', 'money' => number_format($planning_company_achievement, 1) . '%'],
-    ['title' => 'Delivery', 'icon' => 'fa-diagram-project', 'href' => route('delivery.dashboard'), 'primary' => $implementation_projects, 'primary_label' => 'active projects', 'secondary' => $portfolio_products . ' products | ' . $project_milestones_pending . ' milestones', 'money' => 'Delivery'],
-    ['title' => 'Engineering', 'icon' => 'fa-code-branch', 'href' => route('engineering.dashboard'), 'primary' => $engineering_backlog, 'primary_label' => 'backlog items', 'secondary' => $engineering_releases . ' releases in motion', 'money' => 'Build'],
-    ['title' => 'Customer Success', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard'), 'primary' => $support_tickets_open, 'primary_label' => 'open tickets', 'secondary' => $customer_success_risks . ' high risk accounts', 'money' => 'Success'],
-    ['title' => 'Governance', 'icon' => 'fa-landmark', 'href' => route('governance.dashboard'), 'primary' => $governance_open, 'primary_label' => 'open obligations', 'secondary' => $pending_approvals . ' approvals pending', 'money' => 'Control'],
-    ['title' => 'Intelligence', 'icon' => 'fa-brain', 'href' => route('intelligence.dashboard'), 'primary' => $critical_signals, 'primary_label' => 'critical signals', 'secondary' => $intelligence_recommendations . ' recommendations', 'money' => 'Signals'],
-    ['title' => 'Knowledge', 'icon' => 'fa-folder-tree', 'href' => route('knowledge.dashboard'), 'primary' => $knowledge_articles, 'primary_label' => 'articles', 'secondary' => $document_records . ' document records', 'money' => 'Docs'],
-    ['title' => 'Analytics', 'icon' => 'fa-chart-simple', 'href' => route('analytics.dashboard'), 'primary' => $analytics_reports, 'primary_label' => 'reports', 'secondary' => $domain_events_today . ' events today', 'money' => 'Reports'],
-];
 $system_attention_items = [
     ['label' => 'Pending approvals', 'value' => $pending_approvals . ' requests', 'icon' => 'fa-person-circle-check', 'href' => route('foundation.dashboard')],
     ['label' => 'Stage controls', 'value' => $commercial_pending_controls . ' pending', 'icon' => 'fa-list-check', 'href' => route('commercial.dashboard')],
@@ -316,6 +315,86 @@ $system_attention_items = [
     ['label' => 'Open support', 'value' => $support_tickets_open . ' tickets', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard')],
     ['label' => 'Critical signals', 'value' => $critical_signals . ' open', 'icon' => 'fa-brain', 'href' => route('intelligence.dashboard')],
     ['label' => 'Unread notifications', 'value' => $unread_notifications . ' unread', 'icon' => 'fa-bell', 'href' => route('foundation.dashboard')],
+];
+$operating_clusters = [
+    [
+        'title' => 'Growth Engine',
+        'href' => route('commercial.dashboard'),
+        'icon' => 'fa-arrow-trend-up',
+        'score' => min(100, $commercial_active_opportunities > 0 ? 72 : ($commercial_active_leads > 0 ? 48 : 12)),
+        'primary' => onyx_money($commercial_pipeline_value + $sales_month + $crm_recurring_revenue, $currency),
+        'primary_label' => 'pipeline, revenue and recurring base',
+        'metrics' => [
+            ['label' => 'Leads', 'value' => $commercial_active_leads],
+            ['label' => 'Opportunities', 'value' => $commercial_active_opportunities],
+            ['label' => 'Customers', 'value' => $customer_count],
+        ],
+    ],
+    [
+        'title' => 'Money Control',
+        'href' => route('finance.dashboard'),
+        'icon' => 'fa-scale-balanced',
+        'score' => min(100, $open_invoice_balance > 0 ? max(20, 100 - ($credit_customer_count * 10)) : 88),
+        'primary' => onyx_money(($finance_revenue_month ?: $sales_month) - ($finance_expense_month ?: $purchase_month), $currency),
+        'primary_label' => 'net month position',
+        'metrics' => [
+            ['label' => 'Receivables', 'value' => onyx_money($open_invoice_balance, $currency)],
+            ['label' => 'Budgets', 'value' => $finance_budget_lines],
+            ['label' => 'Unclassified', 'value' => $finance_unclassified],
+        ],
+    ],
+    [
+        'title' => 'Stock & Procurement',
+        'href' => onyx_legacy_url('inventory.php'),
+        'icon' => 'fa-boxes-stacked',
+        'score' => min(100, $product_count > 0 ? max(10, 100 - ($low_stock_count * 12)) : 0),
+        'primary' => onyx_money($inventory_value, $currency),
+        'primary_label' => 'stock value under control',
+        'metrics' => [
+            ['label' => 'Products', 'value' => $product_count],
+            ['label' => 'Low stock', 'value' => $low_stock_count],
+            ['label' => 'Purchases', 'value' => $purchase_count],
+        ],
+    ],
+    [
+        'title' => 'People Execution',
+        'href' => route('planning.dashboard'),
+        'icon' => 'fa-people-arrows',
+        'score' => min(100, max(0, $planning_company_achievement)),
+        'primary' => number_format($planning_company_achievement, 1) . '%',
+        'primary_label' => 'company workplan achievement',
+        'metrics' => [
+            ['label' => 'Employees', 'value' => $employee_profiles],
+            ['label' => 'Positions', 'value' => $hr_positions],
+            ['label' => 'Actions', 'value' => $planning_corrective_actions],
+        ],
+    ],
+    [
+        'title' => 'Delivery Assurance',
+        'href' => route('delivery.dashboard'),
+        'icon' => 'fa-layer-group',
+        'score' => min(100, $implementation_projects > 0 ? max(25, 85 - (($support_tickets_open + $project_milestones_pending) * 5)) : 30),
+        'primary' => $implementation_projects . ' active projects',
+        'primary_label' => 'delivery, success and engineering',
+        'metrics' => [
+            ['label' => 'Milestones', 'value' => $project_milestones_pending],
+            ['label' => 'Tickets', 'value' => $support_tickets_open],
+            ['label' => 'Backlog', 'value' => $engineering_backlog],
+        ],
+    ],
+    [
+        'title' => 'Governance Intelligence',
+        'href' => route('intelligence.dashboard'),
+        'icon' => 'fa-shield-halved',
+        'score' => min(100, max(10, 100 - (($pending_approvals + $critical_signals + $governance_open) * 8))),
+        'primary' => ($pending_approvals + $critical_signals + $governance_open) . ' control items',
+        'primary_label' => 'approvals, obligations and signals',
+        'metrics' => [
+            ['label' => 'Approvals', 'value' => $pending_approvals],
+            ['label' => 'Signals', 'value' => $critical_signals],
+            ['label' => 'Docs', 'value' => $document_records],
+        ],
+    ],
 ];
 $sales_goal = max($sales_month, 10000000);
 $expense_goal = max($purchase_month, 6000000);
@@ -337,16 +416,16 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
     .dash-board .system-kpi span,.dash-board .dash-kpi span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.05!important;text-transform:uppercase!important}.dash-board .system-kpi strong,.dash-board .dash-kpi strong{display:block!important;font-size:12px!important;font-weight:900!important;line-height:1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .system-kpi small,.dash-board .dash-kpi small{color:#d8d8de!important;display:block!important;font-size:8px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
     .dash-board .dash-grid{align-items:start!important;display:grid!important;gap:7px!important;grid-auto-rows:max-content!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;min-width:0!important}.dash-board .span-2x{grid-column:span 2!important}.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x{grid-column:span 4!important}.dash-board .span-5x{grid-column:span 5!important}.dash-board .span-6x{grid-column:span 6!important}.dash-board .span-8x{grid-column:span 8!important}.dash-board .span-12x{grid-column:1/-1!important}
     .dash-board .dash-panel{align-self:start!important;background:#101923!important;border:1px solid var(--dash-line)!important;height:auto!important;min-height:0!important;overflow:hidden!important;padding:8px!important}.dash-board .dash-title{align-items:center!important;display:flex!important;gap:6px!important;justify-content:space-between!important;margin-bottom:6px!important;min-width:0!important}.dash-board .dash-title strong{font-size:10px!important;font-weight:900!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-title i{color:#fff!important}.dash-board .dash-title a,.dash-board .dash-tabs span{border:1px solid var(--dash-line)!important;color:#fff!important;font-size:8px!important;font-weight:900!important;line-height:1!important;padding:5px 7px!important;text-decoration:none!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-tabs span:first-child{background:#fff!important;color:#050506!important}
-    .dash-board .module-cards{display:grid!important;gap:6px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .module-card{background:rgba(255,255,255,.025)!important;border:1px solid var(--dash-line)!important;color:#fff!important;display:grid!important;gap:4px!important;grid-template-columns:20px minmax(0,1fr) auto!important;grid-template-areas:"icon title money" "icon value secondary"!important;min-height:42px!important;overflow:hidden!important;padding:5px!important;text-decoration:none!important}.dash-board .module-card:hover{background:rgba(255,255,255,.07)!important;text-decoration:none!important}.dash-board .module-card-head{display:contents!important}.dash-board .module-card-head i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:10px!important;grid-area:icon!important;height:20px!important;justify-content:center!important;width:20px!important}.dash-board .module-card-head span{color:#d8d8de!important;font-size:8px!important;font-weight:900!important;grid-area:money!important;line-height:1.15!important;max-width:82px!important;overflow:hidden!important;text-align:right!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .module-card>div:not(.module-card-head){display:contents!important}.dash-board .module-card>span{color:#fff!important;font-size:10px!important;font-weight:900!important;grid-area:title!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .module-card strong{font-size:11px!important;grid-area:value!important;line-height:1!important}.dash-board .module-card small{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:800!important;grid-area:value!important;line-height:1.1!important;margin:12px 0 0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .module-card em{border:0!important;color:#d8d8de!important;font-size:8px!important;font-style:normal!important;font-weight:800!important;grid-area:secondary!important;line-height:1.1!important;overflow:hidden!important;padding:0!important;text-align:right!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+    .dash-board .cluster-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-card{background:rgba(255,255,255,.025)!important;border:1px solid var(--dash-line)!important;color:#fff!important;display:grid!important;gap:9px!important;grid-template-columns:76px minmax(0,1fr)!important;min-height:116px!important;padding:8px!important;text-decoration:none!important}.dash-board .cluster-card:hover{background:rgba(255,255,255,.07)!important;text-decoration:none!important}.dash-board .cluster-donut{display:block!important;height:72px!important;width:72px!important}.dash-board .cluster-donut-value{fill:#fff!important;font-size:12px!important;font-weight:900!important}.dash-board .cluster-donut-label{fill:#8d99a8!important;font-size:7px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .cluster-head{align-items:center!important;display:flex!important;gap:7px!important;justify-content:space-between!important;margin-bottom:5px!important}.dash-board .cluster-head strong{font-size:11px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-head i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:10px!important;height:20px!important;justify-content:center!important;width:20px!important}.dash-board .cluster-primary{display:block!important;font-size:14px!important;font-weight:900!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-note{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important;margin-top:3px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-metrics{display:grid!important;gap:4px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;margin-top:7px!important}.dash-board .cluster-metric{border-top:1px solid rgba(255,255,255,.07)!important;min-width:0!important;padding-top:4px!important}.dash-board .cluster-metric span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-metric strong{display:block!important;font-size:10px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-bar{background:rgba(255,255,255,.07)!important;height:4px!important;margin-top:7px!important;overflow:hidden!important}.dash-board .cluster-bar span{background:#fff!important;display:block!important;height:100%!important}
     .dash-board .system-strip{display:grid!important;gap:6px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .attention-grid,.dash-board .report-grid{display:grid!important;gap:7px!important}.dash-board .attention-item,.dash-board .report-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:flex!important;gap:8px!important;min-height:32px!important;overflow:hidden!important;padding:5px!important;text-decoration:none!important}.dash-board .attention-icon,.dash-board .report-icon{align-items:center!important;color:#fff!important;display:flex!important;flex:0 0 16px!important;font-size:10px!important;height:16px!important;justify-content:center!important;width:16px!important}.dash-board .attention-item strong,.dash-board .report-item strong{display:block!important;font-size:9px!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .attention-item span,.dash-board .report-item span{color:var(--onyx-muted)!important;display:block!important;font-size:10px!important;line-height:1.2!important;margin:1px 0 0!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
     .dash-board .chart-shell{height:94px!important;min-height:94px!important;overflow:hidden!important;padding:0!important}.dash-board .chart-svg{display:block!important;height:94px!important;width:100%!important}.dash-board .dash-chart-note{color:var(--onyx-muted)!important;font-size:10px!important;font-weight:900!important;margin-bottom:6px!important;text-transform:uppercase!important}.dash-board .dash-donut-wrap{align-items:center!important;display:grid!important;gap:10px!important;grid-template-columns:72px minmax(0,1fr)!important}.dash-board .revenue-pie{height:70px!important;width:70px!important}.dash-board .pie-total-label{fill:#8d8d98!important;font-size:8px!important;font-weight:900!important}.dash-board .pie-total-value{fill:#fff!important;font-size:7px!important;font-weight:900!important}.dash-board .revenue-pie-empty{align-items:center!important;border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;display:flex!important;font-size:10px!important;font-weight:900!important;height:70px!important;justify-content:center!important;text-align:center!important;width:70px!important}
     .dash-board .mini-list{display:grid!important;gap:4px!important}.dash-board .mini-row{align-items:center!important;border-bottom:1px solid rgba(255,255,255,.045)!important;display:grid!important;gap:8px!important;grid-template-columns:minmax(0,1fr) auto!important;padding:0 0 4px!important}.dash-board .mini-row span{color:var(--onyx-muted)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .mini-row strong{font-size:9px!important;line-height:1.18!important;white-space:nowrap!important}
     .dash-board .dash-table{border-collapse:collapse!important;table-layout:fixed!important;width:100%!important}.dash-board .dash-table th{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;padding:5px 4px!important;text-align:left!important;text-transform:uppercase!important}.dash-board .dash-table td{border-top:1px solid rgba(255,255,255,.045)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;padding:6px 5px!important;text-overflow:ellipsis!important;vertical-align:top!important}.dash-board .dash-empty{border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;font-size:11px!important;line-height:1.35!important;min-height:44px!important;padding:9px!important;text-align:center!important}.dash-board .dash-status{background:rgba(255,255,255,.08)!important;border:1px solid var(--dash-line)!important;color:#fff!important;font-size:9px!important;font-weight:900!important;padding:3px 5px!important;text-transform:uppercase!important;white-space:nowrap!important}
     .dash-board .activity-map{background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01))!important;border:1px solid rgba(255,255,255,.075)!important;height:68px!important;min-height:68px!important}.dash-board .activity-stats{display:grid!important;gap:5px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin-top:5px!important}.dash-board .activity-stat{align-items:center!important;display:flex!important;gap:6px!important;min-width:0!important}.dash-board .activity-stat i{color:#fff!important;font-size:11px!important}.dash-board .activity-stat strong{display:block!important;font-size:13px!important;line-height:1!important}.dash-board .activity-stat span{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important}
     .dash-board .bottom-kpis{display:grid!important;gap:8px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .bottom-card{align-items:center!important;background:#101923!important;border:1px solid var(--dash-line)!important;display:flex!important;gap:9px!important;min-height:42px!important;padding:6px!important}.dash-board .bottom-card i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;height:24px!important;justify-content:center!important;width:24px!important}.dash-board .bottom-card strong{display:block!important;font-size:12px!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .bottom-card span{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;font-weight:900!important;text-transform:uppercase!important}
-    @media(max-width:1180px){.dash-board .system-kpis,.dash-board .system-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .module-cards{grid-template-columns:repeat(4,minmax(0,1fr))!important}.dash-board .dash-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
-    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .module-cards,.dash-board .system-strip,.dash-board .bottom-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
-    @media(max-width:620px){.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .module-cards,.dash-board .system-strip,.dash-board .bottom-kpis,.dash-board .activity-stats{grid-template-columns:1fr!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
+    @media(max-width:1180px){.dash-board .system-kpis,.dash-board .system-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .system-strip,.dash-board .bottom-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
+    @media(max-width:620px){.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .cluster-grid,.dash-board .system-strip,.dash-board .bottom-kpis,.dash-board .activity-stats{grid-template-columns:1fr!important}.dash-board .cluster-card{grid-template-columns:68px minmax(0,1fr)!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
 </style>
 
 <div class="dash-board">
@@ -381,22 +460,30 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
 
     <section class="dash-panel span-12x">
         <div class="dash-title">
-            <strong><i class="fa-solid fa-table-cells-large"></i> System module coverage</strong>
-            <div class="dash-tabs"><span>All offices</span></div>
+            <strong><i class="fa-solid fa-chart-pie"></i> Operating command clusters</strong>
+            <div class="dash-tabs"><span>Executive view</span></div>
         </div>
-        <div class="module-cards">
-            <?php foreach ($module_cards as $module): ?>
-                <a class="module-card" href="<?= htmlspecialchars($module['href']) ?>">
-                    <div class="module-card-head">
-                        <i class="fa-solid <?= htmlspecialchars($module['icon']) ?>"></i>
-                        <span><?= htmlspecialchars($module['money']) ?></span>
-                    </div>
+        <div class="cluster-grid">
+            <?php foreach ($operating_clusters as $cluster): ?>
+                <a class="cluster-card" href="<?= htmlspecialchars($cluster['href']) ?>">
+                    <?= dashboard_gauge_svg((float) $cluster['score'], 'score') ?>
                     <div>
-                        <strong><?= htmlspecialchars((string) $module['primary']) ?></strong>
-                        <small><?= htmlspecialchars($module['primary_label']) ?></small>
+                        <div class="cluster-head">
+                            <strong><?= htmlspecialchars($cluster['title']) ?></strong>
+                            <i class="fa-solid <?= htmlspecialchars($cluster['icon']) ?>"></i>
+                        </div>
+                        <span class="cluster-primary"><?= htmlspecialchars((string) $cluster['primary']) ?></span>
+                        <span class="cluster-note"><?= htmlspecialchars($cluster['primary_label']) ?></span>
+                        <div class="cluster-metrics">
+                            <?php foreach ($cluster['metrics'] as $metric): ?>
+                                <div class="cluster-metric">
+                                    <span><?= htmlspecialchars($metric['label']) ?></span>
+                                    <strong><?= htmlspecialchars((string) $metric['value']) ?></strong>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="cluster-bar"><span style="width: <?= htmlspecialchars((string) max(0, min(100, (float) $cluster['score']))) ?>%"></span></div>
                     </div>
-                    <em><?= htmlspecialchars($module['secondary']) ?></em>
-                    <span><?= htmlspecialchars($module['title']) ?></span>
                 </a>
             <?php endforeach; ?>
         </div>
