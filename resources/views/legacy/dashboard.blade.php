@@ -169,6 +169,27 @@ function dashboard_gauge_svg(float $percent, string $label): string
     return $svg;
 }
 
+function dashboard_trend(float $current, float $previous): array
+{
+    if ($previous <= 0 && $current <= 0) {
+        return ['class' => 'flat', 'icon' => 'fa-minus', 'label' => 'No movement'];
+    }
+    if ($previous <= 0) {
+        return ['class' => 'up', 'icon' => 'fa-arrow-trend-up', 'label' => 'New activity'];
+    }
+
+    $change = (($current - $previous) / max(1, abs($previous))) * 100;
+    if (abs($change) < 1) {
+        return ['class' => 'flat', 'icon' => 'fa-minus', 'label' => 'Flat'];
+    }
+
+    return [
+        'class' => $change > 0 ? 'up' : 'down',
+        'icon' => $change > 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down',
+        'label' => ($change > 0 ? '+' : '') . number_format($change, 1) . '%',
+    ];
+}
+
 $context = onyx_page_start(
     'Dashboard',
     'Compact business control board with revenue, customers, invoices, stock, reports, and operational alerts.'
@@ -180,6 +201,8 @@ $pdo = onyx_db();
 $today = date('Y-m-d');
 $this_month_start = date('Y-m-01');
 $this_month_end = date('Y-m-t');
+$last_month_start = date('Y-m-01', strtotime('first day of last month'));
+$last_month_end = date('Y-m-t', strtotime('last day of last month'));
 
 $customer_count = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM customers WHERE tenant_id = :tenant_id AND is_active = 1', ['tenant_id' => $tenant_id]);
 $supplier_count = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM suppliers WHERE tenant_id = :tenant_id AND is_active = 1', ['tenant_id' => $tenant_id]);
@@ -207,6 +230,9 @@ $quotation_value = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(total), 0
 $purchase_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM purchases WHERE tenant_id = :tenant_id AND purchase_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
 $purchase_count = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM purchases WHERE tenant_id = :tenant_id AND purchase_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
 $gross_margin_estimate = max(0, $sales_month - $purchase_month);
+$sales_last_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(total), 0) FROM invoices WHERE tenant_id = :tenant_id AND invoice_type = "invoice" AND invoice_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $last_month_start, 'end_date' => $last_month_end]);
+$purchase_last_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM purchases WHERE tenant_id = :tenant_id AND purchase_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $last_month_start, 'end_date' => $last_month_end]);
+$invoice_count_last_month = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id AND invoice_type = "invoice" AND invoice_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $last_month_start, 'end_date' => $last_month_end]);
 
 $sales_trend = dashboard_monthly_totals($pdo, 'invoices', 'invoice_date', 'total', 'tenant_id = :tenant_id AND invoice_type = "invoice"', ['tenant_id' => $tenant_id]);
 $purchase_trend = dashboard_monthly_totals($pdo, 'purchases', 'purchase_date', 'total_amount', 'tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
@@ -229,6 +255,7 @@ $commercial_pending_controls = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FRO
 $commercial_open_negotiations = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_negotiations WHERE tenant_id = :tenant_id AND status NOT IN ("Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
 $commercial_due_renewals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_renewals WHERE tenant_id = :tenant_id AND status NOT IN ("Converted", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
 $commercial_open_expansions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM commercial_expansion_opportunities WHERE tenant_id = :tenant_id AND status NOT IN ("Converted", "Closed", "Cancelled")', ['tenant_id' => $tenant_id]);
+$commercial_pipeline_last_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(estimated_value), 0) FROM commercial_opportunities WHERE tenant_id = :tenant_id AND current_stage NOT IN ("Won", "Lost") AND created_at < :start_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start . ' 00:00:00']);
 
 $crm_account_plans = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_account_plans WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
 $crm_at_risk_accounts = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM crm_customer_health_snapshots WHERE tenant_id = :tenant_id AND health_status IN ("At Risk", "Critical", "Poor")', ['tenant_id' => $tenant_id]);
@@ -241,6 +268,7 @@ $finance_unclassified = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM finan
 $finance_budget_lines = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM finance_budget_lines WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
 $finance_revenue_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(amount), 0) FROM finance_transactions WHERE tenant_id = :tenant_id AND direction = "Inflow" AND transaction_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
 $finance_expense_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(amount), 0) FROM finance_transactions WHERE tenant_id = :tenant_id AND direction = "Outflow" AND transaction_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
+$finance_revenue_last_month = (float) dashboard_scalar($pdo, 'SELECT COALESCE(SUM(amount), 0) FROM finance_transactions WHERE tenant_id = :tenant_id AND direction = "Inflow" AND transaction_date BETWEEN :start_date AND :end_date', ['tenant_id' => $tenant_id, 'start_date' => $last_month_start, 'end_date' => $last_month_end]);
 
 $hr_departments = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM hr_departments WHERE tenant_id = :tenant_id AND status = "Active"', ['tenant_id' => $tenant_id]);
 $hr_positions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM hr_positions WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
@@ -251,6 +279,7 @@ $planning_company_achievement = (float) dashboard_scalar($pdo, 'SELECT COALESCE(
 $planning_targets = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_items WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
 $planning_evidence_pending = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_evidence WHERE tenant_id = :tenant_id AND status = "Submitted"', ['tenant_id' => $tenant_id]);
 $planning_corrective_actions = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM workplan_corrective_actions WHERE tenant_id = :tenant_id AND status IN ("Open", "In Progress")', ['tenant_id' => $tenant_id]);
+$planning_last_snapshot = (float) dashboard_scalar($pdo, 'SELECT COALESCE(AVG(achievement_percentage), 0) FROM workplan_items WHERE tenant_id = :tenant_id AND updated_at < :start_date', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start . ' 00:00:00']);
 
 $pending_approvals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM approval_requests WHERE tenant_id = :tenant_id AND status = "Pending"', ['tenant_id' => $tenant_id]);
 $unread_notifications = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM system_notifications WHERE tenant_id = :tenant_id AND read_at IS NULL', ['tenant_id' => $tenant_id]);
@@ -272,6 +301,10 @@ $critical_signals = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM intellige
 $intelligence_recommendations = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM intelligence_recommendations WHERE tenant_id = :tenant_id AND status = "Open"', ['tenant_id' => $tenant_id]);
 $knowledge_articles = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM knowledge_articles WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
 $analytics_reports = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM analytics_reports WHERE tenant_id = :tenant_id', ['tenant_id' => $tenant_id]);
+$overdue_invoice_count = (int) dashboard_scalar($pdo, 'SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id AND invoice_type = "invoice" AND status NOT IN ("paid", "cancelled") AND due_date IS NOT NULL AND due_date < :today', ['tenant_id' => $tenant_id, 'today' => $today]);
+$pipeline_stage_rows = dashboard_rows($pdo, 'SELECT current_stage AS label, COUNT(*) AS count_value, COALESCE(SUM(estimated_value), 0) AS money_value FROM commercial_opportunities WHERE tenant_id = :tenant_id AND current_stage NOT IN ("Won", "Lost") GROUP BY current_stage ORDER BY money_value DESC LIMIT 5', ['tenant_id' => $tenant_id]);
+$invoice_status_rows = dashboard_rows($pdo, 'SELECT status AS label, COUNT(*) AS count_value, COALESCE(SUM(total), 0) AS money_value FROM invoices WHERE tenant_id = :tenant_id AND invoice_type = "invoice" AND invoice_date BETWEEN :start_date AND :end_date GROUP BY status ORDER BY money_value DESC LIMIT 5', ['tenant_id' => $tenant_id, 'start_date' => $this_month_start, 'end_date' => $this_month_end]);
+$recent_events = dashboard_rows($pdo, 'SELECT title, source_module, occurred_at FROM domain_events WHERE tenant_id = :tenant_id ORDER BY occurred_at DESC LIMIT 6', ['tenant_id' => $tenant_id]);
 
 $attention_items = [
     ['label' => 'Products near reorder', 'value' => $near_reorder . ' items', 'icon' => 'fa-boxes-stacked', 'href' => 'inventory.php'],
@@ -300,13 +333,27 @@ $activity_stats = [
     ['label' => 'Low Stock', 'value' => $low_stock_count, 'icon' => 'fa-triangle-exclamation'],
     ['label' => 'Service Jobs', 'value' => $upcoming_maintenance, 'icon' => 'fa-screwdriver-wrench'],
 ];
+$sales_goal = max($sales_month, 10000000);
+$pipeline_goal = max($commercial_pipeline_value, 50000000);
+$execution_goal = 85;
+$collection_goal = max($sales_month, 10000000);
+$expense_goal = max($purchase_month, 6000000);
+$profit_goal = max($gross_margin_estimate, 4000000);
+$sales_progress = min(100, $sales_goal > 0 ? ($sales_month / $sales_goal) * 100 : 0);
+$pipeline_progress = min(100, $pipeline_goal > 0 ? ($commercial_pipeline_value / $pipeline_goal) * 100 : 0);
+$execution_progress = min(100, $execution_goal > 0 ? ($planning_company_achievement / $execution_goal) * 100 : 0);
+$collection_progress = min(100, $collection_goal > 0 ? ($payments_today / $collection_goal) * 100 : 0);
+$expense_progress = min(100, $expense_goal > 0 ? ($purchase_month / $expense_goal) * 100 : 0);
+$profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit_goal) * 100 : 0);
+$revenue_base = max($sales_month, $finance_revenue_month);
+$revenue_previous = max($sales_last_month, $finance_revenue_last_month);
 $executive_kpis = [
-    ['label' => 'Revenue MTD', 'value' => onyx_money(max($sales_month, $finance_revenue_month), $currency), 'note' => 'Sales and finance inflow', 'icon' => 'fa-chart-line'],
-    ['label' => 'Open Pipeline', 'value' => onyx_money($commercial_pipeline_value, $currency), 'note' => $commercial_active_opportunities . ' active opportunities', 'icon' => 'fa-briefcase'],
-    ['label' => 'Receivables', 'value' => onyx_money($open_invoice_balance, $currency), 'note' => $credit_customer_count . ' customer accounts due', 'icon' => 'fa-file-invoice-dollar'],
-    ['label' => 'Company Execution', 'value' => number_format($planning_company_achievement, 1) . '%', 'note' => $planning_targets . ' workplan targets', 'icon' => 'fa-bullseye'],
-    ['label' => 'Controls Pending', 'value' => (string) ($pending_approvals + $commercial_pending_controls + $planning_evidence_pending), 'note' => 'Approvals, stage gates, evidence', 'icon' => 'fa-clipboard-check'],
-    ['label' => 'Customer Risk', 'value' => (string) ($crm_at_risk_accounts + $customer_success_risks + $support_tickets_open), 'note' => 'CRM health, success and tickets', 'icon' => 'fa-headset'],
+    ['label' => 'Revenue MTD', 'value' => onyx_money($revenue_base, $currency), 'note' => 'Target ' . onyx_money($sales_goal, $currency), 'icon' => 'fa-chart-line', 'href' => onyx_legacy_url('sales.php'), 'trend' => dashboard_trend($revenue_base, $revenue_previous), 'progress' => $sales_progress],
+    ['label' => 'Open Pipeline', 'value' => onyx_money($commercial_pipeline_value, $currency), 'note' => $commercial_active_opportunities . ' opportunities', 'icon' => 'fa-briefcase', 'href' => route('commercial.dashboard'), 'trend' => dashboard_trend($commercial_pipeline_value, $commercial_pipeline_last_month), 'progress' => $pipeline_progress],
+    ['label' => 'Receivables', 'value' => onyx_money($open_invoice_balance, $currency), 'note' => $overdue_invoice_count . ' overdue invoices', 'icon' => 'fa-file-invoice-dollar', 'href' => onyx_legacy_url('sales.php'), 'trend' => dashboard_trend($open_invoice_balance, 0), 'progress' => max(0, 100 - min(100, $credit_customer_count * 12))],
+    ['label' => 'Company Execution', 'value' => number_format($planning_company_achievement, 1) . '%', 'note' => 'Target ' . $execution_goal . '%', 'icon' => 'fa-bullseye', 'href' => route('planning.dashboard'), 'trend' => dashboard_trend($planning_company_achievement, $planning_last_snapshot), 'progress' => $execution_progress],
+    ['label' => 'Controls Pending', 'value' => (string) ($pending_approvals + $commercial_pending_controls + $planning_evidence_pending), 'note' => 'Approvals, gates, evidence', 'icon' => 'fa-clipboard-check', 'href' => route('foundation.dashboard'), 'trend' => ['class' => 'down', 'icon' => 'fa-arrow-trend-down', 'label' => 'Resolve'], 'progress' => max(0, 100 - (($pending_approvals + $commercial_pending_controls + $planning_evidence_pending) * 12))],
+    ['label' => 'Customer Risk', 'value' => (string) ($crm_at_risk_accounts + $customer_success_risks + $support_tickets_open), 'note' => 'Health, success, tickets', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard'), 'trend' => ['class' => 'down', 'icon' => 'fa-arrow-trend-down', 'label' => 'Reduce'], 'progress' => max(0, 100 - (($crm_at_risk_accounts + $customer_success_risks + $support_tickets_open) * 10))],
 ];
 $system_attention_items = [
     ['label' => 'Pending approvals', 'value' => $pending_approvals . ' requests', 'icon' => 'fa-person-circle-check', 'href' => route('foundation.dashboard')],
@@ -315,6 +362,20 @@ $system_attention_items = [
     ['label' => 'Open support', 'value' => $support_tickets_open . ' tickets', 'icon' => 'fa-headset', 'href' => route('customer_success.dashboard')],
     ['label' => 'Critical signals', 'value' => $critical_signals . ' open', 'icon' => 'fa-brain', 'href' => route('intelligence.dashboard')],
     ['label' => 'Unread notifications', 'value' => $unread_notifications . ' unread', 'icon' => 'fa-bell', 'href' => route('foundation.dashboard')],
+];
+$today_command_items = [
+    ['priority' => 'P1', 'label' => 'Approve pending requests', 'value' => $pending_approvals . ' approvals', 'href' => route('foundation.dashboard')],
+    ['priority' => 'P1', 'label' => 'Collect overdue receivables', 'value' => $overdue_invoice_count . ' invoices', 'href' => onyx_legacy_url('sales.php')],
+    ['priority' => 'P2', 'label' => 'Review stage controls', 'value' => $commercial_pending_controls . ' controls', 'href' => route('commercial.dashboard')],
+    ['priority' => 'P2', 'label' => 'Verify workplan evidence', 'value' => $planning_evidence_pending . ' reviews', 'href' => route('planning.dashboard')],
+    ['priority' => 'P2', 'label' => 'Reorder low stock', 'value' => $low_stock_count . ' items', 'href' => onyx_legacy_url('inventory.php')],
+    ['priority' => 'P3', 'label' => 'Clear support risks', 'value' => $support_tickets_open . ' tickets', 'href' => route('customer_success.dashboard')],
+];
+$target_cards = [
+    ['label' => 'Revenue target', 'value' => onyx_money($sales_month, $currency), 'target' => onyx_money($sales_goal, $currency), 'progress' => $sales_progress],
+    ['label' => 'Pipeline target', 'value' => onyx_money($commercial_pipeline_value, $currency), 'target' => onyx_money($pipeline_goal, $currency), 'progress' => $pipeline_progress],
+    ['label' => 'Execution target', 'value' => number_format($planning_company_achievement, 1) . '%', 'target' => $execution_goal . '%', 'progress' => $execution_progress],
+    ['label' => 'Profit target', 'value' => onyx_money($gross_margin_estimate, $currency), 'target' => onyx_money($profit_goal, $currency), 'progress' => $profit_progress],
 ];
 $operating_clusters = [
     [
@@ -396,12 +457,6 @@ $operating_clusters = [
         ],
     ],
 ];
-$sales_goal = max($sales_month, 10000000);
-$expense_goal = max($purchase_month, 6000000);
-$profit_goal = max($gross_margin_estimate, 4000000);
-$sales_progress = min(100, $sales_goal > 0 ? ($sales_month / $sales_goal) * 100 : 0);
-$expense_progress = min(100, $expense_goal > 0 ? ($purchase_month / $expense_goal) * 100 : 0);
-$profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit_goal) * 100 : 0);
 ?>
 
 <style>
@@ -409,23 +464,22 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
     .dash-board *{box-sizing:border-box}.dash-board a{color:inherit}
     .dash-board .dash-hero{align-items:center!important;background:#0a0f16!important;border:1px solid var(--dash-line)!important;display:grid!important;gap:8px!important;grid-template-columns:minmax(0,1fr) auto!important;min-height:48px!important;padding:7px 10px!important}
     .dash-board .dash-hero h2{font-size:15px!important;line-height:1.1!important;margin:0 0 3px!important}.dash-board .dash-hero p{color:var(--onyx-muted)!important;font-size:9px!important;line-height:1.18!important;margin:0!important;max-width:980px!important}.dash-board .dash-date{border:1px solid var(--dash-line)!important;color:#fff!important;font-size:9px!important;font-weight:900!important;padding:5px 8px!important;text-transform:uppercase!important;white-space:nowrap!important}
-    .dash-board .system-kpis,.dash-board .dash-kpis{align-items:start!important;display:grid!important;gap:6px!important;grid-auto-rows:max-content!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
-    .dash-board .dash-kpis{grid-template-columns:repeat(6,minmax(0,1fr))!important}
-    .dash-board .system-kpi,.dash-board .dash-kpi{align-self:start!important;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012))!important;border:1px solid var(--dash-line)!important;display:grid!important;gap:5px!important;grid-template-columns:24px minmax(0,1fr)!important;height:auto!important;min-height:46px!important;padding:6px!important}
+    .dash-board .system-kpis{align-items:start!important;display:grid!important;gap:6px!important;grid-auto-rows:max-content!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
+    .dash-board .system-kpi,.dash-board .dash-kpi{align-self:start!important;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012))!important;border:1px solid var(--dash-line)!important;color:#fff!important;display:grid!important;gap:5px!important;grid-template-columns:24px minmax(0,1fr)!important;height:auto!important;min-height:46px!important;padding:6px!important;text-decoration:none!important}
     .dash-board .system-kpi i,.dash-board .dash-kpi i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:11px!important;height:24px!important;justify-content:center!important;width:24px!important}
     .dash-board .system-kpi span,.dash-board .dash-kpi span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.05!important;text-transform:uppercase!important}.dash-board .system-kpi strong,.dash-board .dash-kpi strong{display:block!important;font-size:12px!important;font-weight:900!important;line-height:1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .system-kpi small,.dash-board .dash-kpi small{color:#d8d8de!important;display:block!important;font-size:8px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
     .dash-board .dash-grid{align-items:start!important;display:grid!important;gap:7px!important;grid-auto-rows:max-content!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;min-width:0!important}.dash-board .span-2x{grid-column:span 2!important}.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x{grid-column:span 4!important}.dash-board .span-5x{grid-column:span 5!important}.dash-board .span-6x{grid-column:span 6!important}.dash-board .span-8x{grid-column:span 8!important}.dash-board .span-12x{grid-column:1/-1!important}
     .dash-board .dash-panel{align-self:start!important;background:#101923!important;border:1px solid var(--dash-line)!important;height:auto!important;min-height:0!important;overflow:hidden!important;padding:8px!important}.dash-board .dash-title{align-items:center!important;display:flex!important;gap:6px!important;justify-content:space-between!important;margin-bottom:6px!important;min-width:0!important}.dash-board .dash-title strong{font-size:10px!important;font-weight:900!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-title i{color:#fff!important}.dash-board .dash-title a,.dash-board .dash-tabs span{border:1px solid var(--dash-line)!important;color:#fff!important;font-size:8px!important;font-weight:900!important;line-height:1!important;padding:5px 7px!important;text-decoration:none!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .dash-tabs span:first-child{background:#fff!important;color:#050506!important}
     .dash-board .cluster-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-card{background:rgba(255,255,255,.025)!important;border:1px solid var(--dash-line)!important;color:#fff!important;display:grid!important;gap:9px!important;grid-template-columns:76px minmax(0,1fr)!important;min-height:116px!important;padding:8px!important;text-decoration:none!important}.dash-board .cluster-card:hover{background:rgba(255,255,255,.07)!important;text-decoration:none!important}.dash-board .cluster-donut{display:block!important;height:72px!important;width:72px!important}.dash-board .cluster-donut-value{fill:#fff!important;font-size:12px!important;font-weight:900!important}.dash-board .cluster-donut-label{fill:#8d99a8!important;font-size:7px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .cluster-head{align-items:center!important;display:flex!important;gap:7px!important;justify-content:space-between!important;margin-bottom:5px!important}.dash-board .cluster-head strong{font-size:11px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-head i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:10px!important;height:20px!important;justify-content:center!important;width:20px!important}.dash-board .cluster-primary{display:block!important;font-size:14px!important;font-weight:900!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-note{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important;margin-top:3px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-metrics{display:grid!important;gap:4px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;margin-top:7px!important}.dash-board .cluster-metric{border-top:1px solid rgba(255,255,255,.07)!important;min-width:0!important;padding-top:4px!important}.dash-board .cluster-metric span{color:var(--onyx-muted)!important;display:block!important;font-size:8px!important;font-weight:900!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;text-transform:uppercase!important;white-space:nowrap!important}.dash-board .cluster-metric strong{display:block!important;font-size:10px!important;line-height:1.1!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .cluster-bar{background:rgba(255,255,255,.07)!important;height:4px!important;margin-top:7px!important;overflow:hidden!important}.dash-board .cluster-bar span{background:#fff!important;display:block!important;height:100%!important}
+    .dash-board .trend-pill{align-items:center!important;border:1px solid rgba(255,255,255,.1)!important;display:inline-flex!important;font-size:8px!important;font-weight:900!important;gap:4px!important;margin-top:4px!important;max-width:100%!important;padding:2px 4px!important;text-transform:uppercase!important}.dash-board .trend-pill.up{color:#8ff0c3!important}.dash-board .trend-pill.down{color:#ff8a8a!important}.dash-board .trend-pill.flat{color:#d8d8de!important}.dash-board .metric-progress,.dash-board .target-bar,.dash-board .mini-bar{background:rgba(255,255,255,.07)!important;height:4px!important;overflow:hidden!important}.dash-board .metric-progress{grid-column:1/-1!important}.dash-board .metric-progress span,.dash-board .target-bar span,.dash-board .mini-bar span{background:#fff!important;display:block!important;height:100%!important}.dash-board .visual-list{display:grid!important;gap:7px!important}.dash-board .visual-row{display:grid!important;gap:6px!important;grid-template-columns:minmax(0,1fr) auto!important}.dash-board .visual-row span{color:var(--onyx-muted)!important;font-size:9px!important;font-weight:800!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .visual-row strong{font-size:9px!important;white-space:nowrap!important}.dash-board .visual-row .mini-bar{grid-column:1/-1!important}.dash-board .target-grid{display:grid!important;gap:7px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}.dash-board .target-card{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:grid!important;gap:5px!important;min-height:58px!important;padding:7px!important}.dash-board .target-card span{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;text-transform:uppercase!important}.dash-board .target-card strong{font-size:12px!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .target-card small{color:#d8d8de!important;font-size:8px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .command-list{display:grid!important;gap:6px!important}.dash-board .command-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;color:#fff!important;display:grid!important;gap:8px!important;grid-template-columns:28px minmax(0,1fr) auto!important;min-height:36px!important;padding:6px!important;text-decoration:none!important}.dash-board .command-priority{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;font-size:8px!important;font-weight:900!important;height:22px!important;justify-content:center!important;width:22px!important}.dash-board .command-item strong{display:block!important;font-size:10px!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .command-item span{color:var(--onyx-muted)!important;font-size:9px!important}.dash-board .command-value{color:#fff!important;font-size:9px!important;font-weight:900!important;white-space:nowrap!important}
     .dash-board .system-strip{display:grid!important;gap:6px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .attention-grid,.dash-board .report-grid{display:grid!important;gap:7px!important}.dash-board .attention-item,.dash-board .report-item{align-items:center!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.075)!important;display:flex!important;gap:8px!important;min-height:32px!important;overflow:hidden!important;padding:5px!important;text-decoration:none!important}.dash-board .attention-icon,.dash-board .report-icon{align-items:center!important;color:#fff!important;display:flex!important;flex:0 0 16px!important;font-size:10px!important;height:16px!important;justify-content:center!important;width:16px!important}.dash-board .attention-item strong,.dash-board .report-item strong{display:block!important;font-size:9px!important;line-height:1.15!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .attention-item span,.dash-board .report-item span{color:var(--onyx-muted)!important;display:block!important;font-size:10px!important;line-height:1.2!important;margin:1px 0 0!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
     .dash-board .chart-shell{height:94px!important;min-height:94px!important;overflow:hidden!important;padding:0!important}.dash-board .chart-svg{display:block!important;height:94px!important;width:100%!important}.dash-board .dash-chart-note{color:var(--onyx-muted)!important;font-size:10px!important;font-weight:900!important;margin-bottom:6px!important;text-transform:uppercase!important}.dash-board .dash-donut-wrap{align-items:center!important;display:grid!important;gap:10px!important;grid-template-columns:72px minmax(0,1fr)!important}.dash-board .revenue-pie{height:70px!important;width:70px!important}.dash-board .pie-total-label{fill:#8d8d98!important;font-size:8px!important;font-weight:900!important}.dash-board .pie-total-value{fill:#fff!important;font-size:7px!important;font-weight:900!important}.dash-board .revenue-pie-empty{align-items:center!important;border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;display:flex!important;font-size:10px!important;font-weight:900!important;height:70px!important;justify-content:center!important;text-align:center!important;width:70px!important}
     .dash-board .mini-list{display:grid!important;gap:4px!important}.dash-board .mini-row{align-items:center!important;border-bottom:1px solid rgba(255,255,255,.045)!important;display:grid!important;gap:8px!important;grid-template-columns:minmax(0,1fr) auto!important;padding:0 0 4px!important}.dash-board .mini-row span{color:var(--onyx-muted)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .mini-row strong{font-size:9px!important;line-height:1.18!important;white-space:nowrap!important}
     .dash-board .dash-table{border-collapse:collapse!important;table-layout:fixed!important;width:100%!important}.dash-board .dash-table th{color:var(--onyx-muted)!important;font-size:8px!important;font-weight:900!important;padding:5px 4px!important;text-align:left!important;text-transform:uppercase!important}.dash-board .dash-table td{border-top:1px solid rgba(255,255,255,.045)!important;font-size:9px!important;line-height:1.18!important;overflow:hidden!important;padding:6px 5px!important;text-overflow:ellipsis!important;vertical-align:top!important}.dash-board .dash-empty{border:1px dashed var(--dash-line)!important;color:var(--onyx-muted)!important;font-size:11px!important;line-height:1.35!important;min-height:44px!important;padding:9px!important;text-align:center!important}.dash-board .dash-status{background:rgba(255,255,255,.08)!important;border:1px solid var(--dash-line)!important;color:#fff!important;font-size:9px!important;font-weight:900!important;padding:3px 5px!important;text-transform:uppercase!important;white-space:nowrap!important}
     .dash-board .activity-map{background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.01))!important;border:1px solid rgba(255,255,255,.075)!important;height:68px!important;min-height:68px!important}.dash-board .activity-stats{display:grid!important;gap:5px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin-top:5px!important}.dash-board .activity-stat{align-items:center!important;display:flex!important;gap:6px!important;min-width:0!important}.dash-board .activity-stat i{color:#fff!important;font-size:11px!important}.dash-board .activity-stat strong{display:block!important;font-size:13px!important;line-height:1!important}.dash-board .activity-stat span{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;line-height:1.15!important}
-    .dash-board .bottom-kpis{display:grid!important;gap:8px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .bottom-card{align-items:center!important;background:#101923!important;border:1px solid var(--dash-line)!important;display:flex!important;gap:9px!important;min-height:42px!important;padding:6px!important}.dash-board .bottom-card i{align-items:center!important;background:#fff!important;color:#050506!important;display:flex!important;height:24px!important;justify-content:center!important;width:24px!important}.dash-board .bottom-card strong{display:block!important;font-size:12px!important;line-height:1!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}.dash-board .bottom-card span{color:var(--onyx-muted)!important;display:block!important;font-size:9px!important;font-weight:900!important;text-transform:uppercase!important}
-    @media(max-width:1180px){.dash-board .system-kpis,.dash-board .system-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
-    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .system-strip,.dash-board .bottom-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
-    @media(max-width:620px){.dash-board .system-kpis,.dash-board .dash-kpis,.dash-board .cluster-grid,.dash-board .system-strip,.dash-board .bottom-kpis,.dash-board .activity-stats{grid-template-columns:1fr!important}.dash-board .cluster-card{grid-template-columns:68px minmax(0,1fr)!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
+    @media(max-width:1180px){.dash-board .system-kpis,.dash-board .system-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dash-board .cluster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+    @media(max-width:900px){.dash-board .dash-hero{grid-template-columns:1fr!important}.dash-board .system-kpis,.dash-board .system-strip,.dash-board .target-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash-board .dash-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}.dash-board .span-2x,.dash-board .span-3x{grid-column:span 3!important}.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}}
+    @media(max-width:620px){.dash-board .system-kpis,.dash-board .cluster-grid,.dash-board .system-strip,.dash-board .activity-stats,.dash-board .target-grid{grid-template-columns:1fr!important}.dash-board .cluster-card{grid-template-columns:68px minmax(0,1fr)!important}.dash-board .dash-grid{grid-template-columns:1fr!important}.dash-board .span-2x,.dash-board .span-3x,.dash-board .span-4x,.dash-board .span-5x,.dash-board .span-6x,.dash-board .span-8x,.dash-board .span-12x{grid-column:1/-1!important}.dash-board .dash-donut-wrap{grid-template-columns:1fr!important}}
 </style>
 
 <div class="dash-board">
@@ -439,23 +493,17 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
 
     <section class="system-kpis" aria-label="Executive system signals">
         <?php foreach ($executive_kpis as $kpi): ?>
-            <div class="system-kpi">
+            <a class="system-kpi" href="<?= htmlspecialchars($kpi['href']) ?>">
                 <i class="fa-solid <?= htmlspecialchars($kpi['icon']) ?>"></i>
                 <div>
                     <span><?= htmlspecialchars($kpi['label']) ?></span>
                     <strong><?= htmlspecialchars((string) $kpi['value']) ?></strong>
                     <small><?= htmlspecialchars($kpi['note']) ?></small>
+                    <span class="trend-pill <?= htmlspecialchars($kpi['trend']['class']) ?>"><i class="fa-solid <?= htmlspecialchars($kpi['trend']['icon']) ?>"></i><?= htmlspecialchars($kpi['trend']['label']) ?></span>
                 </div>
-            </div>
+                <div class="metric-progress"><span style="width: <?= htmlspecialchars((string) max(0, min(100, (float) $kpi['progress']))) ?>%"></span></div>
+            </a>
         <?php endforeach; ?>
-    </section>
-
-    <section class="dash-kpis" aria-label="Business statistics">
-        <div class="dash-kpi"><i class="fa-solid fa-dollar-sign"></i><div><span>Total Revenue</span><strong><?= htmlspecialchars(onyx_money($sales_month, $currency)) ?></strong><small>Month to date</small></div></div>
-        <div class="dash-kpi"><i class="fa-solid fa-user-plus"></i><div><span>New Customers</span><strong><?= htmlspecialchars((string) $new_customers_month) ?></strong><small>This month</small></div></div>
-        <div class="dash-kpi"><i class="fa-solid fa-file-invoice"></i><div><span>Total Invoices</span><strong><?= htmlspecialchars((string) $invoice_count_month) ?></strong><small><?= htmlspecialchars((string) $paid_invoice_count) ?> paid</small></div></div>
-        <div class="dash-kpi"><i class="fa-solid fa-box-open"></i><div><span>Active Products</span><strong><?= htmlspecialchars((string) $product_count) ?></strong><small><?= htmlspecialchars(onyx_money($inventory_value, $currency)) ?> stock</small></div></div>
-        <div class="dash-kpi"><i class="fa-solid fa-circle-check"></i><div><span>Completion Rate</span><strong><?= htmlspecialchars((string) $completion_rate) ?>%</strong><small>Paid invoice ratio</small></div></div>
     </section>
 
     <section class="dash-panel span-12x">
@@ -485,6 +533,23 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
                         <div class="cluster-bar"><span style="width: <?= htmlspecialchars((string) max(0, min(100, (float) $cluster['score']))) ?>%"></span></div>
                     </div>
                 </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="dash-panel span-12x">
+        <div class="dash-title">
+            <strong><i class="fa-solid fa-crosshairs"></i> Targets and pacing</strong>
+            <div class="dash-tabs"><span>Vs target</span></div>
+        </div>
+        <div class="target-grid">
+            <?php foreach ($target_cards as $target): ?>
+                <div class="target-card">
+                    <span><?= htmlspecialchars($target['label']) ?></span>
+                    <strong><?= htmlspecialchars($target['value']) ?></strong>
+                    <small>Target <?= htmlspecialchars($target['target']) ?></small>
+                    <div class="target-bar"><span style="width: <?= htmlspecialchars((string) max(0, min(100, (float) $target['progress']))) ?>%"></span></div>
+                </div>
             <?php endforeach; ?>
         </div>
     </section>
@@ -529,23 +594,19 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
 
         <div class="dash-panel span-4x">
             <div class="dash-title">
-                <strong><i class="fa-solid fa-chart-pie"></i> Revenue by product</strong>
-                <a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">View all</a>
+                <strong><i class="fa-solid fa-filter"></i> Pipeline funnel</strong>
+                <a href="<?= htmlspecialchars(route('commercial.dashboard')) ?>">View all</a>
             </div>
-            <div class="dash-donut-wrap">
-                <?= dashboard_revenue_pie_svg($revenue_mix, $currency) ?>
-                <div class="dash-breakdown">
-                    <?php foreach ($revenue_mix as $item): ?>
-                        <?php
-                        $mixValue = max(0, (float) ($item['total_value'] ?? 0));
-                        $mixShare = $revenue_mix_total > 0 ? number_format(($mixValue / $revenue_mix_total) * 100, 1) . '%' : '0.0%';
-                        ?>
-                        <div class="mini-row" title="<?= htmlspecialchars(($item['product_name'] ?? '-') . ': ' . onyx_money($mixValue, $currency) . ' (' . $mixShare . ')') ?>">
-                            <span><?= htmlspecialchars($item['product_name'] ?? '-') ?> | <?= htmlspecialchars($mixShare) ?></span>
-                            <strong><?= htmlspecialchars(onyx_money($mixValue, $currency)) ?></strong>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+            <div class="visual-list">
+                <?php $pipelineMax = max(1, ...array_map(static fn (array $row): float => (float) ($row['money_value'] ?? 0), $pipeline_stage_rows ?: [['money_value' => 1]])); ?>
+                <?php foreach (($pipeline_stage_rows ?: [['label' => 'No active pipeline', 'count_value' => 0, 'money_value' => 0]]) as $row): ?>
+                    <?php $pct = ((float) ($row['money_value'] ?? 0) / $pipelineMax) * 100; ?>
+                    <div class="visual-row">
+                        <span><?= htmlspecialchars((string) ($row['label'] ?? 'Pipeline')) ?> | <?= htmlspecialchars((string) ($row['count_value'] ?? 0)) ?></span>
+                        <strong><?= htmlspecialchars(onyx_money((float) ($row['money_value'] ?? 0), $currency)) ?></strong>
+                        <div class="mini-bar"><span style="width: <?= htmlspecialchars((string) max(4, min(100, $pct))) ?>%"></span></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -566,84 +627,72 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
         </div>
 
         <div class="dash-panel span-6x">
-            <div class="dash-title"><strong><i class="fa-solid fa-file-invoice-dollar"></i> Purchases</strong><a href="<?= htmlspecialchars(onyx_legacy_url('purchases.php')) ?>">View all</a></div>
-            <?php if ($recent_purchases === []): ?>
-                <div class="dash-empty">No purchase records found yet.</div>
-            <?php else: ?>
-                <table class="dash-table"><thead><tr><th>Supplier</th><th>Date</th><th>Total</th></tr></thead><tbody>
-                    <?php foreach ($recent_purchases as $purchase): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($purchase['supplier'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($purchase['purchase_date'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars(onyx_money((float) ($purchase['total_amount'] ?? 0), $currency)) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody></table>
-            <?php endif; ?>
+            <div class="dash-title"><strong><i class="fa-solid fa-scale-balanced"></i> Receivables and spend pressure</strong><a href="<?= htmlspecialchars(route('finance.dashboard')) ?>">View all</a></div>
+            <div class="visual-list">
+                <?php $pressureMax = max(1, $open_invoice_balance, $purchase_month, $credit_supplier_count); ?>
+                <?php foreach ([['label' => 'Open receivables', 'value' => $open_invoice_balance, 'money' => true], ['label' => 'Month purchases', 'value' => $purchase_month, 'money' => true], ['label' => 'Supplier balances due', 'value' => $credit_supplier_count, 'money' => false], ['label' => 'Overdue invoices', 'value' => $overdue_invoice_count, 'money' => false]] as $row): ?>
+                    <?php $pct = ((float) $row['value'] / $pressureMax) * 100; ?>
+                    <div class="visual-row">
+                        <span><?= htmlspecialchars($row['label']) ?></span>
+                        <strong><?= htmlspecialchars($row['money'] ? onyx_money((float) $row['value'], $currency) : (string) $row['value']) ?></strong>
+                        <div class="mini-bar"><span style="width: <?= htmlspecialchars((string) max(4, min(100, $pct))) ?>%"></span></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </section>
 
     <section class="dash-grid">
         <div class="dash-panel span-4x">
-            <div class="dash-title"><strong><i class="fa-solid fa-receipt"></i> Sales invoices</strong><a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">View all</a></div>
-            <?php if ($recent_invoices === []): ?>
-                <div class="dash-empty">No sales invoices found yet.</div>
-            <?php else: ?>
-                <table class="dash-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead><tbody>
-                    <?php foreach ($recent_invoices as $invoice): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($invoice['invoice_number'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($invoice['customer_name'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($invoice['invoice_date'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars(onyx_money((float) ($invoice['total'] ?? 0), $currency)) ?></td>
-                            <td><span class="dash-status"><?= htmlspecialchars((string) ($invoice['status'] ?? 'draft')) ?></span></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody></table>
-            <?php endif; ?>
+            <div class="dash-title"><strong><i class="fa-solid fa-receipt"></i> Invoice status mix</strong><a href="<?= htmlspecialchars(onyx_legacy_url('sales.php')) ?>">View all</a></div>
+            <div class="visual-list">
+                <?php $invoiceMax = max(1, ...array_map(static fn (array $row): int => (int) ($row['count_value'] ?? 0), $invoice_status_rows ?: [['count_value' => 1]])); ?>
+                <?php foreach (($invoice_status_rows ?: [['label' => 'No invoices', 'count_value' => 0, 'money_value' => 0]]) as $row): ?>
+                    <?php $pct = ((int) ($row['count_value'] ?? 0) / $invoiceMax) * 100; ?>
+                    <div class="visual-row">
+                        <span><?= htmlspecialchars((string) ($row['label'] ?? 'Invoice')) ?></span>
+                        <strong><?= htmlspecialchars((string) ($row['count_value'] ?? 0)) ?></strong>
+                        <div class="mini-bar"><span style="width: <?= htmlspecialchars((string) max(4, min(100, $pct))) ?>%"></span></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <div class="dash-panel span-4x">
-            <div class="dash-title"><strong><i class="fa-solid fa-users"></i> Customers</strong><a href="<?= htmlspecialchars(onyx_legacy_url('customers.php')) ?>">View all</a></div>
-            <?php if ($recent_customers === []): ?>
-                <div class="dash-empty">No customers found yet.</div>
-            <?php else: ?>
-                <table class="dash-table"><thead><tr><th>Customer</th><th>Phone</th><th>Balance</th></tr></thead><tbody>
-                    <?php foreach ($recent_customers as $customer): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($customer['name'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars($customer['phone'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars(onyx_money((float) ($customer['credit_balance'] ?? 0), $currency)) ?></td>
-                        </tr>
+            <div class="dash-title"><strong><i class="fa-solid fa-users"></i> Customer health</strong><a href="<?= htmlspecialchars(route('crm.dashboard')) ?>">View all</a></div>
+            <div class="dash-donut-wrap">
+                <?= dashboard_gauge_svg(max(0, min(100, 100 - (($crm_at_risk_accounts + $customer_success_risks) * 10))), 'health') ?>
+                <div class="visual-list">
+                    <?php foreach ([['label' => 'Active customers', 'value' => $customer_count], ['label' => 'Account plans', 'value' => $crm_account_plans], ['label' => 'At risk', 'value' => $crm_at_risk_accounts + $customer_success_risks], ['label' => 'Subscriptions', 'value' => $crm_subscriptions]] as $row): ?>
+                        <div class="mini-row"><span><?= htmlspecialchars($row['label']) ?></span><strong><?= htmlspecialchars((string) $row['value']) ?></strong></div>
                     <?php endforeach; ?>
-                </tbody></table>
-            <?php endif; ?>
+                </div>
+            </div>
         </div>
 
         <div class="dash-panel span-4x">
-            <div class="dash-title"><strong><i class="fa-solid fa-boxes-packing"></i> Product stock</strong><a href="<?= htmlspecialchars(onyx_legacy_url('products.php')) ?>">View all</a></div>
-            <?php if ($low_stock_rows === []): ?>
-                <div class="dash-empty">Stock levels are healthy.</div>
-            <?php else: ?>
-                <table class="dash-table"><thead><tr><th>Product</th><th>Stock</th><th>Min</th></tr></thead><tbody>
-                    <?php foreach ($low_stock_rows as $product): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($product['name'] ?? $product['sku'] ?? '-') ?></td>
-                            <td><?= htmlspecialchars((string) ($product['current_stock'] ?? 0)) ?></td>
-                            <td><?= htmlspecialchars((string) ($product['min_stock'] ?? 0)) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody></table>
-            <?php endif; ?>
+            <div class="dash-title"><strong><i class="fa-solid fa-boxes-packing"></i> Stock risk</strong><a href="<?= htmlspecialchars(onyx_legacy_url('inventory.php')) ?>">View all</a></div>
+            <div class="visual-list">
+                <?php $stockMax = max(1, $product_count, $near_reorder, $low_stock_count); ?>
+                <?php foreach ([['label' => 'Healthy catalog', 'value' => max(0, $product_count - $near_reorder)], ['label' => 'Near reorder', 'value' => $near_reorder], ['label' => 'Low stock', 'value' => $low_stock_count], ['label' => 'Warranty alerts', 'value' => $warranty_alerts]] as $row): ?>
+                    <?php $pct = ((int) $row['value'] / $stockMax) * 100; ?>
+                    <div class="visual-row">
+                        <span><?= htmlspecialchars($row['label']) ?></span>
+                        <strong><?= htmlspecialchars((string) $row['value']) ?></strong>
+                        <div class="mini-bar"><span style="width: <?= htmlspecialchars((string) max(4, min(100, $pct))) ?>%"></span></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
 
-        <div class="dash-panel span-3x">
-            <div class="dash-title"><strong><i class="fa-solid fa-bell"></i> Attention</strong></div>
-            <div class="attention-grid">
-                <?php foreach ($attention_items as $item): ?>
-                    <a class="attention-item" href="<?= htmlspecialchars(onyx_legacy_url($item['href'])) ?>">
-                        <span class="attention-icon"><i class="fa-solid <?= htmlspecialchars($item['icon']) ?>"></i></span>
+        <div class="dash-panel span-6x">
+            <div class="dash-title"><strong><i class="fa-solid fa-list-check"></i> Today's command list</strong><div class="dash-tabs"><span>Action</span></div></div>
+            <div class="command-list">
+                <?php foreach ($today_command_items as $item): ?>
+                    <a class="command-item" href="<?= htmlspecialchars($item['href']) ?>">
+                        <span class="command-priority"><?= htmlspecialchars($item['priority']) ?></span>
                         <span><strong><?= htmlspecialchars($item['label']) ?></strong><span><?= htmlspecialchars($item['value']) ?></span></span>
+                        <span class="command-value">Open</span>
                     </a>
                 <?php endforeach; ?>
             </div>
@@ -661,21 +710,17 @@ $profit_progress = min(100, $profit_goal > 0 ? ($gross_margin_estimate / $profit
             </div>
         </div>
 
-        <div class="dash-panel span-6x">
-            <div class="dash-title"><strong><i class="fa-solid fa-location-dot"></i> Business activity map</strong><div class="dash-tabs"><span>This Week</span></div></div>
-            <div class="activity-map"></div>
-            <div class="activity-stats">
-                <?php foreach ($activity_stats as $activity): ?>
-                    <div class="activity-stat"><i class="fa-solid <?= htmlspecialchars($activity['icon']) ?>"></i><div><strong><?= htmlspecialchars((string) $activity['value']) ?></strong><span><?= htmlspecialchars($activity['label']) ?></span></div></div>
+        <div class="dash-panel span-3x">
+            <div class="dash-title"><strong><i class="fa-solid fa-clock-rotate-left"></i> Recent system events</strong><div class="dash-tabs"><span>Live</span></div></div>
+            <div class="visual-list">
+                <?php foreach (($recent_events ?: [['title' => 'No system events yet', 'source_module' => 'Audit', 'occurred_at' => '']]) as $event): ?>
+                    <div class="mini-row">
+                        <span><?= htmlspecialchars((string) ($event['title'] ?? '-')) ?></span>
+                        <strong><?= htmlspecialchars((string) ($event['source_module'] ?? '-')) ?></strong>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </div>
-    </section>
-
-    <section class="bottom-kpis">
-        <div class="bottom-card"><i class="fa-solid fa-users"></i><div><span>Total Customers</span><strong><?= htmlspecialchars((string) $customer_count) ?></strong></div></div>
-        <div class="bottom-card"><i class="fa-solid fa-file-circle-check"></i><div><span>Open Balance</span><strong><?= htmlspecialchars(onyx_money($open_invoice_balance, $currency)) ?></strong></div></div>
-        <div class="bottom-card"><i class="fa-solid fa-rotate"></i><div><span>Gross Margin Estimate</span><strong><?= htmlspecialchars(onyx_money($gross_margin_estimate, $currency)) ?></strong></div></div>
     </section>
 </div>
 
