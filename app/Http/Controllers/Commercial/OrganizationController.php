@@ -6,6 +6,7 @@ use App\Http\Requests\Commercial\StoreOrganizationRequest;
 use App\Models\Commercial\CommercialOrganization;
 use App\Models\User;
 use App\Services\Commercial\CommercialAuditService;
+use App\Services\Commercial\CommercialLegacyCustomerBridgeService;
 use App\Services\Commercial\CommercialNumberingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class OrganizationController extends CommercialController
         ]);
     }
 
-    public function store(StoreOrganizationRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit): RedirectResponse
+    public function store(StoreOrganizationRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $organization = CommercialOrganization::create($request->validated() + [
             'tenant_id' => $this->tenantId(),
@@ -55,6 +56,9 @@ class OrganizationController extends CommercialController
         ]);
 
         $audit->record($request, 'created', $organization, 'Created commercial organization ' . $organization->reference);
+        if (str_contains(strtolower($organization->customer_status), 'customer')) {
+            $legacyBridge->syncOrganization($organization, $request->user());
+        }
 
         return redirect()->route('commercial.organizations.show', $organization)->with('success', 'Organization created successfully.');
     }
@@ -82,7 +86,7 @@ class OrganizationController extends CommercialController
         ]);
     }
 
-    public function update(StoreOrganizationRequest $request, CommercialOrganization $organization, CommercialAuditService $audit): RedirectResponse
+    public function update(StoreOrganizationRequest $request, CommercialOrganization $organization, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $this->authorizeCommercial('commercial.organizations.update');
         $this->ensureTenant($organization);
@@ -95,7 +99,23 @@ class OrganizationController extends CommercialController
             'before' => $before,
             'after' => $organization->only(array_keys($before)),
         ]);
+        if (! $organization->legacy_customer_id && str_contains(strtolower($organization->customer_status), 'customer')) {
+            $legacyBridge->syncOrganization($organization, $request->user());
+        }
 
         return redirect()->route('commercial.organizations.show', $organization)->with('success', 'Organization updated successfully.');
+    }
+
+    public function syncCustomer(Request $request, CommercialOrganization $organization, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.organizations.update');
+        $this->ensureTenant($organization);
+
+        $customerId = $legacyBridge->syncOrganization($organization, $request->user());
+        $audit->record($request, 'legacy_customer_synced', $organization->refresh(), 'Synced commercial organization ' . $organization->reference . ' to legacy customer register', [
+            'customer_id' => $customerId,
+        ]);
+
+        return redirect()->route('commercial.organizations.show', $organization)->with('success', 'Legacy customer register synced.');
     }
 }

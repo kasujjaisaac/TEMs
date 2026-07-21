@@ -72,6 +72,7 @@ class LeadConversionService
 
             $opportunity = CommercialOpportunity::create([
                 'tenant_id' => $tenantId,
+                'campaign_id' => $lead->campaign_id,
                 'organization_id' => $organization->id,
                 'lead_id' => $lead->id,
                 'primary_stakeholder_id' => $stakeholder?->id,

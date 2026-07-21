@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Commercial;
 
 use App\Http\Requests\Commercial\StoreLeadRequest;
+use App\Models\Commercial\CommercialCampaign;
 use App\Models\Commercial\CommercialLead;
 use App\Models\User;
 use App\Services\Commercial\CommercialAuditService;
+use App\Services\Commercial\CommercialLegacyCustomerBridgeService;
 use App\Services\Commercial\CommercialNumberingService;
 use App\Services\Commercial\LeadConversionService;
 use Illuminate\Http\RedirectResponse;
@@ -47,10 +49,11 @@ class LeadController extends CommercialController
             'page_title' => 'Create Lead | Texaro Technologies Limited',
             'lead' => new CommercialLead(['status' => 'New', 'temperature' => 'Warm']),
             'employees' => User::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
+            'campaigns' => CommercialCampaign::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
         ]);
     }
 
-    public function store(StoreLeadRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit): RedirectResponse
+    public function store(StoreLeadRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $data = $request->validated();
         $lead = CommercialLead::create($data + [
@@ -61,6 +64,7 @@ class LeadController extends CommercialController
         ]);
 
         $audit->record($request, 'created', $lead, 'Created commercial lead ' . $lead->reference);
+        $legacyBridge->syncLead($lead, $request->user());
 
         return redirect()->route('commercial.leads.show', $lead)->with('success', 'Lead created successfully.');
     }
@@ -85,10 +89,11 @@ class LeadController extends CommercialController
             'page_title' => 'Edit ' . $lead->reference . ' | Texaro Technologies Limited',
             'lead' => $lead,
             'employees' => User::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
+            'campaigns' => CommercialCampaign::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
         ]);
     }
 
-    public function update(StoreLeadRequest $request, CommercialLead $lead, CommercialAuditService $audit): RedirectResponse
+    public function update(StoreLeadRequest $request, CommercialLead $lead, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $this->authorizeCommercial('commercial.leads.update');
         $this->ensureTenant($lead);
@@ -101,11 +106,12 @@ class LeadController extends CommercialController
             'before' => $before,
             'after' => $lead->only(array_keys($before)),
         ]);
+        $legacyBridge->syncLead($lead, $request->user());
 
         return redirect()->route('commercial.leads.show', $lead)->with('success', 'Lead updated successfully.');
     }
 
-    public function convert(Request $request, CommercialLead $lead, LeadConversionService $converter, CommercialAuditService $audit): RedirectResponse
+    public function convert(Request $request, CommercialLead $lead, LeadConversionService $converter, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $this->authorizeCommercial('commercial.leads.convert');
         $this->ensureTenant($lead);
@@ -123,6 +129,9 @@ class LeadController extends CommercialController
             'stakeholder_id' => $result['stakeholder']?->id,
             'opportunity_id' => $result['opportunity']->id,
         ]);
+        $legacyBridge->syncOrganization($result['organization'], $request->user());
+        $legacyBridge->syncLead($lead->refresh(), $request->user());
+        $legacyBridge->syncOpportunity($result['opportunity'], $request->user());
 
         return redirect()->route('commercial.opportunities.show', $result['opportunity'])->with('success', 'Lead converted into organization, stakeholder, and opportunity.');
     }

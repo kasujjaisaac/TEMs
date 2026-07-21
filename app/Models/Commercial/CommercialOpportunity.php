@@ -15,7 +15,7 @@ class CommercialOpportunity extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'organization_id', 'lead_id', 'primary_stakeholder_id',
+        'tenant_id', 'campaign_id', 'organization_id', 'lead_id', 'primary_stakeholder_id',
         'pipeline_stage_id', 'reference', 'title', 'assigned_employee_id',
         'product_or_service', 'opportunity_type', 'opportunity_source',
         'current_stage', 'probability', 'estimated_value', 'currency',
@@ -54,6 +54,11 @@ class CommercialOpportunity extends Model
         return $this->belongsTo(CommercialOrganization::class, 'organization_id');
     }
 
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(CommercialCampaign::class, 'campaign_id');
+    }
+
     public function lead(): BelongsTo
     {
         return $this->belongsTo(CommercialLead::class, 'lead_id');
@@ -82,5 +87,25 @@ class CommercialOpportunity extends Model
     public function latestSalesHandoff(): HasOne
     {
         return $this->hasOne(CommercialSalesHandoff::class, 'opportunity_id')->latestOfMany();
+    }
+
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(CommercialProposal::class, 'opportunity_id');
+    }
+
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(CommercialQuotation::class, 'opportunity_id');
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(CommercialContract::class, 'opportunity_id');
+    }
+
+    public function billingRequests(): HasMany
+    {
+        return $this->hasMany(CommercialBillingRequest::class, 'opportunity_id');
     }
 }

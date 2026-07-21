@@ -7,10 +7,16 @@ use App\Models\Commercial\CommercialOpportunity;
 use App\Models\Commercial\CommercialOpportunityStageHistory;
 use App\Models\Commercial\CommercialOrganization;
 use App\Models\Commercial\CommercialPipelineStage;
+use App\Models\Commercial\CommercialProposal;
+use App\Models\Commercial\CommercialQuotation;
+use App\Models\Commercial\CommercialContract;
+use App\Models\Commercial\CommercialCampaign;
 use App\Models\Commercial\CommercialStakeholder;
 use App\Models\User;
 use App\Services\Commercial\CommercialAuditService;
+use App\Services\Commercial\CommercialLegacyCustomerBridgeService;
 use App\Services\Commercial\CommercialNumberingService;
+use App\Services\Commercial\CommercialRevenueLifecycleService;
 use App\Services\Commercial\CommercialSalesHandoffService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,10 +52,11 @@ class OpportunityController extends CommercialController
             'stakeholders' => CommercialStakeholder::where('tenant_id', $this->tenantId())->orderBy('full_name')->get(),
             'employees' => User::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
             'stages' => CommercialPipelineStage::where('tenant_id', $this->tenantId())->orderBy('display_order')->get(),
+            'campaigns' => CommercialCampaign::where('tenant_id', $this->tenantId())->orderBy('name')->get(),
         ]);
     }
 
-    public function store(StoreOpportunityRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit): RedirectResponse
+    public function store(StoreOpportunityRequest $request, CommercialNumberingService $numbering, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $data = $request->validated();
         CommercialOrganization::where('tenant_id', $this->tenantId())->findOrFail($data['organization_id']);
@@ -70,6 +77,7 @@ class OpportunityController extends CommercialController
         ]);
 
         $audit->record($request, 'created', $opportunity, 'Created opportunity ' . $opportunity->reference);
+        $legacyBridge->syncOpportunity($opportunity, $request->user());
 
         return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Opportunity created successfully.');
     }
@@ -81,12 +89,147 @@ class OpportunityController extends CommercialController
 
         return view('commercial.opportunities.show', [
             'page_title' => $opportunity->reference . ' | Commercial Opportunity',
-            'opportunity' => $opportunity->load(['organization', 'primaryStakeholder', 'assignedEmployee', 'stageHistory', 'latestSalesHandoff']),
+            'opportunity' => $opportunity->load([
+                'organization', 'campaign', 'primaryStakeholder', 'assignedEmployee', 'stageHistory', 'latestSalesHandoff',
+                'proposals', 'quotations', 'contracts', 'billingRequests',
+            ]),
             'stages' => CommercialPipelineStage::where('tenant_id', $this->tenantId())->where('is_active', true)->orderBy('display_order')->get(),
         ]);
     }
 
-    public function handoffToSales(Request $request, CommercialOpportunity $opportunity, CommercialSalesHandoffService $handoff, CommercialAuditService $audit): RedirectResponse
+    public function storeProposal(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'scope_summary' => ['nullable', 'string'],
+            'value_proposition' => ['nullable', 'string'],
+            'version' => ['nullable', 'string', 'max:20'],
+            'proposed_value' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $proposal = $revenue->createProposal($opportunity, $request->user(), $data);
+        $audit->record($request, 'proposal_created', $proposal, 'Created proposal ' . $proposal->reference);
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Proposal created.');
+    }
+
+    public function approveProposal(Request $request, CommercialProposal $proposal, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.change_stage');
+        $this->ensureTenant($proposal);
+
+        $revenue->approveProposal($proposal, $request->user());
+        $audit->record($request, 'proposal_approved', $proposal, 'Approved proposal ' . $proposal->reference);
+
+        return redirect()->route('commercial.opportunities.show', $proposal->opportunity_id)->with('success', 'Proposal approved.');
+    }
+
+    public function storeQuotation(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+
+        $data = $request->validate([
+            'proposal_id' => ['nullable', 'integer'],
+            'quotation_date' => ['nullable', 'date'],
+            'valid_until' => ['nullable', 'date', 'after_or_equal:quotation_date'],
+            'subtotal' => ['nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'tax_amount' => ['nullable', 'numeric', 'min:0'],
+            'terms' => ['nullable', 'string'],
+        ]);
+
+        if (! empty($data['proposal_id'])) {
+            CommercialProposal::where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->findOrFail($data['proposal_id']);
+        }
+
+        $quotation = $revenue->createQuotation($opportunity, $request->user(), $data);
+        $audit->record($request, 'quotation_created', $quotation, 'Created quotation ' . $quotation->reference);
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Quotation created.');
+    }
+
+    public function decideQuotation(Request $request, CommercialQuotation $quotation, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.change_stage');
+        $this->ensureTenant($quotation);
+
+        $data = $request->validate(['decision' => ['required', 'in:Approved,Accepted']]);
+        $data['decision'] === 'Approved'
+            ? $revenue->approveQuotation($quotation, $request->user())
+            : $revenue->acceptQuotation($quotation, $request->user());
+
+        $audit->record($request, 'quotation_' . strtolower($data['decision']), $quotation, $data['decision'] . ' quotation ' . $quotation->reference);
+
+        return redirect()->route('commercial.opportunities.show', $quotation->opportunity_id)->with('success', 'Quotation decision recorded.');
+    }
+
+    public function storeContract(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+
+        $data = $request->validate([
+            'quotation_id' => ['nullable', 'integer'],
+            'contract_title' => ['required', 'string', 'max:255'],
+            'contract_value' => ['nullable', 'numeric', 'min:0'],
+            'starts_on' => ['nullable', 'date'],
+            'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
+            'payment_terms' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if (! empty($data['quotation_id'])) {
+            CommercialQuotation::where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->findOrFail($data['quotation_id']);
+        }
+
+        $contract = $revenue->createContract($opportunity, $request->user(), $data);
+        $audit->record($request, 'contract_created', $contract, 'Created contract ' . $contract->reference);
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Contract created.');
+    }
+
+    public function signContract(Request $request, CommercialContract $contract, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.change_stage');
+        $this->ensureTenant($contract);
+
+        $revenue->signContract($contract, $request->user());
+        $audit->record($request, 'contract_signed', $contract, 'Signed contract ' . $contract->reference);
+
+        return redirect()->route('commercial.opportunities.show', $contract->opportunity_id)->with('success', 'Contract signed and opportunity marked won.');
+    }
+
+    public function storeBillingRequest(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.handoff_to_sales');
+        $this->ensureTenant($opportunity);
+
+        $data = $request->validate([
+            'contract_id' => ['nullable', 'integer'],
+            'quotation_id' => ['nullable', 'integer'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'requested_invoice_date' => ['nullable', 'date'],
+            'billing_terms' => ['nullable', 'string', 'max:255'],
+            'instructions' => ['nullable', 'string'],
+        ]);
+
+        if (! empty($data['contract_id'])) {
+            CommercialContract::where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->findOrFail($data['contract_id']);
+        }
+        if (! empty($data['quotation_id'])) {
+            CommercialQuotation::where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->findOrFail($data['quotation_id']);
+        }
+
+        $billing = $revenue->createBillingRequest($opportunity, $request->user(), $data);
+        $audit->record($request, 'billing_requested', $billing, 'Created billing request ' . $billing->reference);
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Billing request created for Finance.');
+    }
+
+    public function handoffToSales(Request $request, CommercialOpportunity $opportunity, CommercialSalesHandoffService $handoff, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $this->authorizeCommercial('commercial.opportunities.handoff_to_sales');
         $this->ensureTenant($opportunity);
@@ -117,13 +260,14 @@ class OpportunityController extends CommercialController
             'created_customer' => $result['created_customer'],
             'created_quotation' => $result['created_quotation'],
         ]);
+        $legacyBridge->syncOpportunity($opportunity, $request->user());
 
         return redirect()
             ->route('commercial.opportunities.show', $opportunity)
             ->with('success', 'Sales handoff completed. A quotation is now available in Sales.');
     }
 
-    public function updateStage(Request $request, CommercialOpportunity $opportunity, CommercialAuditService $audit): RedirectResponse
+    public function updateStage(Request $request, CommercialOpportunity $opportunity, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
     {
         $this->authorizeCommercial('commercial.opportunities.change_stage');
         $this->ensureTenant($opportunity);
@@ -162,6 +306,7 @@ class OpportunityController extends CommercialController
             'previous_stage' => $previousStage,
             'new_stage' => $stage->name,
         ]);
+        $legacyBridge->syncOpportunity($opportunity, $request->user());
 
         return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Opportunity stage updated successfully.');
     }

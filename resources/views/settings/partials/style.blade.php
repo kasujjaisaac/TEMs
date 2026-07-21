@@ -606,4 +606,16 @@
             width: 100%;
         }
     }
+
+    .access-page{gap:10px!important}
+    .access-header,.access-header-compact{align-items:center!important;gap:8px!important;min-height:0!important;padding:8px 10px!important}
+    .access-title{gap:8px!important}
+    .access-title-icon,.access-header-compact .access-title-icon{flex:0 0 28px!important;font-size:10px!important;height:28px!important;width:28px!important}
+    .access-header h1,.access-header-compact h1{font-size:14px!important;font-weight:800!important;line-height:1.1!important;margin:0 0 1px!important}
+    .access-header p,.access-header-compact p,.access-muted{font-size:10px!important;font-weight:400!important;line-height:1.25!important}
+    .access-button,.access-header-compact .access-button{font-size:10px!important;font-weight:700!important;gap:6px!important;min-height:30px!important;padding:0 9px!important}
+    .access-panel,.access-kpi,.permission-group{padding:10px!important}
+    .access-panel-head{margin-bottom:9px!important;padding-bottom:8px!important}
+    .access-panel h2,.access-panel h3{font-size:11px!important;font-weight:700!important}
+    .access-kpi strong{font-size:14px!important;font-weight:700!important;margin-top:3px!important}
 </style>

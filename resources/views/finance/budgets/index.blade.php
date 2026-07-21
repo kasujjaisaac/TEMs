@@ -30,6 +30,69 @@
         </section>
     @endif
 
+    @if(auth()->user()?->hasPermission('finance.budgets.manage'))
+        <section class="finance-split">
+            <div class="finance-panel">
+                <div class="finance-panel-head"><h2>Expense Control</h2></div>
+                <form class="finance-form" method="POST" action="{{ route('finance.expenses.store') }}">
+                    @csrf
+                    <div class="finance-field"><label>Budget Line</label><select name="budget_line_id"><option value="">None</option>@foreach($budgetLines as $line)<option value="{{ $line->id }}">{{ $line->reference }}</option>@endforeach</select></div>
+                    <div class="finance-field"><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" required></div>
+                    <div class="finance-field"><label>Date</label><input name="expense_date" type="date" value="{{ now()->toDateString() }}"></div>
+                    <div class="finance-field full"><label>Description</label><input name="description" required></div>
+                    <div class="finance-field full"><button class="finance-button" type="submit">Submit Expense</button></div>
+                </form>
+            </div>
+            <div class="finance-panel">
+                <div class="finance-panel-head"><h2>Purchase Request</h2></div>
+                <form class="finance-form" method="POST" action="{{ route('finance.purchase_requests.store') }}">
+                    @csrf
+                    <div class="finance-field"><label>Budget Line</label><select name="budget_line_id"><option value="">None</option>@foreach($budgetLines as $line)<option value="{{ $line->id }}">{{ $line->reference }}</option>@endforeach</select></div>
+                    <div class="finance-field"><label>Estimated Amount</label><input name="estimated_amount" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="finance-field full"><label>Title</label><input name="title" required></div>
+                    <div class="finance-field full"><label>Justification</label><textarea name="justification"></textarea></div>
+                    <div class="finance-field full"><button class="finance-button" type="submit">Submit Request</button></div>
+                </form>
+            </div>
+        </section>
+
+        <section class="finance-split">
+            <div class="finance-panel">
+                <div class="finance-panel-head"><h2>Purchase Order & Bill</h2></div>
+                <form class="finance-form" method="POST" action="{{ route('finance.purchase_orders.store') }}">
+                    @csrf
+                    <div class="finance-field"><label>Supplier</label><input name="supplier_name" required></div>
+                    <div class="finance-field"><label>Total</label><input name="total_amount" type="number" min="0" step="0.01" required></div>
+                    <div class="finance-field full"><button class="finance-button secondary" type="submit">Issue PO</button></div>
+                </form>
+                <form class="finance-form" method="POST" action="{{ route('finance.supplier_bills.store') }}" style="margin-top:12px">
+                    @csrf
+                    <div class="finance-field"><label>Supplier</label><input name="supplier_name" required></div>
+                    <div class="finance-field"><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" required></div>
+                    <div class="finance-field"><label>Bill Date</label><input name="bill_date" type="date" value="{{ now()->toDateString() }}"></div>
+                    <div class="finance-field full"><button class="finance-button secondary" type="submit">Record Bill</button></div>
+                </form>
+            </div>
+            <div class="finance-panel">
+                <div class="finance-panel-head"><h2>Payment & Asset</h2></div>
+                <form class="finance-form" method="POST" action="{{ route('finance.payments.store') }}">
+                    @csrf
+                    <div class="finance-field"><label>Payee</label><input name="payee_name" required></div>
+                    <div class="finance-field"><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" required></div>
+                    <div class="finance-field"><label>Method</label><input name="method" placeholder="Bank, cash, mobile money"></div>
+                    <div class="finance-field full"><button class="finance-button" type="submit">Record Payment</button></div>
+                </form>
+                <form class="finance-form" method="POST" action="{{ route('finance.assets.store') }}" style="margin-top:12px">
+                    @csrf
+                    <div class="finance-field"><label>Asset</label><input name="name" required></div>
+                    <div class="finance-field"><label>Category</label><input name="category"></div>
+                    <div class="finance-field"><label>Cost</label><input name="cost" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="finance-field full"><button class="finance-button secondary" type="submit">Register Asset</button></div>
+                </form>
+            </div>
+        </section>
+    @endif
+
     <section class="finance-panel">
         <div class="finance-panel-head"><h2>Budget Lines</h2></div>
         @include('finance.partials.table', [
@@ -46,6 +109,21 @@
             ])->all()
         ])
         <div style="margin-top:12px">{{ $budgetLines->links() }}</div>
+    </section>
+
+    <section class="finance-panel">
+        <div class="finance-panel-head"><h2>Procurement & Asset Registers</h2></div>
+        @include('finance.partials.table', [
+            'headers' => ['Register', 'Reference', 'Description', 'Amount', 'Status'],
+            'rows' => collect()
+                ->merge($expenses->map(fn($x) => ['Expense', e($x->reference), e($x->description), e(number_format((float)$x->amount, 2)), e($x->status)]))
+                ->merge($purchaseRequests->map(fn($x) => ['Purchase Request', e($x->reference), e($x->title), e(number_format((float)$x->estimated_amount, 2)), e($x->status)]))
+                ->merge($purchaseOrders->map(fn($x) => ['Purchase Order', e($x->reference), e($x->supplier_name), e(number_format((float)$x->total_amount, 2)), e($x->status)]))
+                ->merge($supplierBills->map(fn($x) => ['Supplier Bill', e($x->reference), e($x->supplier_name), e(number_format((float)$x->amount, 2)), e($x->status)]))
+                ->merge($payments->map(fn($x) => ['Payment', e($x->reference), e($x->payee_name), e(number_format((float)$x->amount, 2)), e($x->status)]))
+                ->merge($assets->map(fn($x) => ['Asset', e($x->reference), e($x->name), e(number_format((float)$x->cost, 2)), e($x->status)]))
+                ->values()->all()
+        ])
     </section>
 </section>
 @endsection

@@ -6,6 +6,7 @@ use App\Models\Finance\FinanceAccount;
 use App\Models\Finance\FinanceBudgetLine;
 use App\Models\Finance\FinanceCostCentre;
 use App\Services\Finance\FinanceControlService;
+use App\Services\Finance\FinanceProcurementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,12 @@ class BudgetController extends FinanceController
             'accounts' => FinanceAccount::where('tenant_id', $this->tenantId())->where('type', 'Expense')->orderBy('code')->get(),
             'costCentres' => FinanceCostCentre::where('tenant_id', $this->tenantId())->orderBy('code')->get(),
             'fiscalYear' => $finance->currentFiscalYear($this->tenantId()),
+            'expenses' => \DB::table('finance_expenses')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
+            'purchaseRequests' => \DB::table('purchase_requests')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
+            'purchaseOrders' => \DB::table('purchase_orders')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
+            'supplierBills' => \DB::table('supplier_bills')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
+            'payments' => \DB::table('finance_payments')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
+            'assets' => \DB::table('asset_register')->where('tenant_id', $this->tenantId())->latest()->limit(10)->get(),
         ]);
     }
 
@@ -60,5 +67,93 @@ class BudgetController extends FinanceController
         ]);
 
         return redirect()->route('finance.budgets.index')->with('success', 'Budget line created successfully.');
+    }
+
+    public function storeExpense(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'budget_line_id' => ['nullable', 'integer'],
+            'description' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'expense_date' => ['nullable', 'date'],
+        ]);
+        if (! empty($data['budget_line_id'])) {
+            FinanceBudgetLine::where('tenant_id', $this->tenantId())->findOrFail($data['budget_line_id']);
+        }
+        $procurement->createExpense($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Expense submitted.');
+    }
+
+    public function storePurchaseRequest(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'budget_line_id' => ['nullable', 'integer'],
+            'title' => ['required', 'string', 'max:255'],
+            'justification' => ['nullable', 'string'],
+            'estimated_amount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+        $procurement->createPurchaseRequest($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Purchase request submitted.');
+    }
+
+    public function storePurchaseOrder(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'purchase_request_id' => ['nullable', 'integer'],
+            'supplier_name' => ['required', 'string', 'max:255'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+        ]);
+        $procurement->createPurchaseOrder($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Purchase order issued.');
+    }
+
+    public function storeSupplierBill(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'purchase_order_id' => ['nullable', 'integer'],
+            'supplier_name' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'bill_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date'],
+        ]);
+        $procurement->createSupplierBill($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Supplier bill recorded.');
+    }
+
+    public function storePayment(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'supplier_bill_id' => ['nullable', 'integer'],
+            'payee_name' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['nullable', 'date'],
+            'method' => ['nullable', 'string', 'max:80'],
+        ]);
+        $procurement->createPayment($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Payment recorded.');
+    }
+
+    public function storeAsset(Request $request, FinanceProcurementService $procurement): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:120'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'acquired_on' => ['nullable', 'date'],
+        ]);
+        $procurement->createAsset($this->tenantId(), $request->user(), $data);
+
+        return back()->with('success', 'Asset registered.');
     }
 }

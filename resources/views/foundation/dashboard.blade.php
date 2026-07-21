@@ -31,6 +31,9 @@
         <div class="access-kpi"><span>Unread Notifications</span><strong>{{ $metrics['unread_notifications'] }}</strong></div>
         <div class="access-kpi"><span>Events Today</span><strong>{{ $metrics['events_today'] }}</strong></div>
         <div class="access-kpi"><span>Document Records</span><strong>{{ $metrics['document_records'] }}</strong></div>
+        <div class="access-kpi"><span>Employees</span><strong>{{ $metrics['employee_profiles'] }}</strong></div>
+        <div class="access-kpi"><span>Approval Rules</span><strong>{{ $metrics['approval_rules'] }}</strong></div>
+        <div class="access-kpi"><span>Notification Prefs</span><strong>{{ $metrics['notification_preferences'] }}</strong></div>
     </section>
 
     <section class="access-grid">
@@ -75,13 +78,13 @@
 
             <div class="access-table-wrap" style="margin-top:16px">
                 <table class="access-table access-table-square">
-                    <thead><tr><th>Request</th><th>Status</th><th>Owner</th><th>Decision</th></tr></thead>
+                    <thead><tr><th>Request</th><th>Status</th><th>Current Step</th><th>Decision</th></tr></thead>
                     <tbody>
                     @forelse($approvals as $approval)
                         <tr>
                             <td><span class="access-table-title">{{ $approval->title }}</span><span class="access-muted">{{ $approval->module }} / {{ $approval->request_type }}</span></td>
                             <td><span class="access-badge {{ $approval->status === 'Approved' ? 'success' : ($approval->status === 'Rejected' ? 'danger' : 'warning') }}">{{ $approval->status }}</span></td>
-                            <td>{{ $approval->requester?->name ?? 'System' }}</td>
+                            <td><span class="access-table-title">Step {{ $approval->current_step }}</span><span class="access-muted">{{ $approval->currentApprover?->name ?? ($approval->steps->firstWhere('status', 'Pending')?->approver_role ?: 'Open approval queue') }}</span></td>
                             <td>
                                 @if($approval->status === 'Pending')
                                     <form method="POST" action="{{ route('foundation.approvals.decision', $approval) }}" class="access-actions">
@@ -111,6 +114,16 @@
     <section class="access-grid">
         <div class="access-panel">
             <div class="access-panel-head"><h2>Notifications</h2></div>
+            <form class="access-form" method="POST" action="{{ route('foundation.notification_preferences.store') }}" style="margin-bottom:14px">
+                @csrf
+                <div class="security-grid">
+                    <div class="access-field"><label>User</label><select name="user_id" required>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+                    <div class="access-field"><label>Module</label><input name="source_module" placeholder="* or Finance"></div>
+                    <div class="access-field"><label>Type</label><input name="type" placeholder="* or approval"></div>
+                    <div class="access-field"><label>In App</label><select name="in_app_enabled"><option value="1">Enabled</option><option value="0">Muted</option></select></div>
+                </div>
+                <div class="access-footer-actions"><button class="access-button secondary" type="submit">Save Preference</button></div>
+            </form>
             <div class="access-table-wrap">
                 <table class="access-table access-table-square">
                     <thead><tr><th>Notification</th><th>Severity</th><th>User</th><th>Status</th></tr></thead>
@@ -161,8 +174,62 @@
         </div>
     </section>
 
+    <section class="access-grid">
+        <div class="access-panel">
+            <div class="access-panel-head"><h2>Employee Profile Foundation</h2></div>
+            <form class="access-form" method="POST" action="{{ route('foundation.employees.store') }}">
+                @csrf
+                <div class="security-grid">
+                    <div class="access-field"><label>User Account</label><select name="user_id"><option value="">No login account</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+                    <div class="access-field"><label>Employee Number</label><input name="employee_number" placeholder="Auto if blank"></div>
+                    <div class="access-field"><label>Full Name</label><input name="full_name" required></div>
+                    <div class="access-field"><label>Work Email</label><input name="work_email" type="email"></div>
+                    <div class="access-field"><label>Status</label><select name="employment_status"><option>Active</option><option>Probation</option><option>Inactive</option><option>Exited</option></select></div>
+                    <div class="access-field"><label>Joined On</label><input name="joined_on" type="date"></div>
+                </div>
+                <div class="access-footer-actions"><button class="access-button" type="submit">Create Employee Profile</button></div>
+            </form>
+            <div class="access-table-wrap" style="margin-top:14px">
+                <table class="access-table access-table-square"><thead><tr><th>Employee</th><th>Email</th><th>Status</th></tr></thead><tbody>
+                    @forelse($employees as $employee)<tr><td><span class="access-table-title">{{ $employee->employee_number }}</span><span class="access-muted">{{ $employee->full_name }}</span></td><td>{{ $employee->work_email ?: '-' }}</td><td><span class="access-badge success">{{ $employee->employment_status }}</span></td></tr>@empty<tr><td colspan="3">No employee profiles recorded.</td></tr>@endforelse
+                </tbody></table>
+            </div>
+        </div>
+        <div class="access-panel">
+            <div class="access-panel-head"><h2>Approval Routing Rules</h2></div>
+            <form class="access-form" method="POST" action="{{ route('foundation.approval_rules.store') }}">
+                @csrf
+                <div class="security-grid">
+                    <div class="access-field"><label>Module</label><input name="module" value="Finance" required></div>
+                    <div class="access-field"><label>Request Type</label><input name="request_type" value="Expense" required></div>
+                    <div class="access-field"><label>Minimum Amount</label><input name="minimum_amount" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="access-field"><label>Approver Role</label><input name="approver_role" placeholder="Managing Director"></div>
+                    <div class="access-field"><label>Approver User</label><select name="approver_user_id"><option value="">Role based</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
+                    <div class="access-field"><label>Sequence</label><input name="sequence" type="number" min="1" value="1"></div>
+                </div>
+                <div class="access-footer-actions"><button class="access-button secondary" type="submit">Create Rule</button></div>
+            </form>
+            <div class="access-table-wrap" style="margin-top:14px">
+                <table class="access-table access-table-square"><thead><tr><th>Rule</th><th>Threshold</th><th>Approver</th></tr></thead><tbody>
+                    @forelse($approvalRules as $rule)<tr><td><span class="access-table-title">{{ $rule->module }}</span><span class="access-muted">{{ $rule->request_type }}</span></td><td>{{ number_format((float) $rule->minimum_amount, 2) }}</td><td>{{ $rule->approver_role ?: ('User #' . $rule->approver_user_id) }}</td></tr>@empty<tr><td colspan="3">No approval rules configured.</td></tr>@endforelse
+                </tbody></table>
+            </div>
+        </div>
+    </section>
+
     <section class="access-panel">
         <div class="access-panel-head"><h2>Document Foundation</h2></div>
+        <form class="access-form" method="POST" action="{{ route('foundation.documents.store') }}" style="margin-bottom:14px">
+            @csrf
+            <div class="security-grid">
+                <div class="access-field"><label>Module</label><input name="module" value="Enterprise Foundation" required></div>
+                <div class="access-field"><label>Type</label><input name="document_type" value="Policy" required></div>
+                <div class="access-field"><label>Prefix</label><input name="prefix" value="DOC"></div>
+                <div class="access-field"><label>Title</label><input name="title" required></div>
+                <div class="access-field"><label>Status</label><select name="status"><option>Draft</option><option>Review</option><option>Approved</option><option>Published</option><option>Archived</option></select></div>
+            </div>
+            <div class="access-footer-actions"><button class="access-button" type="submit">Register Document</button></div>
+        </form>
         <div class="access-table-wrap">
             <table class="access-table access-table-square">
                 <thead><tr><th>Document</th><th>Module</th><th>Status</th><th>Owner</th></tr></thead>

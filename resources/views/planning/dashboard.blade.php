@@ -20,9 +20,9 @@
         <div class="planning-card"><span>Workplan Targets</span><strong>{{ $metrics['targets'] }}</strong></div>
         <div class="planning-card"><span>At Risk / Behind</span><strong>{{ $metrics['at_risk_or_behind'] }}</strong></div>
         <div class="planning-card"><span>Workplans</span><strong>{{ $metrics['workplans'] }}</strong></div>
-        <div class="planning-card"><span>Monthly Allocations</span><strong>{{ $metrics['monthly_allocations'] }}</strong></div>
-        <div class="planning-card"><span>Weekly Allocations</span><strong>{{ $metrics['weekly_allocations'] }}</strong></div>
-        <div class="planning-card"><span>Strategic Pillars</span><strong>{{ $metrics['strategic_pillars'] }}</strong></div>
+        <div class="planning-card"><span>Evidence Awaiting Review</span><strong>{{ $metrics['evidence_awaiting_review'] }}</strong></div>
+        <div class="planning-card"><span>Evidence Submitted</span><strong>{{ $metrics['evidence_submitted'] }}</strong></div>
+        <div class="planning-card"><span>Open Corrective Actions</span><strong>{{ $metrics['open_corrective_actions'] }}</strong></div>
     </section>
 
     <section class="planning-split">

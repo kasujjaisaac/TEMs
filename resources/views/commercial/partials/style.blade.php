@@ -286,6 +286,7 @@
 
     .commercial-alert.success { border-color: rgba(143,240,195,.28); color: #8ff0c3; }
     .commercial-alert.error { border-color: rgba(255,138,138,.28); color: #ff8a8a; }
+    .commercial-inline-form{display:inline-flex;margin:0 6px 6px 0}
 
     .commercial-split {
         display: grid;
@@ -393,4 +394,16 @@
             text-transform: uppercase;
         }
     }
+
+    .commercial-page{gap:10px}
+    .commercial-header{align-items:center!important;gap:8px!important;min-height:0!important;padding:8px 10px!important}
+    .commercial-title{gap:8px!important}
+    .commercial-title-icon{flex:0 0 28px!important;font-size:10px!important;height:28px!important;width:28px!important}
+    .commercial-header h1{font-size:14px!important;font-weight:800!important;line-height:1.1!important;margin:0 0 1px!important}
+    .commercial-muted{font-size:10px!important;font-weight:400!important;line-height:1.25!important}
+    .commercial-button,.commercial-icon-button{font-size:10px!important;font-weight:700!important;gap:6px!important;min-height:30px!important;padding:0 9px!important}
+    .commercial-panel,.commercial-card{padding:10px!important}
+    .commercial-panel-head{margin-bottom:9px!important;padding-bottom:8px!important}
+    .commercial-panel h2,.commercial-panel h3{font-size:11px!important;font-weight:700!important}
+    .commercial-card strong{font-size:14px!important;font-weight:700!important;margin-top:3px!important}
 </style>

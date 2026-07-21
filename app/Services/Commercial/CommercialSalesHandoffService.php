@@ -24,16 +24,12 @@ class CommercialSalesHandoffService
             $tenantId = (int) $opportunity->tenant_id;
 
             $createdCustomer = false;
-            $customerId = (int) ($organization->legacy_customer_id ?: 0);
-            if ($customerId <= 0 || ! $this->customerExists($tenantId, $customerId)) {
-                $customerId = $this->createCustomer($opportunity, $user);
-                $organization->forceFill([
-                    'legacy_customer_id' => $customerId,
-                    'customer_status' => 'Active Customer',
-                    'updated_by' => $user->id,
-                ])->save();
+            $previousCustomerId = (int) ($organization->legacy_customer_id ?: 0);
+            if ($previousCustomerId <= 0 || ! $this->customerExists($tenantId, $previousCustomerId)) {
                 $createdCustomer = true;
             }
+            $customerId = app(CommercialLegacyCustomerBridgeService::class)->syncOrganization($organization, $user);
+            $organization->refresh();
 
             $handoff = CommercialSalesHandoff::firstOrCreate(
                 ['tenant_id' => $tenantId, 'opportunity_id' => $opportunity->id],

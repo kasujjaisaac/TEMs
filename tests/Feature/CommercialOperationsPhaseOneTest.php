@@ -3,9 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\Commercial\CommercialLead;
+use App\Models\Commercial\CommercialBillingRequest;
+use App\Models\Commercial\CommercialCampaign;
+use App\Models\Commercial\CommercialContract;
 use App\Models\Commercial\CommercialOpportunity;
 use App\Models\Commercial\CommercialOrganization;
 use App\Models\Commercial\CommercialPipelineStage;
+use App\Models\Commercial\CommercialProposal;
+use App\Models\Commercial\CommercialQuotation;
 use App\Models\Commercial\CommercialSalesHandoff;
 use App\Models\Role;
 use App\Models\User;
@@ -71,6 +76,54 @@ class CommercialOperationsPhaseOneTest extends TestCase
             'module' => 'commercial',
             'action' => 'converted',
         ]);
+    }
+
+    public function test_campaign_can_attribute_leads_and_converted_opportunities(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $this->seed(CommercialSeeder::class);
+
+        $this->actingAs($admin)
+            ->post(route('commercial.campaigns.store'), [
+                'name' => 'Q3 School Outreach',
+                'campaign_type' => 'Demand Generation',
+                'channel' => 'Field',
+                'budget' => 1500000,
+                'actual_spend' => 250000,
+                'status' => 'Active',
+            ])
+            ->assertRedirect(route('commercial.campaigns.index'));
+
+        $campaign = CommercialCampaign::where('tenant_id', $admin->tenant_id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('commercial.leads.store'), [
+                'campaign_id' => $campaign->id,
+                'organization_name' => 'Campaign Lead Customer',
+                'contact_person' => 'Campaign Buyer',
+                'lead_source' => 'Campaign',
+                'interested_product' => 'TEMS',
+                'estimated_budget' => '5000000',
+                'temperature' => 'Hot',
+                'lead_score' => 90,
+                'status' => 'Qualified',
+            ])
+            ->assertRedirect();
+
+        $lead = CommercialLead::where('tenant_id', $admin->tenant_id)->where('organization_name', 'Campaign Lead Customer')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('commercial.leads.convert', $lead))
+            ->assertRedirect();
+
+        $this->assertSame($campaign->id, $lead->fresh()->campaign_id);
+        $this->assertSame($campaign->id, $lead->fresh()->opportunity->campaign_id);
+
+        $this->actingAs($admin)
+            ->get(route('commercial.campaigns.index'))
+            ->assertOk()
+            ->assertSee('Q3 School Outreach')
+            ->assertSee('Campaign Register');
     }
 
     public function test_weighted_value_is_calculated_from_value_and_probability(): void
@@ -271,6 +324,100 @@ class CommercialOperationsPhaseOneTest extends TestCase
             'tenant_id' => $admin->tenant_id,
             'module' => 'commercial',
             'action' => 'sales_handoff_created',
+        ]);
+    }
+
+    public function test_opportunity_revenue_lifecycle_creates_proposal_quotation_contract_and_billing_request(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $this->seed(CommercialSeeder::class);
+
+        $organization = CommercialOrganization::create([
+            'tenant_id' => $admin->tenant_id,
+            'reference' => 'ORG-2026-00500',
+            'legal_name' => 'Lifecycle Customer',
+            'customer_status' => 'Prospect',
+            'payment_terms' => 'Net 30',
+        ]);
+
+        $opportunity = CommercialOpportunity::create([
+            'tenant_id' => $admin->tenant_id,
+            'organization_id' => $organization->id,
+            'reference' => 'OPP-2026-00500',
+            'title' => 'Lifecycle Implementation',
+            'product_or_service' => 'TEMS Enterprise Suite',
+            'current_stage' => 'Qualified',
+            'probability' => 20,
+            'estimated_value' => 7500000,
+            'currency' => 'UGX',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('commercial.opportunities.proposals.store', $opportunity), [
+                'title' => 'Lifecycle Proposal',
+                'scope_summary' => 'Implementation scope.',
+                'value_proposition' => 'Single operating system.',
+                'proposed_value' => 7500000,
+            ])
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $proposal = CommercialProposal::where('tenant_id', $admin->tenant_id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('commercial.proposals.approve', $proposal))
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $this->actingAs($admin)
+            ->post(route('commercial.opportunities.quotations.store', $opportunity), [
+                'proposal_id' => $proposal->id,
+                'subtotal' => 7500000,
+                'discount_amount' => 500000,
+                'tax_amount' => 0,
+                'terms' => 'Net 30',
+            ])
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $quotation = CommercialQuotation::where('tenant_id', $admin->tenant_id)->firstOrFail();
+        $this->assertSame('7000000.00', $quotation->total);
+
+        $this->actingAs($admin)
+            ->post(route('commercial.quotations.decision', $quotation), ['decision' => 'Accepted'])
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $this->actingAs($admin)
+            ->post(route('commercial.opportunities.contracts.store', $opportunity), [
+                'quotation_id' => $quotation->id,
+                'contract_title' => 'Lifecycle Contract',
+                'contract_value' => 7000000,
+                'payment_terms' => 'Net 30',
+            ])
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $contract = CommercialContract::where('tenant_id', $admin->tenant_id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('commercial.contracts.sign', $contract))
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $this->actingAs($admin)
+            ->post(route('commercial.opportunities.billing_requests.store', $opportunity), [
+                'contract_id' => $contract->id,
+                'quotation_id' => $quotation->id,
+                'amount' => 7000000,
+                'billing_terms' => 'Net 30',
+                'instructions' => 'Issue implementation invoice.',
+            ])
+            ->assertRedirect(route('commercial.opportunities.show', $opportunity));
+
+        $this->assertSame('Approved', $proposal->fresh()->status);
+        $this->assertSame('Accepted', $quotation->fresh()->status);
+        $this->assertSame('Signed', $contract->fresh()->status);
+        $this->assertSame('Won', $opportunity->fresh()->current_stage);
+        $this->assertTrue(CommercialBillingRequest::where('tenant_id', $admin->tenant_id)->where('amount', 7000000)->exists());
+        $this->assertDatabaseHas('domain_events', [
+            'tenant_id' => $admin->tenant_id,
+            'event_name' => 'billing.requested',
+            'source_module' => 'Commercial Operations',
         ]);
     }
 

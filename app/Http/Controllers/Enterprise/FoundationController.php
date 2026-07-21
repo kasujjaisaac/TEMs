@@ -8,10 +8,13 @@ use App\Models\AuditLog;
 use App\Models\CompanySetting;
 use App\Models\DocumentRecord;
 use App\Models\DomainEvent;
+use App\Models\NotificationPreference;
 use App\Models\SystemNotification;
+use App\Services\Enterprise\AuditService;
 use App\Services\Enterprise\ApprovalService;
 use App\Services\Enterprise\CompanySettingsService;
 use App\Services\Enterprise\DomainEventService;
+use App\Services\Enterprise\FoundationCompletionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,17 +31,119 @@ class FoundationController extends Controller
         return view('foundation.dashboard', [
             'page_title' => 'Enterprise Foundation | Texaro Technologies Limited',
             'settings' => $settings->settings($tenantId),
-            'approvals' => ApprovalRequest::with(['requester', 'reviewer'])->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
+            'approvals' => ApprovalRequest::with(['requester', 'reviewer', 'currentApprover', 'steps'])->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
             'notifications' => SystemNotification::with('user')->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
+            'notificationPreferences' => NotificationPreference::with('user')->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
             'events' => DomainEvent::with('actor')->where('tenant_id', $tenantId)->latest('occurred_at')->limit(12)->get(),
             'documents' => DocumentRecord::with('owner')->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
+            'employees' => \DB::table('employee_profiles')->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
+            'approvalRules' => \DB::table('approval_rules')->where('tenant_id', $tenantId)->latest()->limit(12)->get(),
+            'users' => \App\Models\User::where('tenant_id', $tenantId)->orderBy('name')->get(),
             'metrics' => [
                 'pending_approvals' => ApprovalRequest::where('tenant_id', $tenantId)->where('status', 'Pending')->count(),
                 'unread_notifications' => SystemNotification::where('tenant_id', $tenantId)->whereNull('read_at')->count(),
                 'events_today' => DomainEvent::where('tenant_id', $tenantId)->whereDate('occurred_at', today())->count(),
                 'document_records' => DocumentRecord::where('tenant_id', $tenantId)->count(),
+                'employee_profiles' => \DB::table('employee_profiles')->where('tenant_id', $tenantId)->count(),
+                'approval_rules' => \DB::table('approval_rules')->where('tenant_id', $tenantId)->where('is_active', true)->count(),
+                'notification_preferences' => NotificationPreference::where('tenant_id', $tenantId)->count(),
             ],
         ]);
+    }
+
+    public function storeEmployee(Request $request, FoundationCompletionService $foundation): RedirectResponse
+    {
+        $this->authorizeFoundation('foundation.company.manage');
+        $data = $request->validate([
+            'user_id' => ['nullable', 'integer'],
+            'employee_number' => ['nullable', 'string', 'max:60'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'work_email' => ['nullable', 'email', 'max:255'],
+            'employment_status' => ['required', 'string', 'max:60'],
+            'joined_on' => ['nullable', 'date'],
+        ]);
+        if (! empty($data['user_id'])) {
+            \App\Models\User::where('tenant_id', $this->tenantId())->findOrFail($data['user_id']);
+        }
+        $foundation->createEmployeeProfile($this->tenantId(), $request->user(), $data);
+        $this->audit($request, 'created', 'foundation', 'Created employee profile ' . $data['full_name']);
+
+        return back()->with('success', 'Employee profile created.');
+    }
+
+    public function storeApprovalRule(Request $request, FoundationCompletionService $foundation): RedirectResponse
+    {
+        $this->authorizeFoundation('foundation.approvals.manage');
+        $data = $request->validate([
+            'module' => ['required', 'string', 'max:80'],
+            'request_type' => ['required', 'string', 'max:120'],
+            'minimum_amount' => ['nullable', 'numeric', 'min:0'],
+            'approver_role' => ['nullable', 'string', 'max:120'],
+            'approver_user_id' => ['nullable', 'integer'],
+            'sequence' => ['nullable', 'integer', 'min:1'],
+        ]);
+        if (! empty($data['approver_user_id'])) {
+            \App\Models\User::where('tenant_id', $this->tenantId())->findOrFail($data['approver_user_id']);
+        }
+        $foundation->createApprovalRule($this->tenantId(), $request->user(), $data);
+        $this->audit($request, 'created', 'foundation', 'Created approval rule for ' . $data['module']);
+
+        return back()->with('success', 'Approval rule created.');
+    }
+
+    public function storeNotificationPreference(Request $request): RedirectResponse
+    {
+        $this->authorizeFoundation('foundation.notifications.view');
+        $data = $request->validate([
+            'user_id' => ['required', 'integer'],
+            'source_module' => ['nullable', 'string', 'max:80'],
+            'type' => ['nullable', 'string', 'max:80'],
+            'in_app_enabled' => ['nullable', 'boolean'],
+            'email_enabled' => ['nullable', 'boolean'],
+            'sms_enabled' => ['nullable', 'boolean'],
+        ]);
+
+        \App\Models\User::where('tenant_id', $this->tenantId())->findOrFail($data['user_id']);
+
+        NotificationPreference::updateOrCreate(
+            [
+                'tenant_id' => $this->tenantId(),
+                'user_id' => $data['user_id'],
+                'source_module' => $data['source_module'] ?: '*',
+                'type' => $data['type'] ?: '*',
+            ],
+            [
+                'in_app_enabled' => (bool) ($data['in_app_enabled'] ?? false),
+                'email_enabled' => (bool) ($data['email_enabled'] ?? false),
+                'sms_enabled' => (bool) ($data['sms_enabled'] ?? false),
+            ]
+        );
+
+        app(DomainEventService::class)->record('notification.preference.updated', 'Enterprise Foundation', null, [
+            'user_id' => $data['user_id'],
+            'source_module' => $data['source_module'] ?: '*',
+            'type' => $data['type'] ?: '*',
+        ], $this->tenantId(), $request->user());
+        $this->audit($request, 'updated', 'notifications', 'Updated notification preference');
+
+        return back()->with('success', 'Notification preference saved.');
+    }
+
+    public function storeDocument(Request $request, FoundationCompletionService $foundation): RedirectResponse
+    {
+        $this->authorizeFoundation('foundation.documents.view');
+        $data = $request->validate([
+            'module' => ['required', 'string', 'max:80'],
+            'document_type' => ['required', 'string', 'max:100'],
+            'prefix' => ['nullable', 'string', 'max:20'],
+            'title' => ['required', 'string', 'max:255'],
+            'status' => ['required', Rule::in(['Draft', 'Review', 'Approved', 'Published', 'Archived'])],
+        ]);
+
+        $foundation->registerDocument($this->tenantId(), $request->user(), $data);
+        $this->audit($request, 'created', 'documents', 'Registered document ' . $data['title']);
+
+        return back()->with('success', 'Document registered.');
     }
 
     public function updateCompany(Request $request, CompanySettingsService $settings): RedirectResponse
@@ -75,11 +180,13 @@ class FoundationController extends Controller
             'request_type' => ['required', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:255'],
             'summary' => ['nullable', 'string', 'max:2000'],
+            'amount' => ['nullable', 'numeric', 'min:0'],
             'priority' => ['required', Rule::in(['Low', 'Normal', 'High', 'Critical'])],
         ]);
 
         $approval = $approvals->request($this->tenantId(), $data['module'], $data['request_type'], $data['title'], [
             'summary' => $data['summary'] ?? null,
+            'amount' => $data['amount'] ?? null,
             'priority' => $data['priority'],
             'requested_by' => Auth::id(),
             'actor' => $request->user(),
@@ -134,15 +241,6 @@ class FoundationController extends Controller
 
     private function audit(Request $request, string $action, string $module, string $description, array $metadata = []): void
     {
-        AuditLog::create([
-            'tenant_id' => $this->tenantId(),
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'module' => $module,
-            'description' => $description,
-            'metadata' => $metadata,
-            'ip_address' => $request->ip(),
-            'user_agent' => substr((string) $request->userAgent(), 0, 1000),
-        ]);
+        app(AuditService::class)->record($this->tenantId(), $request->user(), $action, $module, $description, $metadata, null, $request);
     }
 }

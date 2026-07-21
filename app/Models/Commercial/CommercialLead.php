@@ -13,7 +13,7 @@ class CommercialLead extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'organization_id', 'stakeholder_id', 'opportunity_id', 'reference',
+        'tenant_id', 'campaign_id', 'organization_id', 'stakeholder_id', 'opportunity_id', 'reference',
         'organization_name', 'contact_person', 'telephone', 'email', 'location',
         'district', 'country', 'industry', 'sector', 'customer_type', 'lead_source',
         'source_campaign', 'interested_product', 'interested_service', 'estimated_budget',
@@ -37,6 +37,11 @@ class CommercialLead extends Model
     public function assignedEmployee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_employee_id');
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(CommercialCampaign::class, 'campaign_id');
     }
 
     public function organization(): BelongsTo

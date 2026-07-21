@@ -9,7 +9,7 @@ if (! function_exists('onyx_legacy_pages')) {
     {
         return [
             'dashboard', 'crm', 'customers', 'customers_action', 'suppliers', 'suppliers_action',
-            'products', 'products_action', 'inventory', 'sales', 'sales_action', 'pos',
+            'products', 'products_action', 'inventory', 'sales', 'sales_action',
             'purchases', 'accounting', 'banking', 'budgets', 'assets', 'human_resources',
             'hr_profiles', 'hr_employee', 'hr_contracts', 'hr_attendance', 'hr_leave', 'hr_advances',
             'hr_documents', 'hr_performance', 'hr_payroll_readiness', 'payroll',
@@ -294,7 +294,6 @@ if (! function_exists('onyx_nav_items')) {
             ['file' => 'inventory.php', 'icon' => 'fa-warehouse', 'label' => 'Inventory'],
             ['file' => 'sales.php', 'icon' => 'fa-file-invoice-dollar', 'label' => 'Sales'],
             ['file' => 'document_templates.php', 'icon' => 'fa-file-lines', 'label' => 'Document Templates'],
-            ['file' => 'pos.php', 'icon' => 'fa-cash-register', 'label' => 'POS'],
             ['file' => 'purchases.php', 'icon' => 'fa-shopping-cart', 'label' => 'Purchases'],
             ['file' => 'accounting.php', 'icon' => 'fa-calculator', 'label' => 'Accounting'],
             ['file' => 'banking.php', 'icon' => 'fa-university', 'label' => 'Banking'],
@@ -620,9 +619,9 @@ if (! function_exists('onyx_page_start')) {
                 </label>
             </div>
             <div class="topbar-right">
-                <a class="topbar-action" href="<?= url('pos.php') ?>">
+                <a class="topbar-action" href="<?= route('commercial.opportunities.create') ?>">
                     <i class="fa-solid fa-plus"></i>
-                    <span>New Sale</span>
+                    <span>New Opportunity</span>
                 </a>
                 <span class="topbar-chip">
                     <i class="fa-solid fa-circle-check"></i>
@@ -669,13 +668,13 @@ if (! function_exists('onyx_page_end')) {
         </main>
         <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
             <a href="<?= url('dashboard.php') ?>" class="<?= onyx_current_page() === 'dashboard.php' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high"></i><span>Home</span></a>
-            <a href="<?= url('sales.php') ?>" class="<?= in_array(onyx_current_page(), ['sales.php', 'sales_action.php', 'pos.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-cash-register"></i><span>Sales</span></a>
-            <a href="<?= url('products.php') ?>" class="<?= in_array(onyx_current_page(), ['products.php', 'products_action.php', 'inventory.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-boxes-stacked"></i><span>Stock</span></a>
+            <a href="<?= route('commercial.dashboard') ?>" class="<?= request()->is('commercial*') ? 'active' : '' ?>"><i class="fa-solid fa-briefcase"></i><span>Pipeline</span></a>
+            <a href="<?= route('delivery.dashboard') ?>" class="<?= request()->is('delivery*') ? 'active' : '' ?>"><i class="fa-solid fa-layer-group"></i><span>Solutions</span></a>
             <a href="<?= url('accounting.php') ?>" class="<?= in_array(onyx_current_page(), ['accounting.php', 'banking.php', 'budgets.php'], true) ? 'active' : '' ?>"><i class="fa-solid fa-scale-balanced"></i><span>Finance</span></a>
             <a href="<?= url('human_resources.php') ?>" class="<?= str_starts_with(onyx_current_page(), 'hr_') || onyx_current_page() === 'human_resources.php' ? 'active' : '' ?>"><i class="fa-solid fa-users-gear"></i><span>HR</span></a>
             <button type="button" data-mobile-more><i class="fa-solid fa-ellipsis"></i><span>More</span></button>
         </nav>
-        <a class="mobile-fab" href="<?= url('pos.php') ?>" aria-label="New sale"><i class="fa-solid fa-plus"></i><span>Sale</span></a>
+        <a class="mobile-fab" href="<?= route('commercial.opportunities.create') ?>" aria-label="New opportunity"><i class="fa-solid fa-plus"></i><span>Deal</span></a>
         </body></html>
         <?php
     }

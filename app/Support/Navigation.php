@@ -22,6 +22,7 @@ class Navigation
                 'label' => 'Planning & Performance',
                 'icon' => 'fa-bullseye',
                 'items' => [
+                    ['file' => 'strategy.php', 'label' => 'Executive Strategy', 'icon' => 'fa-chess-king', 'url' => route('strategy.dashboard'), 'patterns' => ['strategy*'], 'permission' => 'strategy.view'],
                     ['file' => 'planning.php', 'label' => 'Performance Dashboard', 'icon' => 'fa-chart-line', 'url' => route('planning.dashboard'), 'patterns' => ['planning'], 'permission' => 'planning.dashboard.view'],
                     ['file' => 'planning-objectives.php', 'label' => 'Strategic Objectives', 'icon' => 'fa-compass', 'url' => route('planning.objectives.index'), 'patterns' => ['planning/objectives*'], 'permission' => 'planning.strategy.view'],
                     ['file' => 'planning-workplans.php', 'label' => 'Corporate Workplans', 'icon' => 'fa-list-check', 'url' => route('planning.workplans.index'), 'patterns' => ['planning/workplans*'], 'permission' => 'planning.workplans.view'],
@@ -31,13 +32,11 @@ class Navigation
                 ],
             ],
             [
-                'label' => 'Sales',
-                'icon' => 'fa-cash-register',
+                'label' => 'Solutions Portfolio',
+                'icon' => 'fa-layer-group',
                 'items' => [
-                    ['file' => 'pos.php', 'label' => 'POS', 'icon' => 'fa-store', 'url' => url('pos'), 'patterns' => ['pos*']],
-                    ['file' => 'sales.php', 'label' => 'Sales', 'icon' => 'fa-receipt', 'url' => url('sales'), 'patterns' => ['sales*', 'sales_action*']],
-                    ['file' => 'customers.php', 'label' => 'Customers', 'icon' => 'fa-users', 'url' => url('customers'), 'patterns' => ['customers*', 'customers_action*']],
-                    ['file' => 'crm.php', 'label' => 'CRM', 'icon' => 'fa-handshake', 'url' => url('crm'), 'patterns' => ['crm*']],
+                    ['file' => 'delivery.php', 'label' => 'Software Products & Client Solutions', 'icon' => 'fa-diagram-project', 'url' => route('delivery.dashboard'), 'patterns' => ['delivery*'], 'permission' => 'delivery.view'],
+                    ['file' => 'sales.php', 'label' => 'Legacy Billing Records', 'icon' => 'fa-receipt', 'url' => url('sales'), 'patterns' => ['sales*', 'sales_action*'], 'permission' => 'sales.view'],
                 ],
             ],
             [
@@ -45,14 +44,26 @@ class Navigation
                 'icon' => 'fa-briefcase',
                 'items' => [
                     ['file' => 'commercial.php', 'label' => 'Commercial Dashboard', 'icon' => 'fa-chart-line', 'url' => route('commercial.dashboard'), 'patterns' => ['commercial'], 'permission' => 'commercial.dashboard.view'],
+                    ['file' => 'marketing.php', 'label' => 'Marketing & Communications', 'icon' => 'fa-bullhorn', 'url' => route('marketing.dashboard'), 'patterns' => ['marketing*'], 'permission' => 'marketing.view'],
+                    ['file' => 'commercial-campaigns.php', 'label' => 'Campaigns', 'icon' => 'fa-bullhorn', 'url' => route('commercial.campaigns.index'), 'patterns' => ['commercial/campaigns*'], 'permission' => 'commercial.campaigns.view'],
                     ['file' => 'commercial-leads.php', 'label' => 'Leads', 'icon' => 'fa-filter-circle-dollar', 'url' => route('commercial.leads.index'), 'patterns' => ['commercial/leads*'], 'permission' => 'commercial.leads.view'],
-                    ['file' => 'commercial-organizations.php', 'label' => 'Organizations', 'icon' => 'fa-building', 'url' => route('commercial.organizations.index'), 'patterns' => ['commercial/organizations*'], 'permission' => 'commercial.organizations.view'],
-                    ['file' => 'commercial-stakeholders.php', 'label' => 'Stakeholders', 'icon' => 'fa-address-book', 'url' => route('commercial.stakeholders.index'), 'patterns' => ['commercial/stakeholders*'], 'permission' => 'commercial.stakeholders.view'],
+                    ['file' => 'commercial-organizations.php', 'label' => 'Prospect Organizations', 'icon' => 'fa-building', 'url' => route('commercial.organizations.index'), 'patterns' => ['commercial/organizations*'], 'permission' => 'commercial.organizations.view'],
+                    ['file' => 'commercial-stakeholders.php', 'label' => 'Deal Stakeholders', 'icon' => 'fa-address-book', 'url' => route('commercial.stakeholders.index'), 'patterns' => ['commercial/stakeholders*'], 'permission' => 'commercial.stakeholders.view'],
                     ['file' => 'commercial-opportunities.php', 'label' => 'Opportunities', 'icon' => 'fa-handshake-angle', 'url' => route('commercial.opportunities.index'), 'patterns' => ['commercial/opportunities*'], 'permission' => 'commercial.opportunities.view'],
                     ['file' => 'commercial-pipeline.php', 'label' => 'Commercial Pipeline', 'icon' => 'fa-table-columns', 'url' => route('commercial.opportunities.index'), 'patterns' => ['commercial/pipeline*'], 'permission' => 'commercial.opportunities.view'],
                     ['file' => 'commercial-activities.php', 'label' => 'Activities', 'icon' => 'fa-list-check', 'url' => route('commercial.activities.index'), 'patterns' => ['commercial/activities*'], 'permission' => 'commercial.activities.view'],
                     ['file' => 'commercial-meetings.php', 'label' => 'Meetings', 'icon' => 'fa-calendar-days', 'url' => route('commercial.meetings.index'), 'patterns' => ['commercial/meetings*'], 'permission' => 'commercial.meetings.view'],
                     ['file' => 'commercial-site-visits.php', 'label' => 'Site Visits', 'icon' => 'fa-location-dot', 'url' => route('commercial.site_visits.index'), 'patterns' => ['commercial/site-visits*'], 'permission' => 'commercial.site_visits.view'],
+                ],
+            ],
+            [
+                'label' => 'CRM & Customer Accounts',
+                'icon' => 'fa-address-book',
+                'items' => [
+                    ['file' => 'crm.php', 'label' => 'CRM Dashboard', 'icon' => 'fa-circle-nodes', 'url' => route('crm.dashboard'), 'patterns' => ['crm'], 'permission' => 'crm.accounts.view'],
+                    ['file' => 'crm-accounts.php', 'label' => 'Customer Accounts', 'icon' => 'fa-users', 'url' => route('crm.accounts.index'), 'patterns' => ['crm/accounts*'], 'permission' => 'crm.accounts.view'],
+                    ['file' => 'customers.php', 'label' => 'Legacy Customer Register', 'icon' => 'fa-address-card', 'url' => url('customers'), 'patterns' => ['customers*', 'customers_action*'], 'permission' => 'customers.view'],
+                    ['file' => 'customer-success.php', 'label' => 'Customer Success', 'icon' => 'fa-headset', 'url' => route('customer_success.dashboard'), 'patterns' => ['customer-success*'], 'permission' => 'customer_success.view'],
                 ],
             ],
             [
@@ -103,14 +114,25 @@ class Navigation
                 'label' => 'Operations',
                 'icon' => 'fa-briefcase',
                 'items' => [
+                    ['file' => 'engineering.php', 'label' => 'Engineering', 'icon' => 'fa-code-branch', 'url' => route('engineering.dashboard'), 'patterns' => ['engineering*'], 'permission' => 'engineering.view'],
                     ['file' => 'mobile_app.php', 'label' => 'Mobile App', 'icon' => 'fa-mobile-screen-button', 'url' => url('mobile_app'), 'patterns' => ['mobile_app*']],
                     ['file' => 'notifications.php', 'label' => 'Notifications', 'icon' => 'fa-bell', 'url' => url('notifications'), 'patterns' => ['notifications*']],
+                ],
+            ],
+            [
+                'label' => 'Governance',
+                'icon' => 'fa-scale-balanced',
+                'items' => [
+                    ['file' => 'governance.php', 'label' => 'Governance', 'icon' => 'fa-landmark', 'url' => route('governance.dashboard'), 'patterns' => ['governance*'], 'permission' => 'governance.view'],
+                    ['file' => 'intelligence.php', 'label' => 'Intelligence', 'icon' => 'fa-brain', 'url' => route('intelligence.dashboard'), 'patterns' => ['intelligence*'], 'permission' => 'intelligence.view'],
                 ],
             ],
             [
                 'label' => 'Reports',
                 'icon' => 'fa-file-lines',
                 'items' => [
+                    ['file' => 'analytics.php', 'label' => 'Reports & Analytics', 'icon' => 'fa-chart-simple', 'url' => route('analytics.dashboard'), 'patterns' => ['analytics*'], 'permission' => 'analytics.view'],
+                    ['file' => 'knowledge.php', 'label' => 'Knowledge & Documents', 'icon' => 'fa-folder-tree', 'url' => route('knowledge.dashboard'), 'patterns' => ['knowledge*'], 'permission' => 'knowledge.view'],
                     ['file' => 'reports.php', 'label' => 'Reports', 'icon' => 'fa-chart-column', 'url' => url('reports'), 'patterns' => ['reports*']],
                 ],
             ],

@@ -26,6 +26,18 @@ if (! function_exists('customer_page_ensure_columns')) {
         if (! in_array('customer_group', $columns, true)) {
             $pdo->exec("ALTER TABLE customers ADD COLUMN customer_group VARCHAR(50) DEFAULT 'retail'");
         }
+        if (! in_array('commercial_organization_id', $columns, true)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN commercial_organization_id BIGINT(20) DEFAULT NULL");
+        }
+        if (! in_array('commercial_reference', $columns, true)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN commercial_reference VARCHAR(80) DEFAULT NULL");
+        }
+        if (! in_array('commercial_sync_status', $columns, true)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN commercial_sync_status VARCHAR(60) DEFAULT NULL");
+        }
+        if (! in_array('commercial_synced_at', $columns, true)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN commercial_synced_at DATETIME DEFAULT NULL");
+        }
     }
 }
 
@@ -36,7 +48,8 @@ $currency = $context['currency'];
 $tenant_id = (int) (onyx_tenant_id() ?? 0);
 
 $customers = onyx_rows(
-    'SELECT id, customer_code, name, company_name, contact_person, customer_group, phone, email,
+    'SELECT id, commercial_organization_id, commercial_reference, commercial_sync_status, commercial_synced_at,
+            customer_code, name, company_name, contact_person, customer_group, customer_source, phone, email,
             credit_limit, credit_balance, is_active, created_at
      FROM customers
      WHERE tenant_id = :tenant_id
@@ -231,11 +244,12 @@ $customers = onyx_rows(
             <table class="customer-table">
                 <colgroup>
                     <col style="width: 100px;">
-                    <col style="width: 180px;">
-                    <col style="width: 160px;">
+                    <col style="width: 170px;">
+                    <col style="width: 150px;">
                     <col style="width: 130px;">
                     <col style="width: 180px;">
                     <col style="width: 100px;">
+                    <col style="width: 130px;">
                     <col style="width: 160px;">
                     <col style="width: 100px;">
                     <col style="width: 310px;">
@@ -248,6 +262,7 @@ $customers = onyx_rows(
                         <th>Phone</th>
                         <th>Email</th>
                         <th>Group</th>
+                        <th>Origin</th>
                         <th>Balance</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -256,7 +271,7 @@ $customers = onyx_rows(
                 <tbody>
                     <?php if ($customers === []): ?>
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="customer-empty">No registered customers yet.</div>
                             </td>
                         </tr>
@@ -273,6 +288,8 @@ $customers = onyx_rows(
                                 $editUrl = onyx_legacy_url('customers_action.php?action=edit&id=' . $id);
                                 $statementUrl = onyx_legacy_url('customers_action.php?action=print&id=' . $id);
                                 $deleteUrl = onyx_legacy_url('customers_action.php?action=delete&id=' . $id);
+                                $commercialOrgId = (int) ($customer['commercial_organization_id'] ?? 0);
+                                $commercialUrl = $commercialOrgId > 0 ? url('commercial/organizations/' . $commercialOrgId) : '';
                             ?>
                             <tr>
                                 <td><?= customer_page_h($customer['customer_code'] ?: '-') ?></td>
@@ -287,6 +304,14 @@ $customers = onyx_rows(
                                 <td><?= customer_page_h($customer['email'] ?: '-') ?></td>
                                 <td><span class="customer-badge"><?= customer_page_h($customer['customer_group'] ?: 'retail') ?></span></td>
                                 <td>
+                                    <?php if ($commercialOrgId > 0): ?>
+                                        <a class="customer-badge ok" href="<?= customer_page_h($commercialUrl) ?>"><?= customer_page_h($customer['commercial_reference'] ?: 'Commercial') ?></a>
+                                        <span class="customer-muted"><?= customer_page_h($customer['commercial_sync_status'] ?: 'Synced') ?></span>
+                                    <?php else: ?>
+                                        <span class="customer-badge"><?= customer_page_h($customer['customer_source'] ?: 'Legacy') ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
                                     <span class="customer-badge <?= customer_page_h($balanceClass) ?>"><?= customer_page_h(onyx_money($balance, $currency)) ?></span>
                                     <span class="customer-muted">Limit <?= customer_page_h(onyx_money($limit, $currency)) ?></span>
                                 </td>
@@ -296,6 +321,7 @@ $customers = onyx_rows(
                                         <a class="customer-action" href="<?= customer_page_h($profileUrl) ?>">Profile</a>
                                         <a class="customer-action" href="<?= customer_page_h($editUrl) ?>">Edit</a>
                                         <a class="customer-action" href="<?= customer_page_h($statementUrl) ?>" target="_blank">Statement</a>
+                                        <?php if ($commercialOrgId > 0): ?><a class="customer-action" href="<?= customer_page_h($commercialUrl) ?>">Commercial</a><?php endif; ?>
                                         <a class="customer-action danger" href="<?= customer_page_h($deleteUrl) ?>">Delete</a>
                                     </div>
                                 </td>

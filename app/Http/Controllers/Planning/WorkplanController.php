@@ -8,6 +8,7 @@ use App\Models\HR\HrPosition;
 use App\Models\Planning\StrategicObjective;
 use App\Models\Planning\Workplan;
 use App\Models\Planning\WorkplanAssignment;
+use App\Models\Planning\WorkplanEvidence;
 use App\Models\Planning\WorkplanItem;
 use App\Models\User;
 use App\Services\Planning\PlanningPerformanceService;
@@ -39,7 +40,10 @@ class WorkplanController extends PlanningController
         $this->ensureTenant($workplan);
 
         $items = $workplan->items()
-            ->with(['objective.pillar', 'assignments.department', 'assignments.position', 'assignments.employee', 'budgetLine'])
+            ->with([
+                'objective.pillar', 'assignments.department', 'assignments.position', 'assignments.employee',
+                'budgetLine', 'evidence.submitter', 'evidence.reviewer', 'correctiveActions.owner',
+            ])
             ->orderBy('priority')
             ->orderBy('due_on')
             ->get();
@@ -116,6 +120,65 @@ class WorkplanController extends PlanningController
         $planning->createAllocations($item);
 
         return redirect()->route('planning.workplans.show', $workplan)->with('success', 'Workplan target saved and allocations generated.');
+    }
+
+    public function submitEvidence(Request $request, WorkplanItem $item, PlanningPerformanceService $planning): RedirectResponse
+    {
+        $this->authorizePlanning('planning.workplans.manage');
+        $this->ensureTenant($item);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'evidence_type' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string'],
+            'source_module' => ['nullable', 'string', 'max:120'],
+            'source_reference' => ['nullable', 'string', 'max:120'],
+            'claimed_value' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $planning->submitEvidence($item, $request->user(), $data, $request);
+
+        return redirect()->route('planning.workplans.show', $item->workplan_id)->with('success', 'Evidence submitted for verification.');
+    }
+
+    public function reviewEvidence(Request $request, WorkplanEvidence $evidence, PlanningPerformanceService $planning): RedirectResponse
+    {
+        $this->authorizePlanning('planning.approvals.manage');
+        $this->ensureTenant($evidence);
+
+        $data = $request->validate([
+            'decision' => ['required', 'in:Approved,Rejected'],
+            'verified_value' => ['required_if:decision,Approved', 'nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $planning->reviewEvidence($evidence, $request->user(), $data['decision'], (float) ($data['verified_value'] ?? 0), $data['notes'] ?? null, $request);
+
+        return redirect()->route('planning.workplans.show', $evidence->item->workplan_id)->with('success', 'Evidence review recorded and target progress recalculated.');
+    }
+
+    public function storeCorrectiveAction(Request $request, WorkplanItem $item, PlanningPerformanceService $planning): RedirectResponse
+    {
+        $this->authorizePlanning('planning.workplans.manage');
+        $this->ensureTenant($item);
+
+        $data = $request->validate([
+            'owner_id' => ['nullable', 'integer'],
+            'title' => ['required', 'string', 'max:255'],
+            'root_cause' => ['nullable', 'string'],
+            'recovery_plan' => ['required', 'string'],
+            'due_on' => ['nullable', 'date'],
+            'severity' => ['required', 'in:Low,Medium,High,Critical'],
+            'status' => ['required', 'in:Open,In Progress,Completed,Cancelled'],
+        ]);
+
+        if (! empty($data['owner_id'])) {
+            User::where('tenant_id', $this->tenantId())->findOrFail($data['owner_id']);
+        }
+
+        $planning->createCorrectiveAction($item, $request->user(), $data, $request);
+
+        return redirect()->route('planning.workplans.show', $item->workplan_id)->with('success', 'Corrective action created for the target.');
     }
 
     public function approve(Workplan $workplan): RedirectResponse

@@ -2254,3 +2254,327 @@ textarea:focus,
     min-height: 38px !important;
   }
 }
+
+/* Final table cascade: must stay after mobile rules. */
+.table-wrap,
+.access-table-wrap,
+.planning-table-wrap,
+.finance-table-wrap,
+.commercial-table-wrap,
+.hr-core-table-wrap,
+.product-table-wrap,
+.sales-table-wrap,
+.inventory-table-wrap,
+.purchase-table-wrap,
+.supplier-table-wrap,
+.customer-table-wrap,
+.crm-table-wrap,
+.pos-table-wrap,
+.admin-table-wrap,
+.hr-table-wrap,
+.contract-table-wrap {
+  max-width: 100% !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  padding-bottom: 0 !important;
+  width: 100% !important;
+}
+
+table,
+.table,
+.onyx-erp-body .table,
+.access-table,
+.planning-table,
+.finance-table,
+.commercial-table,
+.hr-core-table,
+.product-table,
+.product-compact-table,
+.product-preview-table,
+.sales-table,
+.inventory-table,
+.purchase-table,
+.supplier-table,
+.customer-table,
+.crm-table,
+.pos-table,
+.admin-table,
+.hr-table,
+.contract-table,
+.dash-table,
+table[data-mobile-enhanced="1"] {
+  border-collapse: collapse !important;
+  display: table !important;
+  font-family: "Poppins", system-ui, sans-serif !important;
+  min-width: 0 !important;
+  table-layout: auto !important;
+  width: 100% !important;
+}
+
+table thead,
+table[data-mobile-enhanced="1"] thead {
+  display: table-header-group !important;
+}
+
+table tbody,
+table[data-mobile-enhanced="1"] tbody {
+  display: table-row-group !important;
+}
+
+table tr,
+table[data-mobile-enhanced="1"] tr {
+  background: transparent !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  display: table-row !important;
+  padding: 0 !important;
+}
+
+table th,
+.table th,
+.onyx-erp-body .table th,
+.access-table th,
+.planning-table th,
+.finance-table th,
+.commercial-table th,
+.hr-core-table th,
+.product-table th,
+.product-compact-table th,
+.product-preview-table th,
+.sales-table th,
+.inventory-table th,
+.purchase-table th,
+.supplier-table th,
+.customer-table th,
+.crm-table th,
+.pos-table th,
+.admin-table th,
+.hr-table th,
+.contract-table th,
+.dash-table th,
+table[data-mobile-enhanced="1"] th {
+  color: var(--onyx-muted, #8d99a8) !important;
+  display: table-cell !important;
+  font-family: "Poppins", system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.25 !important;
+  padding: 7px 6px !important;
+  text-align: left !important;
+  text-transform: uppercase !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+}
+
+table td,
+.table td,
+.onyx-erp-body .table td,
+.access-table td,
+.planning-table td,
+.finance-table td,
+.commercial-table td,
+.hr-core-table td,
+.product-table td,
+.product-compact-table td,
+.product-preview-table td,
+.sales-table td,
+.inventory-table td,
+.purchase-table td,
+.supplier-table td,
+.customer-table td,
+.crm-table td,
+.pos-table td,
+.admin-table td,
+.hr-table td,
+.contract-table td,
+.dash-table td,
+table[data-mobile-enhanced="1"] td {
+  color: var(--onyx-text, #f5f7fa) !important;
+  display: table-cell !important;
+  font-family: "Poppins", system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+  padding: 7px 6px !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.access-table-title,
+.planning-table-title,
+.finance-table-title,
+.commercial-table-title,
+.hr-core-table-title,
+.product-name strong,
+.sales-name strong,
+.purchase-name strong,
+.inventory-name strong,
+.supplier-name strong,
+.customer-name strong,
+.hr-employee-name strong,
+.contract-name strong {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+}
+
+table[data-mobile-enhanced="1"] td::before {
+  content: none !important;
+}
+
+/* Compact page headers, cards, and legacy hero blocks. */
+.commercial-header,
+.planning-header,
+.finance-header,
+.hr-core-header,
+.access-header,
+.access-header-compact,
+.admin-hero,
+.hr-hero,
+.contract-hero,
+.employee-hero,
+.dash-hero,
+.sales-hero,
+.product-hero,
+.inventory-hero,
+.purchase-hero,
+.supplier-hero,
+.customer-hero,
+.crm-hero {
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  padding: 8px 10px !important;
+}
+
+.commercial-title-icon,
+.planning-icon,
+.finance-icon,
+.hr-core-icon,
+.access-title-icon,
+.hr-hero-icon,
+.contract-icon,
+.employee-avatar {
+  flex: 0 0 28px !important;
+  font-size: 10px !important;
+  height: 28px !important;
+  width: 28px !important;
+}
+
+.commercial-header h1,
+.planning-header h1,
+.finance-header h1,
+.hr-core h1,
+.access-header h1,
+.admin-title,
+.hr-hero h2,
+.contract-hero h2,
+.employee-name {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  margin: 0 0 1px !important;
+}
+
+.commercial-muted,
+.planning-muted,
+.finance-muted,
+.hr-core-muted,
+.access-muted,
+.access-header p,
+.admin-subtitle,
+.admin-muted,
+.hr-hero p,
+.contract-hero p,
+.employee-subline {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1.25 !important;
+}
+
+.commercial-button,
+.planning-button,
+.finance-button,
+.finance-icon-button,
+.hr-core-button,
+.hr-core-icon-button,
+.access-button,
+.admin-btn,
+.hr-btn,
+.contract-btn,
+.employee-btn,
+.sales-action,
+.product-action,
+.inventory-btn,
+.purchase-btn,
+.supplier-btn,
+.customer-action,
+.crm-btn,
+.pos-btn {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  gap: 6px !important;
+  min-height: 30px !important;
+  padding: 0 9px !important;
+}
+
+.commercial-panel,
+.commercial-card,
+.planning-panel,
+.planning-card,
+.finance-panel,
+.finance-card,
+.hr-core-panel,
+.hr-core-card,
+.access-panel,
+.access-kpi,
+.permission-group,
+.admin-panel,
+.admin-kpi,
+.hr-panel,
+.hr-stat,
+.contract-panel,
+.contract-stat,
+.employee-panel,
+.employee-stat,
+.inventory-panel,
+.inventory-kpi,
+.purchase-panel,
+.purchase-kpi,
+.supplier-panel,
+.supplier-kpi,
+.customer-panel,
+.crm-panel,
+.crm-kpi,
+.product-panel,
+.product-kpi,
+.dash-panel,
+.dash-kpi,
+.onyx-erp-body .stat-card,
+.stat-card {
+  min-height: 0 !important;
+  padding: 10px !important;
+}
+
+.commercial-page,
+.planning-page,
+.finance-page,
+.hr-core,
+.access-page,
+.admin-page,
+.hr-register,
+.contract-register,
+.employee-file,
+.inventory-page,
+.purchase-page,
+.supplier-page,
+.customer-page,
+.crm-page,
+.product-page,
+.dash-page {
+  gap: 10px !important;
+}

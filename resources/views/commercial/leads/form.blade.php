@@ -29,6 +29,7 @@
         <div class="commercial-field"><label>Country</label><input name="country" value="{{ old('country', $lead->country ?: 'Uganda') }}"></div>
         <div class="commercial-field"><label>Industry</label><input name="industry" value="{{ old('industry', $lead->industry) }}"></div>
         <div class="commercial-field"><label>Sector</label><input name="sector" value="{{ old('sector', $lead->sector) }}"></div>
+        <div class="commercial-field"><label>Campaign</label><select name="campaign_id"><option value="">None</option>@foreach($campaigns as $campaign)<option value="{{ $campaign->id }}" @selected((string) old('campaign_id', $lead->campaign_id) === (string) $campaign->id)>{{ $campaign->reference }} - {{ $campaign->name }}</option>@endforeach</select></div>
         <div class="commercial-field"><label>Lead Source</label><select name="lead_source">@foreach(['Website','Referral','Social Media','Campaign','Walk-in','Telephone','Email','Event','Partnership','Existing Customer','Direct Prospecting','Tender','Other'] as $source)<option value="{{ $source }}" @selected(old('lead_source', $lead->lead_source) === $source)>{{ $source }}</option>@endforeach</select></div>
         <div class="commercial-field"><label>Interested Product</label><input name="interested_product" value="{{ old('interested_product', $lead->interested_product) }}"></div>
         <div class="commercial-field"><label>Interested Service</label><input name="interested_service" value="{{ old('interested_service', $lead->interested_service) }}"></div>

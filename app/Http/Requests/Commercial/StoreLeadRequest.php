@@ -19,6 +19,7 @@ class StoreLeadRequest extends FormRequest
     {
         return [
             'organization_name' => ['required', 'string', 'max:180'],
+            'campaign_id' => ['nullable', 'integer', 'exists:commercial_campaigns,id'],
             'contact_person' => ['nullable', 'string', 'max:180'],
             'telephone' => ['nullable', 'string', 'max:80'],
             'email' => ['nullable', 'email:rfc', 'max:180'],

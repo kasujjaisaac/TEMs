@@ -8,12 +8,11 @@ class PagePermissionMap
     {
         return [
             'dashboard' => 'dashboard.view',
-            'pos' => 'pos.access',
             'sales' => 'sales.view',
             'sales_action' => 'sales.create',
             'customers' => 'customers.view',
             'customers_action' => 'customers.manage',
-            'crm' => 'crm.manage',
+            'crm' => 'crm.accounts.view',
             'products' => 'products.view',
             'products_action' => 'products.manage',
             'inventory' => 'inventory.view',

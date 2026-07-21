@@ -102,6 +102,63 @@ class EnterpriseFoundationTest extends TestCase
         $this->assertTrue(DomainEvent::where('tenant_id', $admin->tenant_id)->where('event_name', 'approval.approved')->exists());
     }
 
+    public function test_approval_rules_create_ordered_steps_before_final_approval(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $approver = $this->createUser('super_admin', $admin->tenant_id);
+
+        DB::table('approval_rules')->insert([
+            [
+                'tenant_id' => $admin->tenant_id,
+                'module' => 'Finance',
+                'request_type' => 'Expense',
+                'minimum_amount' => 0,
+                'approver_role' => 'Finance Lead',
+                'sequence' => 1,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'tenant_id' => $admin->tenant_id,
+                'module' => 'Finance',
+                'request_type' => 'Expense',
+                'minimum_amount' => 1000000,
+                'approver_user_id' => $approver->id,
+                'sequence' => 2,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $approval = app(ApprovalService::class)->request($admin->tenant_id, 'Finance', 'Expense', 'Approve logistics expense', [
+            'amount' => 1500000,
+            'requested_by' => $admin->id,
+            'actor' => $admin,
+        ]);
+
+        $this->assertSame(2, $approval->steps()->count());
+        $this->actingAs($admin)
+            ->post(route('foundation.approvals.decision', $approval), ['decision' => 'Approved'])
+            ->assertRedirect();
+
+        $approval->refresh();
+        $this->assertSame('Pending', $approval->status);
+        $this->assertSame(2, $approval->current_step);
+        $this->assertSame($approver->id, $approval->current_approver_id);
+
+        $this->actingAs($approver)
+            ->post(route('foundation.approvals.decision', $approval), ['decision' => 'Approved'])
+            ->assertRedirect();
+
+        $this->assertSame('Approved', $approval->fresh()->status);
+        $this->assertDatabaseHas('domain_events', [
+            'tenant_id' => $admin->tenant_id,
+            'event_name' => 'approval.step.approved',
+        ]);
+    }
+
     public function test_notification_can_be_marked_as_read(): void
     {
         $admin = $this->createUser('super_admin');
@@ -113,6 +170,48 @@ class EnterpriseFoundationTest extends TestCase
 
         $this->assertNotNull($notification->fresh()->read_at);
         $this->assertTrue(DomainEvent::where('tenant_id', $admin->tenant_id)->where('event_name', 'notification.read')->exists());
+    }
+
+    public function test_notification_preferences_can_mute_in_app_notifications_and_documents_are_numbered(): void
+    {
+        $admin = $this->createUser('super_admin');
+
+        $this->actingAs($admin)
+            ->post(route('foundation.notification_preferences.store'), [
+                'user_id' => $admin->id,
+                'source_module' => 'Finance',
+                'type' => 'approval',
+                'in_app_enabled' => 0,
+            ])
+            ->assertRedirect();
+
+        $notification = app(NotificationService::class)->notify($admin, $admin->tenant_id, 'Muted finance approval', 'Preference should mute this.', [
+            'source_module' => 'Finance',
+            'type' => 'approval',
+        ]);
+
+        $this->assertSame('Muted', $notification->severity);
+        $this->assertNotNull($notification->read_at);
+
+        $this->actingAs($admin)
+            ->post(route('foundation.documents.store'), [
+                'module' => 'Enterprise Foundation',
+                'document_type' => 'Policy',
+                'prefix' => 'POL',
+                'title' => 'Approval routing policy',
+                'status' => 'Draft',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('document_records', [
+            'tenant_id' => $admin->tenant_id,
+            'reference' => 'POL-' . now()->format('Y') . '-00001',
+            'title' => 'Approval routing policy',
+        ]);
+        $this->assertDatabaseHas('domain_events', [
+            'tenant_id' => $admin->tenant_id,
+            'event_name' => 'document.registered',
+        ]);
     }
 
     public function test_foundation_dashboard_shows_enterprise_registers(): void
@@ -146,17 +245,17 @@ class EnterpriseFoundationTest extends TestCase
             ->assertSee('HR assignment');
     }
 
-    private function createUser(string $roleSlug): User
+    private function createUser(string $roleSlug, ?int $tenantId = null): User
     {
-        $tenantId = DB::table('tenants')->insertGetId([
-            'company_name' => 'Foundation Test Company',
-            'slug' => 'foundation-test-' . $roleSlug . '-' . str()->random(6),
-            'currency' => 'UGX',
-            'fiscal_year_start' => '2026-01-01',
-            'status' => 'trial',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $tenantId ??= DB::table('tenants')->insertGetId([
+                'company_name' => 'Foundation Test Company',
+                'slug' => 'foundation-test-' . $roleSlug . '-' . str()->random(6),
+                'currency' => 'UGX',
+                'fiscal_year_start' => '2026-01-01',
+                'status' => 'trial',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
         Role::ensureDefaultsForTenant($tenantId);
         $role = Role::where('tenant_id', $tenantId)->where('slug', $roleSlug)->firstOrFail();

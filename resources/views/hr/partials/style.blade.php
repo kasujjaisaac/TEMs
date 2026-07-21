@@ -310,4 +310,16 @@
             width: 100%;
         }
     }
+
+    .hr-core{gap:10px}
+    .hr-core-header{align-items:center!important;gap:8px!important;min-height:0!important;padding:8px 10px!important}
+    .hr-core-title{gap:8px!important}
+    .hr-core-icon{flex:0 0 28px!important;font-size:10px!important;height:28px!important;width:28px!important}
+    .hr-core h1{font-size:14px!important;font-weight:800!important;line-height:1.1!important}
+    .hr-core-muted{font-size:10px!important;font-weight:400!important;line-height:1.25!important}
+    .hr-core-button,.hr-core-icon-button{font-size:10px!important;font-weight:700!important;gap:6px!important;min-height:30px!important;padding:0 9px!important}
+    .hr-core-panel,.hr-core-card{padding:10px!important}
+    .hr-core-panel-head{margin-bottom:9px!important;padding-bottom:8px!important}
+    .hr-core h2,.hr-core h3{font-size:11px!important;font-weight:700!important}
+    .hr-core-card strong{font-size:14px!important;font-weight:700!important;margin-top:3px!important}
 </style>

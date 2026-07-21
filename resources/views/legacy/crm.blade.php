@@ -38,6 +38,10 @@ function crm_ensure_tables(PDO $pdo): void
     crm_ensure_column($pdo, 'customers', 'customer_source', 'VARCHAR(80) DEFAULT NULL');
     crm_ensure_column($pdo, 'customers', 'account_manager', 'VARCHAR(155) DEFAULT NULL');
     crm_ensure_column($pdo, 'customers', 'internal_notes', 'TEXT DEFAULT NULL');
+    crm_ensure_column($pdo, 'customers', 'commercial_organization_id', 'BIGINT(20) DEFAULT NULL');
+    crm_ensure_column($pdo, 'customers', 'commercial_reference', 'VARCHAR(80) DEFAULT NULL');
+    crm_ensure_column($pdo, 'customers', 'commercial_sync_status', 'VARCHAR(60) DEFAULT NULL');
+    crm_ensure_column($pdo, 'customers', 'commercial_synced_at', 'DATETIME DEFAULT NULL');
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS crm_leads (
         id BIGINT(20) NOT NULL AUTO_INCREMENT,
@@ -61,6 +65,7 @@ function crm_ensure_tables(PDO $pdo): void
         KEY idx_crm_leads_tenant_status (tenant_id, status),
         KEY idx_crm_leads_tenant_customer (tenant_id, customer_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    crm_ensure_column($pdo, 'crm_leads', 'commercial_lead_id', 'BIGINT(20) DEFAULT NULL');
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS crm_opportunities (
         id BIGINT(20) NOT NULL AUTO_INCREMENT,
@@ -81,6 +86,7 @@ function crm_ensure_tables(PDO $pdo): void
         KEY idx_crm_opportunities_tenant_stage (tenant_id, stage),
         KEY idx_crm_opportunities_tenant_customer (tenant_id, customer_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    crm_ensure_column($pdo, 'crm_opportunities', 'commercial_opportunity_id', 'BIGINT(20) DEFAULT NULL');
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS crm_activities (
         id BIGINT(20) NOT NULL AUTO_INCREMENT,
@@ -325,13 +331,13 @@ $context = onyx_page_start('CRM', 'Leads, pipeline, follow-ups, campaigns, and c
 $currency = $context['currency'];
 
 $customers = onyx_rows(
-    'SELECT id, name, company_name, contact_person, phone, email, customer_group, account_manager, is_active
+    'SELECT id, commercial_organization_id, commercial_reference, name, company_name, contact_person, phone, email, customer_group, account_manager, is_active
      FROM customers WHERE tenant_id = :tenant_id ORDER BY updated_at DESC, name ASC LIMIT 100',
     ['tenant_id' => $tenant_id]
 );
 
 $leads = onyx_rows(
-    'SELECT l.*, c.name AS customer_name
+    'SELECT l.*, c.name AS customer_name, c.commercial_organization_id
      FROM crm_leads l
      LEFT JOIN customers c ON c.id = l.customer_id AND c.tenant_id = l.tenant_id
      WHERE l.tenant_id = :tenant_id
@@ -341,7 +347,7 @@ $leads = onyx_rows(
 );
 
 $opportunities = onyx_rows(
-    'SELECT o.*, c.name AS customer_name, l.contact_name AS lead_name
+    'SELECT o.*, c.name AS customer_name, c.commercial_organization_id, l.contact_name AS lead_name
      FROM crm_opportunities o
      LEFT JOIN customers c ON c.id = o.customer_id AND c.tenant_id = o.tenant_id
      LEFT JOIN crm_leads l ON l.id = o.lead_id AND l.tenant_id = o.tenant_id
@@ -526,7 +532,13 @@ $conversionRate = $leadCount > 0 ? round(($convertedLeadCount / $leadCount) * 10
                             <?php foreach ($leads as $lead): ?>
                                 <?php $statusClass = in_array($lead['status'], ['converted', 'qualified'], true) ? 'ok' : (in_array($lead['status'], ['lost'], true) ? 'danger' : 'warn'); ?>
                                 <tr>
-                                    <td><div class="crm-name"><strong><?= crm_h($lead['company_name'] ?: $lead['contact_name']) ?></strong><span><?= crm_h($lead['customer_name'] ?: 'Prospect') ?></span></div></td>
+                                    <td>
+                                        <div class="crm-name">
+                                            <strong><?= crm_h($lead['company_name'] ?: $lead['contact_name']) ?></strong>
+                                            <span><?= crm_h($lead['customer_name'] ?: 'Prospect') ?></span>
+                                            <?php if ((int) ($lead['commercial_lead_id'] ?? 0) > 0): ?><span class="crm-muted">Commercial <?= crm_h($lead['commercial_lead_id']) ?></span><?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td><?= crm_h($lead['phone'] ?: '-') ?><span class="crm-muted"><?= crm_h($lead['email'] ?: '-') ?></span></td>
                                     <td><?= crm_h(ucwords(str_replace('_', ' ', $lead['source'] ?: 'walk_in'))) ?></td>
                                     <td><?= crm_h(crm_money($lead['estimated_value'], $currency)) ?></td>
@@ -585,8 +597,17 @@ $conversionRate = $leadCount > 0 ? round(($convertedLeadCount / $leadCount) * 10
                         <?php else: ?>
                             <?php foreach ($opportunities as $opp): ?>
                                 <tr>
-                                    <td><div class="crm-name"><strong><?= crm_h($opp['title']) ?></strong><span><?= crm_h($opp['owner'] ?: '-') ?></span></div></td>
-                                    <td><?= crm_h($opp['customer_name'] ?: $opp['lead_name'] ?: '-') ?></td>
+                                    <td>
+                                        <div class="crm-name">
+                                            <strong><?= crm_h($opp['title']) ?></strong>
+                                            <span><?= crm_h($opp['owner'] ?: '-') ?></span>
+                                            <?php if ((int) ($opp['commercial_opportunity_id'] ?? 0) > 0): ?><span class="crm-muted">Commercial <?= crm_h($opp['commercial_opportunity_id']) ?></span><?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <?= crm_h($opp['customer_name'] ?: $opp['lead_name'] ?: '-') ?>
+                                        <?php if ((int) ($opp['commercial_organization_id'] ?? 0) > 0): ?><span class="crm-muted"><a href="<?= crm_h(url('commercial/organizations/' . (int) $opp['commercial_organization_id'])) ?>">Commercial profile</a></span><?php endif; ?>
+                                    </td>
                                     <td><?= crm_h(crm_money($opp['value'], $currency)) ?></td>
                                     <td><?= crm_h($opp['probability']) ?>%</td>
                                     <td><?= crm_h($opp['expected_close_date'] ?: '-') ?></td>

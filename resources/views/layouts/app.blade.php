@@ -21,7 +21,7 @@
             <button type="button" data-mobile-more-close aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="mobile-more-grid">
-            <a href="{{ url('customers') }}"><i class="fa-solid fa-users"></i><span>Customers</span></a>
+            <a href="{{ route('crm.accounts.index') }}"><i class="fa-solid fa-users"></i><span>Accounts</span></a>
             <a href="{{ url('suppliers') }}"><i class="fa-solid fa-truck"></i><span>Suppliers</span></a>
             <a href="{{ url('purchases') }}"><i class="fa-solid fa-cart-shopping"></i><span>Purchases</span></a>
             <a href="{{ url('reports') }}"><i class="fa-solid fa-chart-column"></i><span>Reports</span></a>
@@ -50,9 +50,9 @@
             </label>
         </div>
         <div class="topbar-right">
-            <a class="topbar-action" href="{{ url('pos') }}">
+            <a class="topbar-action" href="{{ route('commercial.opportunities.create') }}">
                 <i class="fa-solid fa-plus"></i>
-                <span>New Sale</span>
+                <span>New Opportunity</span>
             </a>
             <span class="topbar-chip">
                 <i class="fa-solid fa-circle-check"></i>
@@ -82,14 +82,14 @@
 
     <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
         <a href="{{ url('dashboard') }}" class="{{ request()->is('dashboard*') ? 'active' : '' }}"><i class="fa-solid fa-gauge-high"></i><span>Home</span></a>
-        <a href="{{ url('sales') }}" class="{{ request()->is('sales*') || request()->is('pos*') ? 'active' : '' }}"><i class="fa-solid fa-cash-register"></i><span>Sales</span></a>
-        <a href="{{ url('products') }}" class="{{ request()->is('products*') || request()->is('inventory*') ? 'active' : '' }}"><i class="fa-solid fa-boxes-stacked"></i><span>Stock</span></a>
+        <a href="{{ route('commercial.dashboard') }}" class="{{ request()->is('commercial*') ? 'active' : '' }}"><i class="fa-solid fa-briefcase"></i><span>Pipeline</span></a>
+        <a href="{{ route('delivery.dashboard') }}" class="{{ request()->is('delivery*') ? 'active' : '' }}"><i class="fa-solid fa-layer-group"></i><span>Solutions</span></a>
+        <a href="{{ route('crm.dashboard') }}" class="{{ request()->is('crm*') || request()->is('customers*') ? 'active' : '' }}"><i class="fa-solid fa-address-book"></i><span>CRM</span></a>
         <a href="{{ url('accounting') }}" class="{{ request()->is('accounting*') || request()->is('banking*') ? 'active' : '' }}"><i class="fa-solid fa-scale-balanced"></i><span>Finance</span></a>
-        <a href="{{ url('human_resources') }}" class="{{ request()->is('human_resources*') || request()->is('hr_*') ? 'active' : '' }}"><i class="fa-solid fa-users-gear"></i><span>HR</span></a>
         <button type="button" data-mobile-more><i class="fa-solid fa-ellipsis"></i><span>More</span></button>
     </nav>
 
-    <a class="mobile-fab" href="{{ url('pos') }}" aria-label="New sale"><i class="fa-solid fa-plus"></i><span>Sale</span></a>
+    <a class="mobile-fab" href="{{ route('commercial.opportunities.create') }}" aria-label="New opportunity"><i class="fa-solid fa-plus"></i><span>Deal</span></a>
 </main>
 
 <script>

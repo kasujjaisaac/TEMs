@@ -2,16 +2,25 @@
 
 namespace App\Services\Planning;
 
+use App\Models\AuditLog;
 use App\Models\Finance\FinanceBudgetLine;
 use App\Models\HR\HrDepartment;
 use App\Models\HR\HrPosition;
+use App\Models\Planning\WorkplanCorrectiveAction;
+use App\Models\Planning\WorkplanEvidence;
+use App\Models\Planning\WorkplanEvidenceReview;
 use App\Models\Planning\PlanningYear;
 use App\Models\Planning\StrategicObjective;
 use App\Models\Planning\StrategicPillar;
 use App\Models\Planning\TargetAllocation;
 use App\Models\Planning\Workplan;
 use App\Models\Planning\WorkplanItem;
+use App\Models\User;
+use App\Services\Enterprise\DomainEventService;
+use App\Services\Enterprise\NotificationService;
 use Carbon\CarbonPeriod;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -78,6 +87,9 @@ class PlanningPerformanceService
                 'weekly_allocations' => TargetAllocation::where('tenant_id', $tenantId)->where('period_type', 'Weekly')->count(),
                 'company_achievement' => $items->isEmpty() ? 0 : (int) round($weightedAchievement / $weightedTarget),
                 'at_risk_or_behind' => ($healthCounts['At Risk'] ?? 0) + ($healthCounts['Behind'] ?? 0),
+                'evidence_submitted' => WorkplanEvidence::where('tenant_id', $tenantId)->count(),
+                'evidence_awaiting_review' => WorkplanEvidence::where('tenant_id', $tenantId)->where('status', 'Submitted')->count(),
+                'open_corrective_actions' => WorkplanCorrectiveAction::where('tenant_id', $tenantId)->whereIn('status', ['Open', 'In Progress'])->count(),
             ],
             'healthCounts' => $healthCounts,
             'recentItems' => $snapshots->take(10),
@@ -140,6 +152,146 @@ class PlanningPerformanceService
                 ['tenant_id' => $item->tenant_id, 'workplan_item_id' => $item->id, 'period_type' => 'Weekly', 'period_start' => $week->copy()->startOfWeek()->toDateString()],
                 ['period_end' => $week->copy()->endOfWeek()->toDateString(), 'target_value' => $weeklyTarget, 'status' => 'Planned']
             );
+        });
+    }
+
+    public function submitEvidence(WorkplanItem $item, User $submitter, array $data, ?Request $request = null): WorkplanEvidence
+    {
+        return DB::transaction(function () use ($item, $submitter, $data, $request): WorkplanEvidence {
+            $evidence = WorkplanEvidence::create([
+                'tenant_id' => $item->tenant_id,
+                'workplan_item_id' => $item->id,
+                'submitted_by' => $submitter->id,
+                'title' => $data['title'],
+                'evidence_type' => $data['evidence_type'],
+                'description' => $data['description'] ?? null,
+                'source_module' => $data['source_module'] ?? null,
+                'source_reference' => $data['source_reference'] ?? null,
+                'claimed_value' => $data['claimed_value'] ?? 0,
+                'status' => 'Submitted',
+                'submitted_at' => now(),
+                'metadata' => [
+                    'required_evidence_type' => $item->required_evidence_type,
+                    'quality_standard' => $item->quality_standard,
+                ],
+            ]);
+
+            app(DomainEventService::class)->record('evidence.submitted', 'Planning and Performance', $evidence, [
+                'workplan_item_id' => $item->id,
+                'reference' => $item->reference,
+                'claimed_value' => $evidence->claimed_value,
+            ], (int) $item->tenant_id, $submitter);
+
+            app(NotificationService::class)->notify(
+                null,
+                (int) $item->tenant_id,
+                'Evidence awaiting verification',
+                $item->reference . ' has new evidence submitted for review.',
+                ['source_module' => 'Planning and Performance', 'type' => 'evidence', 'severity' => 'Info', 'action_url' => route('planning.workplans.show', $item->workplan_id)]
+            );
+
+            $this->audit($item, $submitter, 'submitted', 'Submitted evidence ' . $evidence->title, $request, ['evidence_id' => $evidence->id]);
+
+            return $evidence;
+        });
+    }
+
+    public function reviewEvidence(WorkplanEvidence $evidence, User $reviewer, string $decision, float $verifiedValue, ?string $notes = null, ?Request $request = null): WorkplanEvidence
+    {
+        return DB::transaction(function () use ($evidence, $reviewer, $decision, $verifiedValue, $notes, $request): WorkplanEvidence {
+            $status = $decision === 'Approved' ? 'Verified' : 'Rejected';
+            $verifiedValue = $status === 'Verified' ? $verifiedValue : 0;
+
+            $evidence->forceFill([
+                'status' => $status,
+                'verified_value' => $verifiedValue,
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => now(),
+                'review_notes' => $notes,
+            ])->save();
+
+            WorkplanEvidenceReview::create([
+                'tenant_id' => $evidence->tenant_id,
+                'workplan_evidence_id' => $evidence->id,
+                'reviewed_by' => $reviewer->id,
+                'decision' => $decision,
+                'verified_value' => $verifiedValue,
+                'notes' => $notes,
+            ]);
+
+            $item = $evidence->item()->lockForUpdate()->firstOrFail();
+            if ($status === 'Verified') {
+                $verifiedTotal = WorkplanEvidence::where('tenant_id', $item->tenant_id)
+                    ->where('workplan_item_id', $item->id)
+                    ->where('status', 'Verified')
+                    ->sum('verified_value');
+
+                $item->forceFill([
+                    'actual_value' => $verifiedTotal,
+                    'health_status' => $this->itemSnapshot($item->forceFill(['actual_value' => $verifiedTotal]))['health'],
+                    'updated_by' => $reviewer->id,
+                ])->save();
+            }
+
+            app(DomainEventService::class)->record($status === 'Verified' ? 'evidence.verified' : 'evidence.rejected', 'Planning and Performance', $evidence, [
+                'workplan_item_id' => $item->id,
+                'reference' => $item->reference,
+                'verified_value' => $verifiedValue,
+            ], (int) $item->tenant_id, $reviewer);
+
+            app(NotificationService::class)->notify(
+                $evidence->submitter,
+                (int) $evidence->tenant_id,
+                'Evidence ' . strtolower($status),
+                $evidence->title . ' was ' . strtolower($status) . '.',
+                ['source_module' => 'Planning and Performance', 'type' => 'evidence', 'severity' => $status === 'Verified' ? 'Success' : 'Warning', 'action_url' => route('planning.workplans.show', $item->workplan_id)]
+            );
+
+            $this->audit($item, $reviewer, strtolower($status), $status . ' evidence ' . $evidence->title, $request, ['evidence_id' => $evidence->id, 'verified_value' => $verifiedValue]);
+
+            return $evidence->fresh(['item', 'submitter']);
+        });
+    }
+
+    public function createCorrectiveAction(WorkplanItem $item, User $creator, array $data, ?Request $request = null): WorkplanCorrectiveAction
+    {
+        return DB::transaction(function () use ($item, $creator, $data, $request): WorkplanCorrectiveAction {
+            $action = WorkplanCorrectiveAction::create([
+                'tenant_id' => $item->tenant_id,
+                'workplan_item_id' => $item->id,
+                'owner_id' => $data['owner_id'] ?? null,
+                'created_by' => $creator->id,
+                'title' => $data['title'],
+                'root_cause' => $data['root_cause'] ?? null,
+                'recovery_plan' => $data['recovery_plan'],
+                'due_on' => $data['due_on'] ?? null,
+                'status' => $data['status'] ?? 'Open',
+                'severity' => $data['severity'] ?? 'Medium',
+            ]);
+
+            $item->forceFill([
+                'risk_summary' => $data['root_cause'] ?? $item->risk_summary,
+                'health_status' => 'Recovery',
+                'updated_by' => $creator->id,
+            ])->save();
+
+            app(DomainEventService::class)->record('corrective_action.created', 'Planning and Performance', $action, [
+                'workplan_item_id' => $item->id,
+                'reference' => $item->reference,
+                'severity' => $action->severity,
+            ], (int) $item->tenant_id, $creator);
+
+            app(NotificationService::class)->notify(
+                $action->owner,
+                (int) $item->tenant_id,
+                'Corrective action assigned',
+                $item->reference . ' has a recovery action: ' . $action->title,
+                ['source_module' => 'Planning and Performance', 'type' => 'recovery', 'severity' => $action->severity, 'action_url' => route('planning.workplans.show', $item->workplan_id)]
+            );
+
+            $this->audit($item, $creator, 'created', 'Created corrective action ' . $action->title, $request, ['corrective_action_id' => $action->id]);
+
+            return $action;
         });
     }
 
@@ -275,5 +427,21 @@ class PlanningPerformanceService
         }
 
         return $alerts;
+    }
+
+    private function audit(WorkplanItem $item, User $user, string $action, string $description, ?Request $request = null, array $metadata = []): void
+    {
+        AuditLog::create([
+            'tenant_id' => $item->tenant_id,
+            'user_id' => $user->id,
+            'action' => $action,
+            'module' => 'planning',
+            'subject_type' => WorkplanItem::class,
+            'subject_id' => $item->id,
+            'description' => $description,
+            'metadata' => $metadata,
+            'ip_address' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+        ]);
     }
 }

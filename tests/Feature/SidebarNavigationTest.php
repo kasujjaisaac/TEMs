@@ -19,11 +19,18 @@ class SidebarNavigationTest extends TestCase
         $groups = collect(Navigation::groups());
 
         $commercial = collect($groups->firstWhere('label', 'Commercial Operations')['items'] ?? []);
+        $crm = collect($groups->firstWhere('label', 'CRM & Customer Accounts')['items'] ?? []);
         $hr = collect($groups->firstWhere('label', 'Human Resource')['items'] ?? []);
 
         $this->assertSame(route('commercial.dashboard'), $commercial->firstWhere('label', 'Commercial Dashboard')['url'] ?? null);
         $this->assertSame(route('commercial.leads.index'), $commercial->firstWhere('label', 'Leads')['url'] ?? null);
         $this->assertSame(route('commercial.opportunities.index'), $commercial->firstWhere('label', 'Opportunities')['url'] ?? null);
+        $this->assertSame(route('commercial.organizations.index'), $commercial->firstWhere('label', 'Prospect Organizations')['url'] ?? null);
+
+        $this->assertSame(route('crm.dashboard'), $crm->firstWhere('label', 'CRM Dashboard')['url'] ?? null);
+        $this->assertSame(route('crm.accounts.index'), $crm->firstWhere('label', 'Customer Accounts')['url'] ?? null);
+        $this->assertNull($commercial->firstWhere('label', 'Customers'));
+        $this->assertNull($commercial->firstWhere('label', 'CRM'));
 
         $this->assertSame(route('hr.command'), $hr->firstWhere('label', 'HR Command Centre')['url'] ?? null);
         $this->assertSame(route('hr.departments.index'), $hr->firstWhere('label', 'Organization Structure')['url'] ?? null);
@@ -70,6 +77,7 @@ class SidebarNavigationTest extends TestCase
         $groups = collect(Navigation::visibleGroups($user))->pluck('label')->all();
 
         $this->assertContains('Commercial Operations', $groups);
+        $this->assertContains('CRM & Customer Accounts', $groups);
         $this->assertContains('Finance', $groups);
         $this->assertContains('Planning & Performance', $groups);
     }
@@ -98,6 +106,7 @@ class SidebarNavigationTest extends TestCase
         $groups = collect(Navigation::visibleGroups($user));
 
         $this->assertNotEmpty($groups->firstWhere('label', 'Commercial Operations')['items'] ?? []);
+        $this->assertNotEmpty($groups->firstWhere('label', 'CRM & Customer Accounts')['items'] ?? []);
         $this->assertNotEmpty($groups->firstWhere('label', 'Finance')['items'] ?? []);
         $this->assertNotEmpty($groups->firstWhere('label', 'Human Resource')['items'] ?? []);
         $this->assertNotEmpty($groups->firstWhere('label', 'Planning & Performance')['items'] ?? []);

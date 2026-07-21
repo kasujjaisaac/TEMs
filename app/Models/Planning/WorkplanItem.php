@@ -56,6 +56,16 @@ class WorkplanItem extends Model
         return $this->hasMany(WorkplanAssignment::class);
     }
 
+    public function evidence(): HasMany
+    {
+        return $this->hasMany(WorkplanEvidence::class);
+    }
+
+    public function correctiveActions(): HasMany
+    {
+        return $this->hasMany(WorkplanCorrectiveAction::class);
+    }
+
     public function getAchievementPercentageAttribute(): int
     {
         if ((float) $this->target_value <= 0) {

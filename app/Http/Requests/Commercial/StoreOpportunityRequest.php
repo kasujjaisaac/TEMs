@@ -15,6 +15,7 @@ class StoreOpportunityRequest extends FormRequest
     {
         return [
             'organization_id' => ['required', 'integer', 'exists:commercial_organizations,id'],
+            'campaign_id' => ['nullable', 'integer', 'exists:commercial_campaigns,id'],
             'primary_stakeholder_id' => ['nullable', 'integer', 'exists:commercial_stakeholders,id'],
             'title' => ['required', 'string', 'max:180'],
             'assigned_employee_id' => ['nullable', 'integer', 'exists:users,id'],

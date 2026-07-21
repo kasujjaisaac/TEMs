@@ -22,11 +22,11 @@
         <div class="commercial-card"><span>Active Leads</span><strong>{{ $metrics['active_leads'] }}</strong></div>
         <div class="commercial-card"><span>New This Month</span><strong>{{ $metrics['new_leads_month'] }}</strong></div>
         <div class="commercial-card"><span>Qualified Leads</span><strong>{{ $metrics['qualified_leads'] }}</strong></div>
-        <div class="commercial-card"><span>Organizations</span><strong>{{ $metrics['organizations'] }}</strong></div>
+        <div class="commercial-card"><span>Active Campaigns</span><strong>{{ $metrics['active_campaigns'] }}</strong></div>
         <div class="commercial-card"><span>Active Opportunities</span><strong>{{ $metrics['active_opportunities'] }}</strong></div>
         <div class="commercial-card"><span>Pipeline Value</span><strong>{{ number_format((float) $metrics['pipeline_value'], 2) }}</strong></div>
         <div class="commercial-card"><span>Weighted Pipeline</span><strong>{{ number_format((float) $metrics['weighted_pipeline_value'], 2) }}</strong></div>
-        <div class="commercial-card"><span>Upcoming Meetings</span><strong>{{ $metrics['upcoming_meetings'] }}</strong></div>
+        <div class="commercial-card"><span>Billing Requests</span><strong>{{ $metrics['billing_requests'] }}</strong></div>
     </section>
 
     @if(session('success'))

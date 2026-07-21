@@ -16,6 +16,10 @@
             <a class="commercial-button secondary" href="{{ route('commercial.organizations.index') }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
             @if(auth()->user()?->hasPermission('commercial.organizations.update'))
                 <a class="commercial-button secondary" href="{{ route('commercial.organizations.edit', $organization) }}"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                <form method="POST" action="{{ route('commercial.organizations.sync_customer', $organization) }}" style="display:inline-flex;">
+                    @csrf
+                    <button class="commercial-button secondary" type="submit"><i class="fa-solid fa-rotate"></i> Sync Customer</button>
+                </form>
             @endif
             <a class="commercial-button secondary" href="{{ route('commercial.activities.create', ['related_type' => App\Models\Commercial\CommercialOrganization::class, 'related_id' => $organization->id]) }}"><i class="fa-solid fa-list-check"></i> Activity</a>
             <a class="commercial-button" href="{{ route('commercial.stakeholders.create', ['organization_id' => $organization->id]) }}"><i class="fa-solid fa-user-plus"></i> Stakeholder</a>
@@ -29,6 +33,7 @@
         <div class="commercial-card"><span>Account Manager</span><strong>{{ $organization->accountManager?->name ?: '-' }}</strong></div>
         <div class="commercial-card"><span>Stakeholders</span><strong>{{ $organization->stakeholders->count() }}</strong></div>
         <div class="commercial-card"><span>Opportunities</span><strong>{{ $organization->opportunities->count() }}</strong></div>
+        <div class="commercial-card"><span>Legacy Customer</span><strong>{{ $organization->legacy_customer_id ?: 'Not synced' }}</strong></div>
     </section>
 
     <section class="commercial-split">
@@ -74,10 +79,13 @@
 
     <section class="commercial-panel">
         <div class="commercial-panel-head"><h2>Financial Bridge</h2></div>
-        <p class="commercial-muted">Legacy customer ID links this professional commercial organization to existing Sales, Invoice, and Payment records without merging schemas prematurely.</p>
+        <p class="commercial-muted">Legacy customer ID links this professional commercial organization to existing CRM, Sales, Invoice, POS, Payment, and Customer records without merging schemas prematurely.</p>
         <span class="commercial-badge {{ $organization->legacy_customer_id ? 'success' : 'warning' }}">
             {{ $organization->legacy_customer_id ? 'Linked to legacy customer #' . $organization->legacy_customer_id : 'Not linked yet' }}
         </span>
+        @if($organization->legacy_customer_id)
+            <a class="commercial-button secondary" href="{{ url('customers_action.php?action=view&id=' . $organization->legacy_customer_id) }}" style="margin-left:8px;">Open Legacy Profile</a>
+        @endif
     </section>
 </section>
 @endsection

@@ -19,6 +19,7 @@
     </header>
 
     @if(session('success')) <div class="commercial-alert success">{{ session('success') }}</div> @endif
+    @if($errors->any()) <div class="commercial-alert error">{{ $errors->first() }}</div> @endif
 
     <section class="commercial-grid">
         <div class="commercial-card"><span>Organization</span><strong>{{ $opportunity->organization?->legal_name }}</strong></div>
@@ -26,6 +27,104 @@
         <div class="commercial-card"><span>Probability</span><strong>{{ $opportunity->probability }}%</strong></div>
         <div class="commercial-card"><span>Weighted Value</span><strong>{{ $opportunity->currency }} {{ number_format($opportunity->weighted_value, 2) }}</strong></div>
     </section>
+
+    <section class="commercial-panel">
+        <div class="commercial-panel-head"><h2>Revenue Lifecycle</h2><span class="commercial-muted">Proposal to quotation to contract to billing request.</span></div>
+        @include('commercial.partials.table', [
+            'headers' => ['Record', 'Value', 'Status', 'Date', 'Action'],
+            'rows' => collect()
+                ->merge($opportunity->proposals->map(fn ($proposal) => [
+                    '<strong class="commercial-table-title">' . e($proposal->reference) . '</strong><span class="commercial-muted">Proposal - ' . e($proposal->title) . '</span>',
+                    e($proposal->currency . ' ' . number_format((float) $proposal->proposed_value, 2)),
+                    '<span class="commercial-badge ' . ($proposal->status === 'Approved' ? 'success' : 'warning') . '">' . e($proposal->status) . '</span>',
+                    e($proposal->created_at?->format('M d, Y') ?: '-'),
+                    $proposal->status !== 'Approved' && auth()->user()?->hasPermission('commercial.opportunities.change_stage') ? '<form method="POST" action="' . route('commercial.proposals.approve', $proposal) . '">' . csrf_field() . '<button class="commercial-button" type="submit">Approve</button></form>' : '-',
+                ]))
+                ->merge($opportunity->quotations->map(fn ($quotation) => [
+                    '<strong class="commercial-table-title">' . e($quotation->reference) . '</strong><span class="commercial-muted">Quotation</span>',
+                    e($quotation->currency . ' ' . number_format((float) $quotation->total, 2)),
+                    '<span class="commercial-badge ' . (in_array($quotation->status, ['Approved','Accepted'], true) ? 'success' : 'warning') . '">' . e($quotation->status) . '</span>',
+                    e($quotation->quotation_date?->format('M d, Y') ?: '-'),
+                    auth()->user()?->hasPermission('commercial.opportunities.change_stage') ? '<form class="commercial-inline-form" method="POST" action="' . route('commercial.quotations.decision', $quotation) . '">' . csrf_field() . '<input type="hidden" name="decision" value="Approved"><button class="commercial-button" type="submit">Approve</button></form><form class="commercial-inline-form" method="POST" action="' . route('commercial.quotations.decision', $quotation) . '">' . csrf_field() . '<input type="hidden" name="decision" value="Accepted"><button class="commercial-button secondary" type="submit">Accept</button></form>' : '-',
+                ]))
+                ->merge($opportunity->contracts->map(fn ($contract) => [
+                    '<strong class="commercial-table-title">' . e($contract->reference) . '</strong><span class="commercial-muted">Contract - ' . e($contract->contract_title) . '</span>',
+                    e($contract->currency . ' ' . number_format((float) $contract->contract_value, 2)),
+                    '<span class="commercial-badge ' . ($contract->status === 'Signed' ? 'success' : 'warning') . '">' . e($contract->status) . '</span>',
+                    e($contract->signed_at?->format('M d, Y') ?: ($contract->created_at?->format('M d, Y') ?: '-')),
+                    $contract->status !== 'Signed' && auth()->user()?->hasPermission('commercial.opportunities.change_stage') ? '<form method="POST" action="' . route('commercial.contracts.sign', $contract) . '">' . csrf_field() . '<button class="commercial-button" type="submit">Sign</button></form>' : '-',
+                ]))
+                ->merge($opportunity->billingRequests->map(fn ($billing) => [
+                    '<strong class="commercial-table-title">' . e($billing->reference) . '</strong><span class="commercial-muted">Billing Request</span>',
+                    e($billing->currency . ' ' . number_format((float) $billing->amount, 2)),
+                    '<span class="commercial-badge warning">' . e($billing->status) . '</span>',
+                    e($billing->requested_invoice_date?->format('M d, Y') ?: '-'),
+                    '-',
+                ]))
+                ->values()
+                ->all()
+        ])
+    </section>
+
+    @if(auth()->user()?->hasPermission('commercial.opportunities.update'))
+        <section class="commercial-split">
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Create Proposal</h2></div>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.proposals.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field double"><label>Title</label><input name="title" value="{{ $opportunity->title }} Proposal" required></div>
+                    <div class="commercial-field"><label>Version</label><input name="version" value="1.0"></div>
+                    <div class="commercial-field"><label>Value</label><input name="proposed_value" type="number" min="0" step="0.01" value="{{ $opportunity->estimated_value }}"></div>
+                    <div class="commercial-field full"><label>Scope Summary</label><textarea name="scope_summary">{{ $opportunity->proposed_solution }}</textarea></div>
+                    <div class="commercial-field full"><label>Value Proposition</label><textarea name="value_proposition">{{ $opportunity->customer_need }}</textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Create Proposal</button></div>
+                </form>
+            </div>
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Create Quotation</h2></div>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.quotations.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Proposal</label><select name="proposal_id"><option value="">None</option>@foreach($opportunity->proposals as $proposal)<option value="{{ $proposal->id }}">{{ $proposal->reference }}</option>@endforeach</select></div>
+                    <div class="commercial-field"><label>Subtotal</label><input name="subtotal" type="number" min="0" step="0.01" value="{{ $opportunity->estimated_value }}"></div>
+                    <div class="commercial-field"><label>Discount</label><input name="discount_amount" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="commercial-field"><label>Tax</label><input name="tax_amount" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="commercial-field"><label>Date</label><input name="quotation_date" type="date" value="{{ now()->toDateString() }}"></div>
+                    <div class="commercial-field"><label>Valid Until</label><input name="valid_until" type="date" value="{{ now()->addDays(14)->toDateString() }}"></div>
+                    <div class="commercial-field full"><label>Terms</label><textarea name="terms">{{ $opportunity->organization?->payment_terms }}</textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Create Quotation</button></div>
+                </form>
+            </div>
+        </section>
+
+        <section class="commercial-split">
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Create Contract</h2></div>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.contracts.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Quotation</label><select name="quotation_id"><option value="">None</option>@foreach($opportunity->quotations as $quotation)<option value="{{ $quotation->id }}">{{ $quotation->reference }}</option>@endforeach</select></div>
+                    <div class="commercial-field double"><label>Title</label><input name="contract_title" value="{{ $opportunity->title }} Contract" required></div>
+                    <div class="commercial-field"><label>Value</label><input name="contract_value" type="number" min="0" step="0.01" value="{{ $opportunity->estimated_value }}"></div>
+                    <div class="commercial-field"><label>Starts On</label><input name="starts_on" type="date" value="{{ now()->toDateString() }}"></div>
+                    <div class="commercial-field"><label>Ends On</label><input name="ends_on" type="date"></div>
+                    <div class="commercial-field full"><label>Payment Terms</label><input name="payment_terms" value="{{ $opportunity->organization?->payment_terms }}"></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Create Contract</button></div>
+                </form>
+            </div>
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Billing Request</h2></div>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.billing_requests.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Contract</label><select name="contract_id"><option value="">None</option>@foreach($opportunity->contracts as $contract)<option value="{{ $contract->id }}">{{ $contract->reference }}</option>@endforeach</select></div>
+                    <div class="commercial-field"><label>Quotation</label><select name="quotation_id"><option value="">None</option>@foreach($opportunity->quotations as $quotation)<option value="{{ $quotation->id }}">{{ $quotation->reference }}</option>@endforeach</select></div>
+                    <div class="commercial-field"><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" value="{{ $opportunity->estimated_value }}" required></div>
+                    <div class="commercial-field"><label>Invoice Date</label><input name="requested_invoice_date" type="date" value="{{ now()->toDateString() }}"></div>
+                    <div class="commercial-field full"><label>Billing Terms</label><input name="billing_terms" value="{{ $opportunity->organization?->payment_terms }}"></div>
+                    <div class="commercial-field full"><label>Instructions</label><textarea name="instructions"></textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Request Billing</button></div>
+                </form>
+            </div>
+        </section>
+    @endif
 
     @if(auth()->user()?->hasPermission('commercial.opportunities.change_stage'))
         <section class="commercial-panel">
@@ -98,6 +197,7 @@
                 'rows' => [
                     ['Estimated Value', e($opportunity->currency . ' ' . number_format((float) $opportunity->estimated_value, 2))],
                     ['Product / Service', e($opportunity->product_or_service ?: '-')],
+                    ['Campaign', e($opportunity->campaign?->name ?: '-')],
                     ['Primary Stakeholder', e($opportunity->primaryStakeholder?->full_name ?: '-')],
                     ['Assigned Employee', e($opportunity->assignedEmployee?->name ?: '-')],
                     ['Expected Close', e($opportunity->expected_close_date?->format('M d, Y') ?: '-')],

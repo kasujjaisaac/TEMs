@@ -3,6 +3,8 @@
 namespace App\Services\Commercial;
 
 use App\Models\Commercial\CommercialLead;
+use App\Models\Commercial\CommercialCampaign;
+use App\Models\Commercial\CommercialBillingRequest;
 use App\Models\Commercial\CommercialMeeting;
 use App\Models\Commercial\CommercialOpportunity;
 use App\Models\Commercial\CommercialOrganization;
@@ -21,9 +23,11 @@ class CommercialDashboardService
             'new_leads_month' => CommercialLead::where('tenant_id', $tenantId)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
             'qualified_leads' => CommercialLead::where('tenant_id', $tenantId)->where('status', 'Qualified')->count(),
             'organizations' => CommercialOrganization::where('tenant_id', $tenantId)->count(),
+            'active_campaigns' => CommercialCampaign::where('tenant_id', $tenantId)->whereIn('status', ['Active', 'Running', 'Planned'])->count(),
             'active_opportunities' => (clone $opportunities)->whereNotIn('current_stage', ['Won', 'Lost'])->count(),
             'pipeline_value' => $pipelineValue,
             'weighted_pipeline_value' => $weightedValue,
+            'billing_requests' => CommercialBillingRequest::where('tenant_id', $tenantId)->count(),
             'upcoming_meetings' => CommercialMeeting::where('tenant_id', $tenantId)->whereDate('meeting_date', '>=', now()->toDateString())->count(),
             'upcoming_site_visits' => CommercialSiteVisit::where('tenant_id', $tenantId)->whereDate('visit_date', '>=', now()->toDateString())->count(),
         ];

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\LegacyPageController;
 use App\Http\Controllers\Commercial\ActivityController as CommercialActivityController;
+use App\Http\Controllers\Commercial\CampaignController as CommercialCampaignController;
 use App\Http\Controllers\Commercial\DashboardController as CommercialDashboardController;
 use App\Http\Controllers\Commercial\LeadController as CommercialLeadController;
 use App\Http\Controllers\Commercial\MeetingController as CommercialMeetingController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Commercial\OpportunityController as CommercialOpportuni
 use App\Http\Controllers\Commercial\OrganizationController as CommercialOrganizationController;
 use App\Http\Controllers\Commercial\SiteVisitController as CommercialSiteVisitController;
 use App\Http\Controllers\Commercial\StakeholderController as CommercialStakeholderController;
+use App\Http\Controllers\CRM\CustomerAccountController as CrmCustomerAccountController;
 use App\Http\Controllers\Finance\AccountController as FinanceAccountController;
 use App\Http\Controllers\Finance\BudgetController as FinanceBudgetController;
 use App\Http\Controllers\Finance\DashboardController as FinanceDashboardController;
@@ -23,6 +25,15 @@ use App\Http\Controllers\Planning\DashboardController as PlanningDashboardContro
 use App\Http\Controllers\Planning\ObjectiveController as PlanningObjectiveController;
 use App\Http\Controllers\Planning\WorkplanController as PlanningWorkplanController;
 use App\Http\Controllers\Enterprise\FoundationController;
+use App\Http\Controllers\Enterprise\DeliveryController;
+use App\Http\Controllers\Enterprise\CustomerSuccessController;
+use App\Http\Controllers\Enterprise\EngineeringController;
+use App\Http\Controllers\Enterprise\GovernanceController;
+use App\Http\Controllers\Enterprise\IntelligenceController;
+use App\Http\Controllers\Enterprise\KnowledgeController;
+use App\Http\Controllers\Enterprise\MarketingController;
+use App\Http\Controllers\Enterprise\ReportsController;
+use App\Http\Controllers\Enterprise\StrategyController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('home');
 Route::get('/index.php', [AuthController::class, 'showLogin'])->name('home.legacy');
@@ -47,13 +58,29 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
+    Route::prefix('crm')->name('crm.')->group(function () {
+        Route::get('/', [CrmCustomerAccountController::class, 'dashboard'])->name('dashboard');
+        Route::get('/accounts', [CrmCustomerAccountController::class, 'index'])->name('accounts.index');
+        Route::get('/accounts/{customer}', [CrmCustomerAccountController::class, 'show'])->name('accounts.show');
+    });
+
     Route::prefix('commercial')->name('commercial.')->group(function () {
         Route::get('/', CommercialDashboardController::class)->name('dashboard');
+        Route::get('/campaigns', [CommercialCampaignController::class, 'index'])->name('campaigns.index');
+        Route::post('/campaigns', [CommercialCampaignController::class, 'store'])->name('campaigns.store');
         Route::post('/leads/{lead}/convert', [CommercialLeadController::class, 'convert'])->name('leads.convert');
         Route::resource('leads', CommercialLeadController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+        Route::post('/organizations/{organization}/sync-customer', [CommercialOrganizationController::class, 'syncCustomer'])->name('organizations.sync_customer');
         Route::resource('organizations', CommercialOrganizationController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
         Route::resource('stakeholders', CommercialStakeholderController::class)->only(['index', 'create', 'store', 'edit', 'update']);
         Route::patch('/opportunities/{opportunity}/stage', [CommercialOpportunityController::class, 'updateStage'])->name('opportunities.stage.update');
+        Route::post('/opportunities/{opportunity}/proposals', [CommercialOpportunityController::class, 'storeProposal'])->name('opportunities.proposals.store');
+        Route::post('/proposals/{proposal}/approve', [CommercialOpportunityController::class, 'approveProposal'])->name('proposals.approve');
+        Route::post('/opportunities/{opportunity}/quotations', [CommercialOpportunityController::class, 'storeQuotation'])->name('opportunities.quotations.store');
+        Route::post('/quotations/{quotation}/decision', [CommercialOpportunityController::class, 'decideQuotation'])->name('quotations.decision');
+        Route::post('/opportunities/{opportunity}/contracts', [CommercialOpportunityController::class, 'storeContract'])->name('opportunities.contracts.store');
+        Route::post('/contracts/{contract}/sign', [CommercialOpportunityController::class, 'signContract'])->name('contracts.sign');
+        Route::post('/opportunities/{opportunity}/billing-requests', [CommercialOpportunityController::class, 'storeBillingRequest'])->name('opportunities.billing_requests.store');
         Route::post('/opportunities/{opportunity}/handoff-to-sales', [CommercialOpportunityController::class, 'handoffToSales'])->name('opportunities.handoff_to_sales');
         Route::resource('opportunities', CommercialOpportunityController::class)->only(['index', 'create', 'store', 'show']);
         Route::resource('activities', CommercialActivityController::class)->only(['index', 'create', 'store']);
@@ -67,6 +94,12 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/accounts', [FinanceAccountController::class, 'index'])->name('accounts.index');
         Route::get('/budgets', [FinanceBudgetController::class, 'index'])->name('budgets.index');
         Route::post('/budgets', [FinanceBudgetController::class, 'store'])->name('budgets.store');
+        Route::post('/expenses', [FinanceBudgetController::class, 'storeExpense'])->name('expenses.store');
+        Route::post('/purchase-requests', [FinanceBudgetController::class, 'storePurchaseRequest'])->name('purchase_requests.store');
+        Route::post('/purchase-orders', [FinanceBudgetController::class, 'storePurchaseOrder'])->name('purchase_orders.store');
+        Route::post('/supplier-bills', [FinanceBudgetController::class, 'storeSupplierBill'])->name('supplier_bills.store');
+        Route::post('/payments', [FinanceBudgetController::class, 'storePayment'])->name('payments.store');
+        Route::post('/assets', [FinanceBudgetController::class, 'storeAsset'])->name('assets.store');
         Route::get('/transactions', [FinanceTransactionController::class, 'index'])->name('transactions.index');
         Route::get('/transactions/{transaction}', [FinanceTransactionController::class, 'show'])->name('transactions.show');
     });
@@ -85,6 +118,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/workplans/{workplan}', [PlanningWorkplanController::class, 'show'])->name('workplans.show');
         Route::post('/workplans/{workplan}/items', [PlanningWorkplanController::class, 'storeItem'])->name('workplans.items.store');
         Route::post('/workplans/{workplan}/approve', [PlanningWorkplanController::class, 'approve'])->name('workplans.approve');
+        Route::post('/workplan-items/{item}/evidence', [PlanningWorkplanController::class, 'submitEvidence'])->name('workplan_items.evidence.store');
+        Route::post('/evidence/{evidence}/review', [PlanningWorkplanController::class, 'reviewEvidence'])->name('evidence.review');
+        Route::post('/workplan-items/{item}/corrective-actions', [PlanningWorkplanController::class, 'storeCorrectiveAction'])->name('workplan_items.corrective_actions.store');
     });
 
     Route::prefix('foundation')->name('foundation.')->group(function () {
@@ -93,6 +129,56 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::post('/approvals', [FoundationController::class, 'storeApproval'])->name('approvals.store');
         Route::post('/approvals/{approval}/decision', [FoundationController::class, 'decideApproval'])->name('approvals.decision');
         Route::post('/notifications/{notification}/read', [FoundationController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('/employees', [FoundationController::class, 'storeEmployee'])->name('employees.store');
+        Route::post('/approval-rules', [FoundationController::class, 'storeApprovalRule'])->name('approval_rules.store');
+        Route::post('/notification-preferences', [FoundationController::class, 'storeNotificationPreference'])->name('notification_preferences.store');
+        Route::post('/documents', [FoundationController::class, 'storeDocument'])->name('documents.store');
+    });
+
+    Route::prefix('strategy')->name('strategy.')->group(function () {
+        Route::get('/', [StrategyController::class, 'index'])->name('dashboard');
+        Route::post('/directives', [StrategyController::class, 'storeDirective'])->name('directives.store');
+    });
+
+    Route::prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/', [MarketingController::class, 'index'])->name('dashboard');
+        Route::post('/plans', [MarketingController::class, 'storePlan'])->name('plans.store');
+    });
+
+    Route::prefix('delivery')->name('delivery.')->group(function () {
+        Route::get('/', [DeliveryController::class, 'index'])->name('dashboard');
+        Route::post('/products', [DeliveryController::class, 'storeProduct'])->name('products.store');
+        Route::post('/projects/from-opportunity', [DeliveryController::class, 'createProjectFromOpportunity'])->name('projects.from_opportunity');
+    });
+
+    Route::prefix('engineering')->name('engineering.')->group(function () {
+        Route::get('/', [EngineeringController::class, 'index'])->name('dashboard');
+        Route::post('/backlog', [EngineeringController::class, 'storeBacklogItem'])->name('backlog.store');
+    });
+
+    Route::prefix('customer-success')->name('customer_success.')->group(function () {
+        Route::get('/', [CustomerSuccessController::class, 'index'])->name('dashboard');
+        Route::post('/tickets', [CustomerSuccessController::class, 'storeTicket'])->name('tickets.store');
+    });
+
+    Route::prefix('governance')->name('governance.')->group(function () {
+        Route::get('/', [GovernanceController::class, 'index'])->name('dashboard');
+        Route::post('/obligations', [GovernanceController::class, 'storeObligation'])->name('obligations.store');
+    });
+
+    Route::prefix('intelligence')->name('intelligence.')->group(function () {
+        Route::get('/', [IntelligenceController::class, 'index'])->name('dashboard');
+        Route::post('/refresh', [IntelligenceController::class, 'refresh'])->name('refresh');
+    });
+
+    Route::prefix('knowledge')->name('knowledge.')->group(function () {
+        Route::get('/', [KnowledgeController::class, 'index'])->name('dashboard');
+        Route::post('/articles', [KnowledgeController::class, 'storeArticle'])->name('articles.store');
+    });
+
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/', [ReportsController::class, 'index'])->name('dashboard');
+        Route::post('/reports', [ReportsController::class, 'storeReport'])->name('reports.store');
     });
 
     Route::get('/settings/users', [AccessControlController::class, 'users'])->name('settings.users');
@@ -114,9 +200,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 });
 
 // Migrated ERP pages. The .php routes keep existing in-page links working while
-// clean Laravel URLs are available for the same pages.
+// clean Laravel URLs are available for the same pages. CRM is now a native
+// module at /crm, so only crm.php should remain on the legacy bridge.
 foreach (onyx_legacy_pages() as $page) {
-    if ($page !== 'assets') {
+    if (! in_array($page, ['assets', 'crm'], true)) {
         Route::match(['GET', 'POST'], '/' . $page, [LegacyPageController::class, 'show'])
             ->middleware('password.changed')
             ->defaults('page', $page)
