@@ -192,7 +192,7 @@ function dashboard_trend(float $current, float $previous): array
 
 $context = onyx_page_start(
     'Dashboard',
-    'Compact business control board with revenue, customers, invoices, stock, reports, and operational alerts.'
+    ''
 );
 $currency = $context['currency'];
 $tenant_id = (int) onyx_tenant_id();
@@ -480,6 +480,7 @@ $operating_clusters = [
 ?>
 
 <style>
+    .page-header{display:none!important}
     .dash-board{--dash-line:rgba(255,255,255,.12);--dash-soft:rgba(255,255,255,.055);display:grid!important;gap:7px!important;max-width:100%!important;min-width:0!important}
     .dash-board *{box-sizing:border-box}.dash-board a{color:inherit}
     .dash-board .dash-hero{align-items:center!important;background:#0a0f16!important;border:1px solid var(--dash-line)!important;display:grid!important;gap:8px!important;grid-template-columns:minmax(0,1fr) auto!important;min-height:48px!important;padding:7px 10px!important}
@@ -503,14 +504,6 @@ $operating_clusters = [
 </style>
 
 <div class="dash-board">
-    <section class="dash-hero" aria-label="Enterprise command centre">
-        <div>
-            <h2>Enterprise Command Centre</h2>
-            <p>One board for sales, CRM, commercial, finance, inventory, HR, planning, delivery, governance, intelligence, knowledge, and reports.</p>
-        </div>
-        <div class="dash-date"><?= htmlspecialchars(date('M d, Y')) ?></div>
-    </section>
-
     <section class="system-kpis" aria-label="Executive system signals">
         <?php foreach ($executive_kpis as $kpi): ?>
             <a class="system-kpi" href="<?= htmlspecialchars($kpi['href']) ?>">
