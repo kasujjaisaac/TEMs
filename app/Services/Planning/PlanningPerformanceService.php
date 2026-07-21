@@ -39,6 +39,14 @@ class PlanningPerformanceService
         'assignment_role', 'required_evidence_type', 'quality_standard', 'description',
     ];
 
+    public const ANNUAL_WORKPLAN_HEADERS = [
+        'Quarter', 'Month', 'Strategic Result', 'Activity / Action', 'Expected Deliverable',
+        'Lead Unit', 'Priority', 'Week 1', 'Week 2', 'Week 3', 'Week 4', 'Revenue Mechanism',
+        'Target Client / Market', 'Target Units', 'Indicative Unit Price (UGX)',
+        'Revenue Target (UGX)', 'Direct Cost (UGX)', 'Gross Profit (UGX)',
+        'Budget Line Supported', 'KPI / Success Indicator', 'Risk & Mitigation', 'Status',
+    ];
+
     public function bootstrapTenant(int $tenantId): PlanningYear
     {
         $year = $this->currentPlanningYear($tenantId);
@@ -171,10 +179,13 @@ class PlanningPerformanceService
         });
     }
 
-    public function importWorkplanCsv(int $tenantId, User $user, UploadedFile $file): PlanningWorkplanImport
+    public function importWorkplanFile(int $tenantId, User $user, UploadedFile $file): PlanningWorkplanImport
     {
         $year = $this->bootstrapTenant($tenantId);
-        [$rows, $errors] = $this->parseWorkplanCsv($file);
+        $extension = strtolower($file->getClientOriginalExtension());
+        [$rows, $errors] = in_array($extension, ['xlsx'], true)
+            ? app(AnnualWorkplanSpreadsheetService::class)->parseAnnualWorkplan($file)
+            : $this->parseWorkplanCsv($file);
 
         if ($errors !== []) {
             PlanningWorkplanImport::create([
@@ -191,7 +202,7 @@ class PlanningPerformanceService
             throw ValidationException::withMessages(['workplan_file' => implode(' ', array_slice($errors, 0, 3))]);
         }
 
-        return DB::transaction(function () use ($tenantId, $user, $file, $year, $rows): PlanningWorkplanImport {
+        return DB::transaction(function () use ($tenantId, $user, $file, $year, $rows, $extension): PlanningWorkplanImport {
             $createdWorkplans = [];
             $importedTargets = 0;
 
@@ -291,7 +302,11 @@ class PlanningPerformanceService
                 'rows_read' => count($rows),
                 'workplans_created' => count($createdWorkplans),
                 'targets_imported' => $importedTargets,
-                'metadata' => ['template_headers' => self::WORKPLAN_IMPORT_HEADERS],
+                'metadata' => [
+                    'template_headers' => self::WORKPLAN_IMPORT_HEADERS,
+                    'annual_workplan_headers' => self::ANNUAL_WORKPLAN_HEADERS,
+                    'source_format' => $extension ?: 'unknown',
+                ],
                 'imported_at' => now(),
             ]);
 
@@ -303,6 +318,11 @@ class PlanningPerformanceService
 
             return $import;
         });
+    }
+
+    public function importWorkplanCsv(int $tenantId, User $user, UploadedFile $file): PlanningWorkplanImport
+    {
+        return $this->importWorkplanFile($tenantId, $user, $file);
     }
 
     private function parseWorkplanCsv(UploadedFile $file): array

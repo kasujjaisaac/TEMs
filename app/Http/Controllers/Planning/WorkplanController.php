@@ -12,6 +12,7 @@ use App\Models\Planning\WorkplanEvidence;
 use App\Models\Planning\WorkplanItem;
 use App\Models\Planning\PlanningWorkplanImport;
 use App\Models\User;
+use App\Services\Planning\AnnualWorkplanSpreadsheetService;
 use App\Services\Planning\PlanningPerformanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,40 +42,15 @@ class WorkplanController extends PlanningController
         ]);
     }
 
-    public function template(PlanningPerformanceService $planning): StreamedResponse
+    public function template(AnnualWorkplanSpreadsheetService $spreadsheet): StreamedResponse
     {
         $this->authorizePlanning('planning.workplans.manage');
 
-        return response()->streamDownload(function () use ($planning): void {
-            $out = fopen('php://output', 'wb');
-            fputcsv($out, PlanningPerformanceService::WORKPLAN_IMPORT_HEADERS);
-            fputcsv($out, [
-                'DEPT-COMM-2026-2027',
-                'Commercial Operations Workplan 2026/2027',
-                'Department',
-                'Commercial growth targets owned by Commercial Operations.',
-                'OBJ-001',
-                'COMM-Q1-001',
-                'Acquire five qualified customer opportunities',
-                'Numeric',
-                'Qualified opportunities created',
-                '5',
-                '0',
-                'opportunities',
-                'High',
-                '20',
-                now()->toDateString(),
-                now()->addMonth()->toDateString(),
-                'COMM',
-                'COMM-002',
-                '',
-                'Accountable',
-                'Opportunity record, meeting notes, quotation or approved site visit.',
-                'Evidence must be dated, attributable and supervisor-verifiable.',
-                'Build and qualify customer opportunities for the current commercial period.',
-            ]);
-            fclose($out);
-        }, 'tems_workplan_import_template.csv', ['Content-Type' => 'text/csv']);
+        return response()->streamDownload(function () use ($spreadsheet): void {
+            echo $spreadsheet->templateBinary();
+        }, 'tems_annual_workplan_template_2026_2027.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function import(Request $request, PlanningPerformanceService $planning): RedirectResponse
@@ -82,10 +58,10 @@ class WorkplanController extends PlanningController
         $this->authorizePlanning('planning.workplans.manage');
 
         $data = $request->validate([
-            'workplan_file' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
+            'workplan_file' => ['required', 'file', 'mimes:csv,txt,xlsx', 'max:8192'],
         ]);
 
-        $import = $planning->importWorkplanCsv($this->tenantId(), $request->user(), $data['workplan_file']);
+        $import = $planning->importWorkplanFile($this->tenantId(), $request->user(), $data['workplan_file']);
 
         return redirect()->route('planning.workplans.index')->with('success', 'Workplan upload imported: ' . $import->targets_imported . ' target(s), ' . $import->workplans_created . ' new workplan(s).');
     }

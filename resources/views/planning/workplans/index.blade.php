@@ -8,7 +8,7 @@
         <div class="planning-title"><div class="planning-icon"><i class="fa-solid fa-list-check"></i></div><div><h1>Corporate Workplans</h1><div class="planning-muted">Corporate, department, position and individual planning baselines.</div></div></div>
         <div class="planning-actions">
             <a class="planning-button secondary" href="{{ route('planning.dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
-            <a class="planning-button secondary" href="{{ route('planning.workplans.template') }}"><i class="fa-solid fa-file-csv"></i> Template</a>
+            <a class="planning-button secondary" href="{{ route('planning.workplans.template') }}"><i class="fa-solid fa-file-excel"></i> Template</a>
         </div>
     </header>
 
@@ -19,12 +19,12 @@
         <div class="planning-panel">
             <div class="planning-panel-head">
                 <h2>Upload Workplan</h2>
-                <span class="planning-muted">CSV uploads become workplans, targets, assignments, allocations and auditable baselines.</span>
+                <span class="planning-muted">Filled annual workplan templates become targets, assignments, allocations and auditable baselines.</span>
             </div>
             <form class="planning-form" method="POST" action="{{ route('planning.workplans.import') }}" enctype="multipart/form-data">
                 @csrf
-                <div class="planning-field double"><label>Completed Workplan CSV</label><input name="workplan_file" type="file" accept=".csv,text/csv,text/plain" required></div>
-                <div class="planning-field double"><label>Required Columns</label><input readonly value="workplan_code, target_reference, target_title, target_value"></div>
+                <div class="planning-field double"><label>Completed Workplan Template</label><input name="workplan_file" type="file" accept=".xlsx,.csv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></div>
+                <div class="planning-field double"><label>Excel Sheet</label><input readonly value="Annual Workplan"></div>
                 <div class="planning-field full"><button class="planning-button" type="submit"><i class="fa-solid fa-upload"></i> Upload & Convert To Targets</button></div>
             </form>
         </div>

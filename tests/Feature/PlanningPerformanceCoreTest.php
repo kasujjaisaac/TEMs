@@ -12,6 +12,7 @@ use App\Models\Planning\WorkplanEvidence;
 use App\Models\Planning\WorkplanItem;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Planning\AnnualWorkplanSpreadsheetService;
 use Database\Seeders\HR\HrOrganizationCoreSeeder;
 use Database\Seeders\Planning\PlanningPerformanceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -373,16 +374,49 @@ class PlanningPerformanceCoreTest extends TestCase
         ]);
     }
 
-    public function test_workplan_import_template_downloads_csv(): void
+    public function test_workplan_xlsx_upload_creates_targets_from_annual_template(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $this->seed(HrOrganizationCoreSeeder::class);
+        $this->seed(PlanningPerformanceSeeder::class);
+
+        $xlsx = app(AnnualWorkplanSpreadsheetService::class)->templateBinary('2026/2027');
+
+        $this->actingAs($admin)
+            ->post(route('planning.workplans.import'), [
+                'workplan_file' => UploadedFile::fake()->createWithContent('annual_workplan.xlsx', $xlsx),
+            ])
+            ->assertRedirect(route('planning.workplans.index'));
+
+        $workplan = Workplan::where('tenant_id', $admin->tenant_id)->where('code', 'CORP-ANNUAL-2026-2027')->firstOrFail();
+        $item = WorkplanItem::where('tenant_id', $admin->tenant_id)->where('reference', 'AWP-2026-2027-006')->firstOrFail();
+
+        $this->assertSame($workplan->id, $item->workplan_id);
+        $this->assertSame('Run executive discovery meetings with priority accounts', $item->title);
+        $this->assertSame('Financial', $item->target_type);
+        $this->assertDatabaseHas('workplan_assignments', [
+            'tenant_id' => $admin->tenant_id,
+            'workplan_item_id' => $item->id,
+            'assignment_role' => 'Accountable',
+        ]);
+        $this->assertGreaterThan(0, TargetAllocation::where('tenant_id', $admin->tenant_id)->where('workplan_item_id', $item->id)->count());
+        $this->assertDatabaseHas('planning_workplan_imports', [
+            'tenant_id' => $admin->tenant_id,
+            'status' => 'Imported',
+            'targets_imported' => 2,
+        ]);
+    }
+
+    public function test_workplan_import_template_downloads_xlsx(): void
     {
         $admin = $this->createUser('super_admin');
 
         $response = $this->actingAs($admin)
             ->get(route('planning.workplans.template'))
             ->assertOk()
-            ->assertDownload('tems_workplan_import_template.csv');
+            ->assertDownload('tems_annual_workplan_template_2026_2027.xlsx');
 
-        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', (string) $response->headers->get('content-type'));
     }
 
     private function createUser(string $roleSlug): User
