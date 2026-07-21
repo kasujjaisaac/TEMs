@@ -235,6 +235,7 @@ class CommercialOperationsPhaseOneTest extends TestCase
             'probability' => 20,
             'estimated_value' => 1000000,
             'currency' => 'UGX',
+            'customer_need' => 'Needs a verified stage movement test.',
         ]);
 
         $stage = CommercialPipelineStage::where('tenant_id', $admin->tenant_id)->where('name', 'Negotiation')->firstOrFail();

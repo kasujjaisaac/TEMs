@@ -100,6 +100,10 @@ class OpportunityController extends CommercialController
             'renewals' => \DB::table('commercial_renewals')->where('tenant_id', $this->tenantId())->where('organization_id', $opportunity->organization_id)->latest('renewal_due_on')->get(),
             'expansions' => \DB::table('commercial_expansion_opportunities')->where('tenant_id', $this->tenantId())->where('source_opportunity_id', $opportunity->id)->latest()->get(),
             'lostAnalysis' => \DB::table('commercial_lost_opportunity_analyses')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->first(),
+            'decisionMap' => \DB::table('commercial_decision_process_maps')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->orderBy('sequence')->get(),
+            'quotationItems' => \DB::table('commercial_quotation_items')->where('tenant_id', $this->tenantId())->whereIn('quotation_id', $opportunity->quotations->pluck('id'))->latest()->get(),
+            'generatedDocuments' => \DB::table('commercial_generated_documents')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->latest()->get(),
+            'reminders' => \DB::table('commercial_reminders')->where('tenant_id', $this->tenantId())->where('source_type', CommercialOpportunity::class)->where('source_id', $opportunity->id)->latest('due_at')->get(),
         ]);
     }
 
@@ -131,6 +135,42 @@ class OpportunityController extends CommercialController
         $completion->recordNegotiation($opportunity, $request->user(), $data);
 
         return back()->with('success', 'Negotiation recorded.');
+    }
+
+    public function storeDecisionStep(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'step_name' => ['required', 'string', 'max:255'],
+            'sequence' => ['nullable', 'integer', 'min:1'],
+            'stakeholder_id' => ['nullable', 'integer'],
+            'decision_role' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'string', 'max:60'],
+            'target_date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $completion->addDecisionStep($opportunity, $request->user(), $data);
+
+        return back()->with('success', 'Decision-process step recorded.');
+    }
+
+    public function storeQuotationItem(Request $request, CommercialQuotation $quotation, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($quotation);
+        $data = $request->validate([
+            'description' => ['required', 'string', 'max:255'],
+            'quantity' => ['nullable', 'numeric', 'min:0.01'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'tax_amount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $completion->createQuotationItem($this->tenantId(), $quotation->id, $request->user(), $data);
+
+        return redirect()->route('commercial.opportunities.show', $quotation->opportunity_id)->with('success', 'Quotation item added.');
     }
 
     public function storeRenewal(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
@@ -181,6 +221,71 @@ class OpportunityController extends CommercialController
         $completion->recordLostAnalysis($opportunity, $request->user(), $data);
 
         return back()->with('success', 'Lost opportunity analysis recorded.');
+    }
+
+    public function createInvoice(Request $request, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.handoff_to_sales');
+        $data = $request->validate(['billing_request_id' => ['required', 'integer']]);
+        $completion->createInvoiceFromBillingRequest($this->tenantId(), (int) $data['billing_request_id'], $request->user());
+
+        return back()->with('success', 'Invoice created from billing request.');
+    }
+
+    public function generateDocument(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'document_type' => ['required', 'string', 'max:120'],
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $completion->generateDocument($opportunity, $request->user(), $data['document_type'], $data['title']);
+
+        return back()->with('success', 'Commercial document generated.');
+    }
+
+    public function storeReminder(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'reminder_type' => ['required', 'string', 'max:100'],
+            'title' => ['required', 'string', 'max:255'],
+            'message' => ['nullable', 'string', 'max:1000'],
+            'due_at' => ['required', 'date'],
+        ]);
+
+        $completion->createReminder($this->tenantId(), Auth::id(), CommercialOpportunity::class, $opportunity->id, $data['reminder_type'], $data['title'], $data['message'] ?? null, $data['due_at']);
+
+        return back()->with('success', 'Commercial reminder created.');
+    }
+
+    public function convertRenewal(Request $request, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.create');
+        $data = $request->validate(['renewal_id' => ['required', 'integer']]);
+        $opportunity = $completion->convertRenewalToOpportunity($this->tenantId(), (int) $data['renewal_id'], $request->user());
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Renewal converted to opportunity.');
+    }
+
+    public function convertExpansion(Request $request, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.create');
+        $data = $request->validate(['expansion_id' => ['required', 'integer']]);
+        $opportunity = $completion->convertExpansionToOpportunity($this->tenantId(), (int) $data['expansion_id'], $request->user());
+
+        return redirect()->route('commercial.opportunities.show', $opportunity)->with('success', 'Expansion converted to opportunity.');
+    }
+
+    public function captureReport(CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.reports.view');
+        $completion->captureReportSnapshot($this->tenantId());
+
+        return back()->with('success', 'Commercial report snapshot captured.');
     }
 
     public function storeProposal(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse
@@ -353,7 +458,7 @@ class OpportunityController extends CommercialController
             ->with('success', 'Sales handoff completed. A quotation is now available in Sales.');
     }
 
-    public function updateStage(Request $request, CommercialOpportunity $opportunity, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge): RedirectResponse
+    public function updateStage(Request $request, CommercialOpportunity $opportunity, CommercialAuditService $audit, CommercialLegacyCustomerBridgeService $legacyBridge, CommercialCompletionService $completion): RedirectResponse
     {
         $this->authorizeCommercial('commercial.opportunities.change_stage');
         $this->ensureTenant($opportunity);
@@ -369,6 +474,7 @@ class OpportunityController extends CommercialController
             ->findOrFail($data['stage_id']);
 
         $previousStage = $opportunity->current_stage;
+        $completion->assertStageCanMove($opportunity, $stage->name, $request->user());
         $opportunity->forceFill([
             'pipeline_stage_id' => $stage->id,
             'current_stage' => $stage->name,

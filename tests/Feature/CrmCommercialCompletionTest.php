@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Commercial\CommercialOpportunity;
+use App\Models\Commercial\CommercialBillingRequest;
+use App\Models\Commercial\CommercialContract;
 use App\Models\Commercial\CommercialOrganization;
 use App\Models\Commercial\CommercialQuotation;
 use App\Models\Role;
@@ -131,6 +133,140 @@ class CrmCommercialCompletionTest extends TestCase
             ->assertSee('Negotiation History')
             ->assertSee('Lost Opportunity Analysis')
             ->assertSee('Budget deferred');
+    }
+
+    public function test_final_crm_records_and_commercial_outputs_make_modules_office_ready(): void
+    {
+        $admin = $this->createUser('super_admin');
+        [$customerId, $organization, $opportunity] = $this->createCustomerOpportunity($admin, [
+            'current_stage' => 'Qualified',
+            'probability' => 35,
+            'customer_need' => null,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('commercial.opportunities.stage.update', $opportunity), [
+                'stage_id' => DB::table('commercial_pipeline_stages')->insertGetId([
+                    'tenant_id' => $admin->tenant_id,
+                    'name' => 'Negotiation',
+                    'display_order' => 3,
+                    'default_probability' => 75,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]),
+            ])
+            ->assertStatus(422);
+
+        $opportunity->forceFill(['customer_need' => 'Needs final readiness workflow.'])->save();
+
+        $this->actingAs($admin)->post(route('crm.accounts.branches.store', $customerId), [
+            'name' => 'Kampala HQ',
+            'city' => 'Kampala',
+            'phone' => '+256700000001',
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('crm.accounts.documents.store', $customerId), [
+            'document_type' => 'Tax Certificate',
+            'title' => 'TIN Certificate',
+            'reference' => 'TIN-001',
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('crm.accounts.subscriptions.store', $customerId), [
+            'product_name' => 'TEMS Commercial Suite',
+            'plan_name' => 'Enterprise',
+            'renews_on' => now()->addYear()->toDateString(),
+            'recurring_amount' => 9000000,
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('commercial.opportunities.decision_steps.store', $opportunity), [
+            'step_name' => 'Finance approval',
+            'sequence' => 1,
+            'decision_role' => 'Finance Contact',
+            'target_date' => now()->addWeek()->toDateString(),
+        ])->assertRedirect();
+
+        $quotation = CommercialQuotation::create([
+            'tenant_id' => $admin->tenant_id,
+            'opportunity_id' => $opportunity->id,
+            'reference' => 'QUO-FINAL-001',
+            'quotation_date' => now()->toDateString(),
+            'valid_until' => now()->addDays(14)->toDateString(),
+            'subtotal' => 0,
+            'discount_amount' => 0,
+            'tax_amount' => 0,
+            'total' => 0,
+            'currency' => 'UGX',
+            'status' => 'Accepted',
+            'prepared_by' => $admin->id,
+        ]);
+        $contract = CommercialContract::create([
+            'tenant_id' => $admin->tenant_id,
+            'opportunity_id' => $opportunity->id,
+            'quotation_id' => $quotation->id,
+            'reference' => 'CON-FINAL-001',
+            'contract_title' => 'Final readiness contract',
+            'contract_value' => 9000000,
+            'currency' => 'UGX',
+            'status' => 'Signed',
+            'prepared_by' => $admin->id,
+            'signed_at' => now(),
+        ]);
+        $billing = CommercialBillingRequest::create([
+            'tenant_id' => $admin->tenant_id,
+            'opportunity_id' => $opportunity->id,
+            'contract_id' => $contract->id,
+            'quotation_id' => $quotation->id,
+            'reference' => 'BIL-FINAL-001',
+            'amount' => 9000000,
+            'currency' => 'UGX',
+            'requested_invoice_date' => now()->toDateString(),
+            'billing_terms' => 'Net 30',
+            'status' => 'Requested',
+            'requested_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->post(route('commercial.quotations.items.store', $quotation), [
+            'description' => 'TEMS Commercial Suite',
+            'quantity' => 1,
+            'unit_price' => 9000000,
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.opportunities.documents.generate', $opportunity), [
+            'document_type' => 'Quotation',
+            'title' => 'Final readiness quotation',
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.opportunities.reminders.store', $opportunity), [
+            'reminder_type' => 'Follow-up',
+            'title' => 'Call finance contact',
+            'due_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.billing_requests.create_invoice'), [
+            'billing_request_id' => $billing->id,
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('commercial.opportunities.renewals.store', $opportunity), [
+            'renewal_due_on' => now()->addYear()->toDateString(),
+            'renewal_value' => 9000000,
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.opportunities.expansions.store', $opportunity), [
+            'title' => 'Add Intelligence module',
+            'estimated_value' => 3000000,
+        ])->assertRedirect();
+        $renewalId = (int) DB::table('commercial_renewals')->where('tenant_id', $admin->tenant_id)->value('id');
+        $expansionId = (int) DB::table('commercial_expansion_opportunities')->where('tenant_id', $admin->tenant_id)->value('id');
+        $this->actingAs($admin)->post(route('commercial.renewals.convert'), ['renewal_id' => $renewalId])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.expansions.convert'), ['expansion_id' => $expansionId])->assertRedirect();
+        $this->actingAs($admin)->post(route('commercial.reports.capture'))->assertRedirect();
+
+        $this->assertDatabaseHas('crm_customer_branches', ['tenant_id' => $admin->tenant_id, 'customer_id' => $customerId, 'name' => 'Kampala HQ']);
+        $this->assertDatabaseHas('crm_customer_documents', ['tenant_id' => $admin->tenant_id, 'customer_id' => $customerId, 'title' => 'TIN Certificate']);
+        $this->assertDatabaseHas('crm_customer_subscriptions', ['tenant_id' => $admin->tenant_id, 'customer_id' => $customerId, 'product_name' => 'TEMS Commercial Suite']);
+        $this->assertDatabaseHas('commercial_decision_process_maps', ['tenant_id' => $admin->tenant_id, 'opportunity_id' => $opportunity->id, 'step_name' => 'Finance approval']);
+        $this->assertDatabaseHas('commercial_quotation_items', ['tenant_id' => $admin->tenant_id, 'quotation_id' => $quotation->id, 'line_total' => 9000000]);
+        $this->assertDatabaseHas('commercial_generated_documents', ['tenant_id' => $admin->tenant_id, 'document_type' => 'Invoice']);
+        $this->assertDatabaseHas('commercial_reminders', ['tenant_id' => $admin->tenant_id, 'title' => 'Call finance contact']);
+        $this->assertDatabaseHas('invoices', ['tenant_id' => $admin->tenant_id, 'commercial_opportunity_id' => $opportunity->id, 'total' => 9000000]);
+        $this->assertDatabaseHas('commercial_renewals', ['id' => $renewalId, 'status' => 'Converted']);
+        $this->assertDatabaseHas('commercial_expansion_opportunities', ['id' => $expansionId, 'status' => 'Converted']);
+        $this->assertDatabaseHas('commercial_report_snapshots', ['tenant_id' => $admin->tenant_id]);
     }
 
     private function createCustomerOpportunity(User $admin, array $opportunityOverrides = []): array

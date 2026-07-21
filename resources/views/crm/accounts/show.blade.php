@@ -202,5 +202,51 @@
             ])
         </div>
     </section>
+
+    <section class="commercial-split">
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Branches</h2><span class="commercial-muted">Customer locations and contacts</span></div>
+            @include('commercial.partials.table', [
+                'headers' => ['Name', 'City', 'Contact', 'Status'],
+                'rows' => $branches->map(fn ($branch) => [e($branch->name), e($branch->city ?: '-'), e(($branch->contact_person ?: '-') . ' / ' . ($branch->phone ?: '-')), e($branch->status)])->all()
+            ])
+            @if(auth()->user()?->hasPermission('crm.accounts.manage') || auth()->user()?->hasPermission('customers.manage'))
+                <form class="commercial-form" method="POST" action="{{ route('crm.accounts.branches.store', $account->id) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Name</label><input name="name" required></div>
+                    <div class="commercial-field"><label>City</label><input name="city"></div>
+                    <div class="commercial-field"><label>Phone</label><input name="phone"></div>
+                    <div class="commercial-field full"><label>Address</label><textarea name="address"></textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Add Branch</button></div>
+                </form>
+            @endif
+        </div>
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Documents & Subscriptions</h2><span class="commercial-muted">Customer proof and product ownership</span></div>
+            @include('commercial.partials.table', [
+                'headers' => ['Record', 'Type / Plan', 'Status', 'Date'],
+                'rows' => $customerDocuments->map(fn ($document) => [e($document->title), e($document->document_type), e($document->status), e($document->expires_on ?: '-')])
+                    ->concat($subscriptions->map(fn ($subscription) => [e($subscription->product_name), e($subscription->plan_name ?: $subscription->billing_frequency ?: '-'), e($subscription->status), e($subscription->renews_on ?: '-')]))
+                    ->all()
+            ])
+            @if(auth()->user()?->hasPermission('crm.accounts.manage') || auth()->user()?->hasPermission('customers.manage'))
+                <form class="commercial-form" method="POST" action="{{ route('crm.accounts.documents.store', $account->id) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Document Type</label><input name="document_type" required></div>
+                    <div class="commercial-field double"><label>Title</label><input name="title" required></div>
+                    <div class="commercial-field"><label>Reference</label><input name="reference"></div>
+                    <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Register Document</button></div>
+                </form>
+                <form class="commercial-form" method="POST" action="{{ route('crm.accounts.subscriptions.store', $account->id) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Product</label><input name="product_name" required></div>
+                    <div class="commercial-field"><label>Plan</label><input name="plan_name"></div>
+                    <div class="commercial-field"><label>Renews On</label><input name="renews_on" type="date"></div>
+                    <div class="commercial-field"><label>Amount</label><input name="recurring_amount" type="number" min="0" step="0.01"></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Add Subscription</button></div>
+                </form>
+            @endif
+        </div>
+    </section>
 </section>
 @endsection

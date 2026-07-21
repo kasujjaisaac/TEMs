@@ -92,6 +92,9 @@ class CustomerAccountController extends Controller
             'healthSnapshots' => DB::table('crm_customer_health_snapshots')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest('snapshot_date')->limit(8)->get(),
             'renewals' => DB::table('commercial_renewals')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest('renewal_due_on')->limit(8)->get(),
             'expansions' => DB::table('commercial_expansion_opportunities')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest()->limit(8)->get(),
+            'branches' => DB::table('crm_customer_branches')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest()->limit(10)->get(),
+            'customerDocuments' => DB::table('crm_customer_documents')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest()->limit(10)->get(),
+            'subscriptions' => DB::table('crm_customer_subscriptions')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest()->limit(10)->get(),
         ]);
     }
 
@@ -120,6 +123,59 @@ class CustomerAccountController extends Controller
         $accounts->captureHealth($this->tenantId(), $customer, Auth::user());
 
         return back()->with('success', 'Customer health captured.');
+    }
+
+    public function storeBranch(Request $request, int $customer, CustomerAccountLifecycleService $accounts)
+    {
+        abort_unless(Auth::user()?->hasPermission('crm.accounts.manage') || Auth::user()?->hasPermission('customers.manage'), 403);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'branch_type' => ['nullable', 'string', 'max:80'],
+            'city' => ['nullable', 'string', 'max:120'],
+            'country' => ['nullable', 'string', 'max:80'],
+            'address' => ['nullable', 'string', 'max:2000'],
+            'contact_person' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:80'],
+            'is_primary' => ['nullable', 'boolean'],
+        ]);
+        $accounts->addBranch($this->tenantId(), $customer, $request->user(), $data);
+
+        return back()->with('success', 'Customer branch saved.');
+    }
+
+    public function storeDocument(Request $request, int $customer, CustomerAccountLifecycleService $accounts)
+    {
+        abort_unless(Auth::user()?->hasPermission('crm.accounts.manage') || Auth::user()?->hasPermission('customers.manage'), 403);
+        $data = $request->validate([
+            'document_type' => ['required', 'string', 'max:120'],
+            'title' => ['required', 'string', 'max:255'],
+            'reference' => ['nullable', 'string', 'max:120'],
+            'status' => ['nullable', 'string', 'max:60'],
+            'expires_on' => ['nullable', 'date'],
+            'storage_path' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $accounts->addDocument($this->tenantId(), $customer, $request->user(), $data);
+
+        return back()->with('success', 'Customer document saved.');
+    }
+
+    public function storeSubscription(Request $request, int $customer, CustomerAccountLifecycleService $accounts)
+    {
+        abort_unless(Auth::user()?->hasPermission('crm.accounts.manage') || Auth::user()?->hasPermission('customers.manage'), 403);
+        $data = $request->validate([
+            'product_name' => ['required', 'string', 'max:255'],
+            'plan_name' => ['nullable', 'string', 'max:120'],
+            'starts_on' => ['nullable', 'date'],
+            'renews_on' => ['nullable', 'date'],
+            'recurring_amount' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:8'],
+            'billing_frequency' => ['nullable', 'string', 'max:80'],
+        ]);
+        $accounts->addSubscription($this->tenantId(), $customer, $request->user(), $data);
+
+        return back()->with('success', 'Customer subscription saved.');
     }
 
     private function authorizeCrm(): void

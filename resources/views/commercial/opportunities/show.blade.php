@@ -59,7 +59,7 @@
                     e($billing->currency . ' ' . number_format((float) $billing->amount, 2)),
                     '<span class="commercial-badge warning">' . e($billing->status) . '</span>',
                     e($billing->requested_invoice_date?->format('M d, Y') ?: '-'),
-                    '-',
+                    $billing->status !== 'Invoice Created' && auth()->user()?->hasPermission('commercial.opportunities.handoff_to_sales') ? '<form method="POST" action="' . route('commercial.billing_requests.create_invoice') . '">' . csrf_field() . '<input type="hidden" name="billing_request_id" value="' . e($billing->id) . '"><button class="commercial-button" type="submit">Create Invoice</button></form>' : '-',
                 ]))
                 ->values()
                 ->all()
@@ -181,19 +181,39 @@
                 </form>
             </div>
             <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Decision Map</h2><span class="commercial-muted">Decision process and buying committee</span></div>
+                @include('commercial.partials.table', [
+                    'headers' => ['Step', 'Role', 'Status', 'Target'],
+                    'rows' => $decisionMap->map(fn ($step) => [e($step->sequence . '. ' . $step->step_name), e($step->decision_role ?: '-'), e($step->status), e($step->target_date ?: '-')])->all()
+                ])
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.decision_steps.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Step</label><input name="step_name" required></div>
+                    <div class="commercial-field"><label>Sequence</label><input name="sequence" type="number" min="1" value="1"></div>
+                    <div class="commercial-field"><label>Role</label><input name="decision_role"></div>
+                    <div class="commercial-field"><label>Target</label><input name="target_date" type="date"></div>
+                    <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Add Decision Step</button></div>
+                </form>
+            </div>
+        </section>
+
+        <section class="commercial-split">
+            <div class="commercial-panel">
                 <div class="commercial-panel-head"><h2>Renewal & Expansion</h2><span class="commercial-muted">Retention, upsell, and cross-sell planning</span></div>
                 @include('commercial.partials.table', [
-                    'headers' => ['Record', 'Due / Type', 'Value', 'Status'],
+                    'headers' => ['Record', 'Due / Type', 'Value', 'Status', 'Action'],
                     'rows' => $renewals->map(fn ($renewal) => [
                         e($renewal->reference),
                         e($renewal->renewal_due_on),
                         e($renewal->currency . ' ' . number_format((float) $renewal->renewal_value, 2)),
                         e($renewal->status),
+                        $renewal->status !== 'Converted' ? '<form method="POST" action="' . route('commercial.renewals.convert') . '">' . csrf_field() . '<input type="hidden" name="renewal_id" value="' . e($renewal->id) . '"><button class="commercial-button secondary" type="submit">Convert</button></form>' : '-',
                     ])->concat($expansions->map(fn ($expansion) => [
                         e($expansion->reference),
                         e($expansion->expansion_type),
                         e($expansion->currency . ' ' . number_format((float) $expansion->estimated_value, 2)),
                         e($expansion->status),
+                        $expansion->status !== 'Converted' ? '<form method="POST" action="' . route('commercial.expansions.convert') . '">' . csrf_field() . '<input type="hidden" name="expansion_id" value="' . e($expansion->id) . '"><button class="commercial-button secondary" type="submit">Convert</button></form>' : '-',
                     ]))->all()
                 ])
                 <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.renewals.store', $opportunity) }}">
@@ -210,6 +230,28 @@
                     <div class="commercial-field"><label>Value</label><input name="estimated_value" type="number" min="0" step="0.01"></div>
                     <div class="commercial-field full"><label>Rationale</label><textarea name="rationale"></textarea></div>
                     <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Identify Expansion</button></div>
+                </form>
+            </div>
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Documents & Reminders</h2><span class="commercial-muted">Generated outputs and follow-up discipline</span></div>
+                @include('commercial.partials.table', [
+                    'headers' => ['Record', 'Type', 'Status', 'Date'],
+                    'rows' => $generatedDocuments->map(fn ($document) => [e($document->reference), e($document->document_type), e($document->status), e($document->generated_at ?: '-')])
+                        ->concat($reminders->map(fn ($reminder) => [e($reminder->title), e($reminder->reminder_type), e($reminder->status), e($reminder->due_at)]))
+                        ->all()
+                ])
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.documents.generate', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Type</label><select name="document_type"><option>Proposal</option><option>Quotation</option><option>Contract</option><option>Invoice</option></select></div>
+                    <div class="commercial-field double"><label>Title</label><input name="title" value="{{ $opportunity->title }}" required></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Generate Document</button></div>
+                </form>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.reminders.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Type</label><input name="reminder_type" value="Follow-up" required></div>
+                    <div class="commercial-field double"><label>Title</label><input name="title" required></div>
+                    <div class="commercial-field"><label>Due</label><input name="due_at" type="datetime-local" required></div>
+                    <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Add Reminder</button></div>
                 </form>
             </div>
         </section>

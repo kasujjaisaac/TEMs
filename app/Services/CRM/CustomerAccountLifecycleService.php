@@ -95,6 +95,86 @@ class CustomerAccountLifecycleService
         return $id;
     }
 
+    public function addBranch(int $tenantId, int $customerId, User $user, array $data): int
+    {
+        $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->first();
+        abort_unless($customer, 404);
+
+        $id = DB::table('crm_customer_branches')->insertGetId([
+            'tenant_id' => $tenantId,
+            'customer_id' => $customerId,
+            'commercial_organization_id' => $customer->commercial_organization_id ?? null,
+            'name' => $data['name'],
+            'branch_type' => $data['branch_type'] ?? 'Branch',
+            'city' => $data['city'] ?? null,
+            'country' => $data['country'] ?? null,
+            'address' => $data['address'] ?? null,
+            'contact_person' => $data['contact_person'] ?? null,
+            'email' => $data['email'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'is_primary' => (bool) ($data['is_primary'] ?? false),
+            'status' => $data['status'] ?? 'Active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->timeline($tenantId, $customerId, $customer->commercial_organization_id ?? null, 'Branch', 'Customer branch registered: ' . $data['name'], $data['address'] ?? null, 'CRM', 'crm_customer_branches', $id, $user);
+
+        return $id;
+    }
+
+    public function addDocument(int $tenantId, int $customerId, User $user, array $data): int
+    {
+        $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->first();
+        abort_unless($customer, 404);
+
+        $id = DB::table('crm_customer_documents')->insertGetId([
+            'tenant_id' => $tenantId,
+            'customer_id' => $customerId,
+            'document_type' => $data['document_type'],
+            'title' => $data['title'],
+            'reference' => $data['reference'] ?? null,
+            'status' => $data['status'] ?? 'Current',
+            'expires_on' => $data['expires_on'] ?? null,
+            'storage_path' => $data['storage_path'] ?? null,
+            'uploaded_by' => $user->id,
+            'metadata' => json_encode(['notes' => $data['notes'] ?? null]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->timeline($tenantId, $customerId, $customer->commercial_organization_id ?? null, 'Document', 'Customer document registered: ' . $data['title'], $data['document_type'], 'CRM', 'crm_customer_documents', $id, $user);
+
+        return $id;
+    }
+
+    public function addSubscription(int $tenantId, int $customerId, User $user, array $data): int
+    {
+        $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->first();
+        abort_unless($customer, 404);
+
+        $id = DB::table('crm_customer_subscriptions')->insertGetId([
+            'tenant_id' => $tenantId,
+            'customer_id' => $customerId,
+            'commercial_organization_id' => $customer->commercial_organization_id ?? null,
+            'product_id' => $data['product_id'] ?? null,
+            'product_name' => $data['product_name'],
+            'plan_name' => $data['plan_name'] ?? null,
+            'starts_on' => $data['starts_on'] ?? now()->toDateString(),
+            'renews_on' => $data['renews_on'] ?? null,
+            'recurring_amount' => $data['recurring_amount'] ?? 0,
+            'currency' => $data['currency'] ?? 'UGX',
+            'billing_frequency' => $data['billing_frequency'] ?? null,
+            'status' => $data['status'] ?? 'Active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->timeline($tenantId, $customerId, $customer->commercial_organization_id ?? null, 'Subscription', 'Customer subscription registered: ' . $data['product_name'], $data['plan_name'] ?? null, 'CRM', 'crm_customer_subscriptions', $id, $user);
+
+        return $id;
+    }
+
     public function timeline(int $tenantId, int $customerId, ?int $organizationId, string $eventType, string $title, ?string $description, string $sourceModule, ?string $sourceType, ?int $sourceId, ?User $user): int
     {
         return DB::table('crm_account_timeline')->insertGetId([
