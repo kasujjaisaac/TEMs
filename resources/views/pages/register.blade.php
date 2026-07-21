@@ -675,6 +675,5 @@
             </section>
         </section>
     </main>
-@include('layouts.design-lock')
 </body>
 </html>

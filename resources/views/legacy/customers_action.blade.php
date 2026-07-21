@@ -784,8 +784,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 <button class="no-print" onclick="window.print()" style="margin-top:24px;padding:10px 14px;">Print Statement</button>
             </div>
             <script>window.print();</script>
-        @include('layouts.design-lock')
-</body>
+        </body>
         </html>
         <?php
         exit();

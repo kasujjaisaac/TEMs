@@ -236,6 +236,5 @@
             <a class="button secondary" href="{{ route('login') }}"><i class="fa-solid fa-arrow-left"></i> Back</a>
         </div>
     </main>
-@include('layouts.design-lock')
 </body>
 </html>

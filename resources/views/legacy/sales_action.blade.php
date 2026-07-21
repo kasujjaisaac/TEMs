@@ -1094,7 +1094,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             Authorized signature: ______________________________
         </div>
     </div>
-@include('layouts.design-lock')
 </body>
 </html>
                         <script>

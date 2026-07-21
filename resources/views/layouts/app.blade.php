@@ -80,8 +80,6 @@
         @yield('content')
     </div>
 
-    @include('layouts.design-lock')
-
     <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
         <a href="{{ url('dashboard') }}" class="{{ request()->is('dashboard*') ? 'active' : '' }}"><i class="fa-solid fa-gauge-high"></i><span>Home</span></a>
         <a href="{{ route('commercial.dashboard') }}" class="{{ request()->is('commercial*') ? 'active' : '' }}"><i class="fa-solid fa-briefcase"></i><span>Pipeline</span></a>
