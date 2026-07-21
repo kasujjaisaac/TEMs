@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Planning\PlanningYear;
+use App\Models\Planning\PlanningDailyTask;
 use App\Models\Planning\TargetAllocation;
 use App\Models\Planning\Workplan;
+use App\Models\Planning\WorkplanAssignment;
 use App\Models\Planning\WorkplanCorrectiveAction;
 use App\Models\Planning\WorkplanEvidence;
 use App\Models\Planning\WorkplanItem;
@@ -226,6 +228,99 @@ class PlanningPerformanceCoreTest extends TestCase
         $this->assertDatabaseHas('domain_events', [
             'tenant_id' => $admin->tenant_id,
             'event_name' => 'corrective_action.created',
+        ]);
+    }
+
+    public function test_daily_workspace_generates_assigned_tasks_and_verifies_evidence(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $this->seed(HrOrganizationCoreSeeder::class);
+        $this->seed(PlanningPerformanceSeeder::class);
+
+        $item = WorkplanItem::where('tenant_id', $admin->tenant_id)->firstOrFail();
+        WorkplanAssignment::where('tenant_id', $admin->tenant_id)
+            ->where('workplan_item_id', $item->id)
+            ->firstOrFail()
+            ->forceFill([
+                'employee_id' => $admin->id,
+                'supervisor_id' => $admin->id,
+            ])
+            ->save();
+
+        $this->actingAs($admin)
+            ->get(route('planning.daily.index'))
+            ->assertOk()
+            ->assertSee('My Daily Workspace')
+            ->assertSee($item->title);
+
+        $task = PlanningDailyTask::where('tenant_id', $admin->tenant_id)
+            ->where('employee_id', $admin->id)
+            ->where('workplan_item_id', $item->id)
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patch(route('planning.daily.tasks.update', $task), [
+                'status' => 'In Progress',
+                'progress_percent' => 40,
+                'blocker_summary' => null,
+                'completion_notes' => 'Started execution.',
+            ])
+            ->assertRedirect(route('planning.daily.index'));
+
+        $this->assertSame('In Progress', $task->fresh()->status);
+
+        $this->actingAs($admin)
+            ->post(route('planning.daily.tasks.evidence.store', $task), [
+                'title' => 'Daily evidence package',
+                'evidence_type' => 'Supervisor-confirmed output',
+                'claimed_value' => 5,
+                'source_reference' => 'TASK-' . $task->id,
+                'description' => 'Evidence submitted from the daily workspace.',
+            ])
+            ->assertRedirect(route('planning.daily.index'));
+
+        $task = $task->fresh();
+        $this->assertSame('Submitted', $task->status);
+        $this->assertNotNull($task->workplan_evidence_id);
+
+        $this->actingAs($admin)
+            ->post(route('planning.daily.tasks.review', $task), [
+                'decision' => 'Approved',
+                'verified_value' => 5,
+                'notes' => 'Daily work verified.',
+            ])
+            ->assertRedirect(route('planning.daily.index'));
+
+        $this->assertSame('Verified', $task->fresh()->status);
+        $this->assertSame('Verified', $task->fresh()->evidence->status);
+        $this->assertDatabaseHas('domain_events', [
+            'tenant_id' => $admin->tenant_id,
+            'event_name' => 'daily_task.reviewed',
+        ]);
+    }
+
+    public function test_supervisor_can_assign_manual_daily_task(): void
+    {
+        $admin = $this->createUser('super_admin');
+
+        $this->actingAs($admin)
+            ->post(route('planning.daily.tasks.store'), [
+                'employee_id' => $admin->id,
+                'supervisor_id' => $admin->id,
+                'title' => 'Prepare daily operating update',
+                'description' => 'Summarize blockers, progress, and next actions.',
+                'expected_output' => 'Daily update',
+                'priority' => 'High',
+                'task_date' => now()->toDateString(),
+                'evidence_required' => 0,
+            ])
+            ->assertRedirect(route('planning.daily.index'));
+
+        $this->assertDatabaseHas('planning_daily_tasks', [
+            'tenant_id' => $admin->tenant_id,
+            'employee_id' => $admin->id,
+            'title' => 'Prepare daily operating update',
+            'status' => 'Not Started',
         ]);
     }
 

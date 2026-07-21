@@ -8,6 +8,7 @@
         <div class="planning-title"><div class="planning-icon"><i class="fa-solid fa-bullseye"></i></div><div><h1>Planning & Performance Engine</h1><div class="planning-muted">{{ $planningYear->name }} - {{ $planningYear->annual_theme }}</div></div></div>
         <div class="planning-actions">
             <a class="planning-button secondary" href="{{ route('planning.objectives.index') }}"><i class="fa-solid fa-compass"></i> Objectives</a>
+            <a class="planning-button secondary" href="{{ route('planning.daily.index') }}"><i class="fa-solid fa-calendar-day"></i> Daily Workspace</a>
             <a class="planning-button" href="{{ route('planning.workplans.index') }}"><i class="fa-solid fa-list-check"></i> Workplans</a>
         </div>
     </header>
@@ -23,6 +24,9 @@
         <div class="planning-card"><span>Evidence Awaiting Review</span><strong>{{ $metrics['evidence_awaiting_review'] }}</strong></div>
         <div class="planning-card"><span>Evidence Submitted</span><strong>{{ $metrics['evidence_submitted'] }}</strong></div>
         <div class="planning-card"><span>Open Corrective Actions</span><strong>{{ $metrics['open_corrective_actions'] }}</strong></div>
+        <div class="planning-card"><span>Daily Tasks Today</span><strong>{{ $metrics['daily_tasks_today'] }}</strong></div>
+        <div class="planning-card"><span>Daily Blockers</span><strong>{{ $metrics['daily_tasks_blocked'] }}</strong></div>
+        <div class="planning-card"><span>Daily Evidence</span><strong>{{ $metrics['daily_tasks_submitted'] }}</strong></div>
     </section>
 
     <section class="planning-split">

@@ -22,6 +22,7 @@ use App\Http\Controllers\HR\CommandCentreController as HrCommandCentreController
 use App\Http\Controllers\HR\DepartmentController as HrDepartmentController;
 use App\Http\Controllers\HR\PositionController as HrPositionController;
 use App\Http\Controllers\Planning\DashboardController as PlanningDashboardController;
+use App\Http\Controllers\Planning\DailyWorkspaceController as PlanningDailyWorkspaceController;
 use App\Http\Controllers\Planning\ObjectiveController as PlanningObjectiveController;
 use App\Http\Controllers\Planning\WorkplanController as PlanningWorkplanController;
 use App\Http\Controllers\Enterprise\FoundationController;
@@ -132,6 +133,11 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
     Route::prefix('planning')->name('planning.')->group(function () {
         Route::get('/', PlanningDashboardController::class)->name('dashboard');
+        Route::get('/daily', [PlanningDailyWorkspaceController::class, 'index'])->name('daily.index');
+        Route::post('/daily/tasks', [PlanningDailyWorkspaceController::class, 'store'])->name('daily.tasks.store');
+        Route::patch('/daily/tasks/{task}', [PlanningDailyWorkspaceController::class, 'update'])->name('daily.tasks.update');
+        Route::post('/daily/tasks/{task}/evidence', [PlanningDailyWorkspaceController::class, 'submitEvidence'])->name('daily.tasks.evidence.store');
+        Route::post('/daily/tasks/{task}/review', [PlanningDailyWorkspaceController::class, 'review'])->name('daily.tasks.review');
         Route::get('/objectives', [PlanningObjectiveController::class, 'index'])->name('objectives.index');
         Route::post('/objectives', [PlanningObjectiveController::class, 'store'])->name('objectives.store');
         Route::get('/workplans', [PlanningWorkplanController::class, 'index'])->name('workplans.index');

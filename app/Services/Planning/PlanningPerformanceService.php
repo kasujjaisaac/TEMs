@@ -15,6 +15,7 @@ use App\Models\Planning\StrategicPillar;
 use App\Models\Planning\TargetAllocation;
 use App\Models\Planning\Workplan;
 use App\Models\Planning\WorkplanItem;
+use App\Models\Planning\PlanningDailyTask;
 use App\Models\User;
 use App\Services\Enterprise\DomainEventService;
 use App\Services\Enterprise\NotificationService;
@@ -90,6 +91,9 @@ class PlanningPerformanceService
                 'evidence_submitted' => WorkplanEvidence::where('tenant_id', $tenantId)->count(),
                 'evidence_awaiting_review' => WorkplanEvidence::where('tenant_id', $tenantId)->where('status', 'Submitted')->count(),
                 'open_corrective_actions' => WorkplanCorrectiveAction::where('tenant_id', $tenantId)->whereIn('status', ['Open', 'In Progress'])->count(),
+                'daily_tasks_today' => PlanningDailyTask::where('tenant_id', $tenantId)->whereDate('task_date', now()->toDateString())->count(),
+                'daily_tasks_blocked' => PlanningDailyTask::where('tenant_id', $tenantId)->where('status', 'Blocked')->count(),
+                'daily_tasks_submitted' => PlanningDailyTask::where('tenant_id', $tenantId)->where('status', 'Submitted')->count(),
             ],
             'healthCounts' => $healthCounts,
             'recentItems' => $snapshots->take(10),

@@ -26,7 +26,7 @@ class Navigation
                     ['file' => 'planning.php', 'label' => 'Performance Dashboard', 'icon' => 'fa-chart-line', 'url' => route('planning.dashboard'), 'patterns' => ['planning'], 'permission' => 'planning.dashboard.view'],
                     ['file' => 'planning-objectives.php', 'label' => 'Strategic Objectives', 'icon' => 'fa-compass', 'url' => route('planning.objectives.index'), 'patterns' => ['planning/objectives*'], 'permission' => 'planning.strategy.view'],
                     ['file' => 'planning-workplans.php', 'label' => 'Corporate Workplans', 'icon' => 'fa-list-check', 'url' => route('planning.workplans.index'), 'patterns' => ['planning/workplans*'], 'permission' => 'planning.workplans.view'],
-                    ['file' => 'planning-daily.php', 'label' => 'My Daily Workspace', 'icon' => 'fa-calendar-day', 'url' => route('planning.dashboard'), 'patterns' => ['planning/daily*'], 'permission' => 'planning.dashboard.view'],
+                    ['file' => 'planning-daily.php', 'label' => 'My Daily Workspace', 'icon' => 'fa-calendar-day', 'url' => route('planning.daily.index'), 'patterns' => ['planning/daily*'], 'permission' => 'planning.daily.view'],
                     ['file' => 'planning-evidence.php', 'label' => 'Evidence & Verification', 'icon' => 'fa-file-shield', 'url' => route('planning.dashboard'), 'patterns' => ['planning/evidence*'], 'permission' => 'planning.workplans.view'],
                     ['file' => 'planning-recovery.php', 'label' => 'Corrective Actions', 'icon' => 'fa-route', 'url' => route('planning.dashboard'), 'patterns' => ['planning/recovery*'], 'permission' => 'planning.workplans.view'],
                 ],

@@ -40,6 +40,7 @@ class SidebarNavigationTest extends TestCase
         $this->assertSame(route('planning.dashboard'), $planning->firstWhere('label', 'Performance Dashboard')['url'] ?? null);
         $this->assertSame(route('planning.objectives.index'), $planning->firstWhere('label', 'Strategic Objectives')['url'] ?? null);
         $this->assertSame(route('planning.workplans.index'), $planning->firstWhere('label', 'Corporate Workplans')['url'] ?? null);
+        $this->assertSame(route('planning.daily.index'), $planning->firstWhere('label', 'My Daily Workspace')['url'] ?? null);
     }
 
     public function test_navigation_refreshes_stale_system_role_permissions_before_filtering(): void
