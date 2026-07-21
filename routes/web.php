@@ -91,12 +91,14 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::prefix('finance')->name('finance.')->group(function () {
         Route::get('/', FinanceDashboardController::class)->name('dashboard');
         Route::post('/sync', [FinanceDashboardController::class, 'sync'])->name('sync');
+        Route::post('/billing-requests/review', [FinanceBudgetController::class, 'reviewBillingRequest'])->name('billing_requests.review');
         Route::get('/accounts', [FinanceAccountController::class, 'index'])->name('accounts.index');
         Route::get('/budgets', [FinanceBudgetController::class, 'index'])->name('budgets.index');
         Route::post('/budgets', [FinanceBudgetController::class, 'store'])->name('budgets.store');
         Route::post('/expenses', [FinanceBudgetController::class, 'storeExpense'])->name('expenses.store');
         Route::post('/purchase-requests', [FinanceBudgetController::class, 'storePurchaseRequest'])->name('purchase_requests.store');
         Route::post('/purchase-orders', [FinanceBudgetController::class, 'storePurchaseOrder'])->name('purchase_orders.store');
+        Route::post('/purchase-requests/approve', [FinanceBudgetController::class, 'approvePurchaseRequest'])->name('purchase_requests.approve');
         Route::post('/supplier-bills', [FinanceBudgetController::class, 'storeSupplierBill'])->name('supplier_bills.store');
         Route::post('/payments', [FinanceBudgetController::class, 'storePayment'])->name('payments.store');
         Route::post('/assets', [FinanceBudgetController::class, 'storeAsset'])->name('assets.store');
@@ -133,6 +135,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::post('/approval-rules', [FoundationController::class, 'storeApprovalRule'])->name('approval_rules.store');
         Route::post('/notification-preferences', [FoundationController::class, 'storeNotificationPreference'])->name('notification_preferences.store');
         Route::post('/documents', [FoundationController::class, 'storeDocument'])->name('documents.store');
+        Route::post('/documents/generate', [FoundationController::class, 'generateDocument'])->name('documents.generate');
     });
 
     Route::prefix('strategy')->name('strategy.')->group(function () {
@@ -149,6 +152,8 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/', [DeliveryController::class, 'index'])->name('dashboard');
         Route::post('/products', [DeliveryController::class, 'storeProduct'])->name('products.store');
         Route::post('/projects/from-opportunity', [DeliveryController::class, 'createProjectFromOpportunity'])->name('projects.from_opportunity');
+        Route::post('/projects/milestones/complete', [DeliveryController::class, 'completeMilestone'])->name('projects.milestones.complete');
+        Route::post('/projects/handover-customer-success', [DeliveryController::class, 'handoverToCustomerSuccess'])->name('projects.handover_customer_success');
     });
 
     Route::prefix('engineering')->name('engineering.')->group(function () {

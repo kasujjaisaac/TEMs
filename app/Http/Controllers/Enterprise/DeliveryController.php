@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Enterprise;
 
 use App\Http\Controllers\Controller;
 use App\Services\Enterprise\EnterpriseExpansionService;
+use App\Services\Enterprise\EnterpriseOperatingControlService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,5 +61,32 @@ class DeliveryController extends Controller
         $service->createProjectFromOpportunity((int) Auth::user()->tenant_id, (int) $data['opportunity_id'], Auth::id());
 
         return back()->with('success', 'Implementation project created from won opportunity.');
+    }
+
+    public function completeMilestone(Request $request, EnterpriseOperatingControlService $controls): RedirectResponse
+    {
+        abort_unless(Auth::user()?->hasPermission('delivery.manage'), 403);
+        $data = $request->validate([
+            'project_id' => ['required', 'integer'],
+            'milestone_id' => ['required', 'integer'],
+            'evidence_summary' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $controls->completeProjectGate((int) Auth::user()->tenant_id, (int) $data['project_id'], (int) $data['milestone_id'], $request->user(), $data['evidence_summary']);
+
+        return back()->with('success', 'Project milestone accepted and delivery gate verified.');
+    }
+
+    public function handoverToCustomerSuccess(Request $request, EnterpriseOperatingControlService $controls): RedirectResponse
+    {
+        abort_unless(Auth::user()?->hasPermission('delivery.manage'), 403);
+        $data = $request->validate([
+            'project_id' => ['required', 'integer'],
+            'handover_notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $controls->handoverProjectToCustomerSuccess((int) Auth::user()->tenant_id, (int) $data['project_id'], $request->user(), $data['handover_notes'] ?? null);
+
+        return back()->with('success', 'Project handed to Customer Success.');
     }
 }

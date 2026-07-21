@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Finance;
 use App\Models\Finance\FinanceAccount;
 use App\Models\Finance\FinanceBudgetLine;
 use App\Models\Finance\FinanceCostCentre;
+use App\Models\Commercial\CommercialBillingRequest;
 use App\Services\Finance\FinanceControlService;
 use App\Services\Finance\FinanceProcurementService;
+use App\Services\Enterprise\EnterpriseOperatingControlService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -155,5 +157,33 @@ class BudgetController extends FinanceController
         $procurement->createAsset($this->tenantId(), $request->user(), $data);
 
         return back()->with('success', 'Asset registered.');
+    }
+
+    public function approvePurchaseRequest(Request $request, EnterpriseOperatingControlService $controls): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'purchase_request_id' => ['required', 'integer'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $controls->approvePurchaseRequest($this->tenantId(), (int) $data['purchase_request_id'], $request->user(), $data['notes'] ?? null);
+
+        return back()->with('success', 'Purchase request approved and finance review recorded.');
+    }
+
+    public function reviewBillingRequest(Request $request, EnterpriseOperatingControlService $controls): RedirectResponse
+    {
+        $this->authorizeFinance('finance.budgets.manage');
+        $data = $request->validate([
+            'billing_request_id' => ['required', 'integer'],
+            'decision' => ['required', 'in:Approved,Rejected'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $billing = CommercialBillingRequest::where('tenant_id', $this->tenantId())->findOrFail($data['billing_request_id']);
+        $controls->reviewBillingRequest($billing, $request->user(), $data['decision'], $data['notes'] ?? null);
+
+        return back()->with('success', 'Billing request reviewed by Finance.');
     }
 }

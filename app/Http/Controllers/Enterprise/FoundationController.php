@@ -14,6 +14,7 @@ use App\Services\Enterprise\AuditService;
 use App\Services\Enterprise\ApprovalService;
 use App\Services\Enterprise\CompanySettingsService;
 use App\Services\Enterprise\DomainEventService;
+use App\Services\Enterprise\EnterpriseOperatingControlService;
 use App\Services\Enterprise\FoundationCompletionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -144,6 +145,24 @@ class FoundationController extends Controller
         $this->audit($request, 'created', 'documents', 'Registered document ' . $data['title']);
 
         return back()->with('success', 'Document registered.');
+    }
+
+    public function generateDocument(Request $request, EnterpriseOperatingControlService $controls): RedirectResponse
+    {
+        $this->authorizeFoundation('foundation.documents.view');
+        $data = $request->validate([
+            'module' => ['required', 'string', 'max:120'],
+            'document_type' => ['required', 'string', 'max:120'],
+            'title' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $controls->generateDocument($this->tenantId(), $request->user(), $data['module'], $data['document_type'], null, $data['title'], [
+            'summary' => $data['summary'] ?? null,
+        ]);
+        $this->audit($request, 'generated', 'documents', 'Generated document ' . $data['title']);
+
+        return back()->with('success', 'Document generated and registered.');
     }
 
     public function updateCompany(Request $request, CompanySettingsService $settings): RedirectResponse
