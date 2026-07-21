@@ -10,18 +10,18 @@
 
 /* ===== Theme variables (tweak these to match brand) ===== */
 :root{
-  --accent: #ff6a00;           /* primary accent */
-  --accent-600: #ff8a1d;
+  --accent: #ffffff;           /* primary accent */
+  --accent-600: #d8d8de;
   --bg: #07111a;               /* page background */
   --surface: #101923;
   --sidebar: #07111a;
-  --panel: rgba(255,106,0,0.035);
-  --panel-border: rgba(255,138,29,0.18);
+  --panel: rgba(255,255,255,0.035);
+  --panel-border: rgba(216,216,222,0.18);
   --muted: #8d99a8;
   --text: #f5f7fa;
   --success: #20d39b;
   --danger: #ff4f38;
-  --warning: #ffb347;
+  --warning: #d8d8de;
   --glass: rgba(255,255,255,0.025);
 
   --radius-sm: 0;
@@ -56,7 +56,7 @@ a:hover { text-decoration: underline; }
 /* Focus and accessibility */
 :focus { outline: none; }
 :focus-visible {
-  box-shadow: 0 0 0 4px rgba(243,156,18,0.12);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.12);
   border-radius: 6px;
 }
 
@@ -662,7 +662,7 @@ body.sidebar-collapsed .topbar-brand {
   font-weight:600; font-size:14px;
 }
 .menu-item i { width:22px; text-align:center; color:var(--muted); font-size:16px; }
-.menu-item:hover { background: rgba(243,156,18,0.06); color: var(--accent); }
+.menu-item:hover { background: rgba(255,255,255,0.06); color: var(--accent); }
 .menu-item.active { background: var(--accent); color: #000; font-weight:800; }
 .menu-item.active i { color:#000; }
 
@@ -717,7 +717,7 @@ body.sidebar-collapsed .topbar-brand {
 }
 .input:focus, input:focus, textarea:focus, select:focus {
   border-color: var(--accent-600);
-  box-shadow: 0 6px 18px rgba(243,156,18,0.08);
+  box-shadow: 0 6px 18px rgba(255,255,255,0.08);
   outline: none;
 }
 select option {
@@ -774,7 +774,7 @@ label.form-label { display:block; font-size:12px; color:var(--muted); font-weigh
 :root {
   --onyx-bg: #07111a;
   --onyx-surface: #101923;
-  --onyx-accent: #ff6a00;
+  --onyx-accent: #ffffff;
   --onyx-border: #263241;
   --onyx-text: #f5f7fa;
   --onyx-muted: #8d99a8;
@@ -1358,13 +1358,13 @@ button {
   width: 30px !important;
 }
 
-/* Onyx Performance theme: dark executive UI with orange KPI accents. */
+/* Onyx Performance theme: dark executive UI with monochrome KPI accents. */
 :root {
   --onyx-bg: #07111a;
   --onyx-surface: #101923;
   --onyx-surface-2: #131d28;
-  --onyx-accent: #ff6a00;
-  --onyx-accent-2: #ff8a1d;
+  --onyx-accent: #ffffff;
+  --onyx-accent-2: #d8d8de;
   --onyx-border: #263241;
   --onyx-text: #f5f7fa;
   --onyx-muted: #8d99a8;
@@ -1373,9 +1373,9 @@ button {
 body,
 .onyx-erp-body {
   background:
-    linear-gradient(rgba(255,106,0,.026) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,106,0,.018) 1px, transparent 1px),
-    radial-gradient(circle at 80% 0%, rgba(255,106,0,.13), transparent 30%),
+    linear-gradient(rgba(255,255,255,.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    radial-gradient(circle at 80% 0%, rgba(255,255,255,.13), transparent 30%),
     linear-gradient(180deg, #07111a 0%, #0a121c 46%, #050a10 100%) !important;
   background-size: 42px 42px, 42px 42px, auto, auto !important;
   color: var(--onyx-text) !important;
@@ -1383,9 +1383,9 @@ body,
 
 .app-topbar {
   background:
-    linear-gradient(90deg, rgba(255,106,0,.13), transparent 32%),
+    linear-gradient(90deg, rgba(255,255,255,.13), transparent 32%),
     #07111a !important;
-  border-bottom: 1px solid rgba(255,106,0,.22) !important;
+  border-bottom: 1px solid rgba(255,255,255,.22) !important;
   box-shadow: 0 12px 34px rgba(0,0,0,.48) !important;
 }
 
@@ -1426,13 +1426,13 @@ body,
 .topbar-action,
 .currency-badge {
   background: rgba(16,25,35,.82) !important;
-  border-color: rgba(255,106,0,.18) !important;
+  border-color: rgba(255,255,255,.18) !important;
 }
 
 .topbar-action:hover,
 .topbar-icon:hover,
 .topbar-chip:hover {
-  border-color: rgba(255,106,0,.48) !important;
+  border-color: rgba(255,255,255,.48) !important;
   color: #ffffff !important;
 }
 
@@ -1451,7 +1451,7 @@ body,
 .topbar-sidebar-toggle {
   background: var(--onyx-accent) !important;
   border-color: var(--onyx-accent) !important;
-  box-shadow: 0 8px 18px rgba(255,106,0,.22) !important;
+  box-shadow: 0 8px 18px rgba(255,255,255,.22) !important;
   color: #050506 !important;
 }
 
@@ -1459,9 +1459,9 @@ body,
 #sidebar,
 .onyx-erp-body .sidebar {
   background:
-    linear-gradient(180deg, rgba(255,106,0,.075), transparent 22%),
+    linear-gradient(180deg, rgba(255,255,255,.075), transparent 22%),
     linear-gradient(180deg, #07111a 0%, #050a10 100%) !important;
-  border-right: 1px solid rgba(255,106,0,.2) !important;
+  border-right: 1px solid rgba(255,255,255,.2) !important;
 }
 
 .sidebar-group-toggle,
@@ -1480,8 +1480,8 @@ body,
 .sidebar-link.active,
 .sidebar-direct-link.active,
 .menu-item.active {
-  background: rgba(255,106,0,.1) !important;
-  border-color: rgba(255,106,0,.44) !important;
+  background: rgba(255,255,255,.1) !important;
+  border-color: rgba(255,255,255,.44) !important;
   color: #ffffff !important;
   text-decoration: none !important;
 }
@@ -1518,12 +1518,12 @@ body,
   background:
     linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
     var(--onyx-surface) !important;
-  border-color: rgba(255,106,0,.18) !important;
+  border-color: rgba(255,255,255,.18) !important;
   box-shadow: 0 10px 28px rgba(0,0,0,.24) !important;
 }
 
 .card:hover {
-  border-color: rgba(255,106,0,.38) !important;
+  border-color: rgba(255,255,255,.38) !important;
 }
 
 .btn,
@@ -1556,7 +1556,7 @@ body,
 .admin-btn:hover,
 .pos-btn:hover {
   border-color: var(--onyx-accent-2) !important;
-  box-shadow: 0 0 0 3px rgba(255,106,0,.11) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.11) !important;
   text-decoration: none !important;
 }
 
@@ -1572,7 +1572,7 @@ body,
 .admin-btn,
 .pos-btn {
   background: rgba(255,255,255,.025) !important;
-  border-color: rgba(255,106,0,.2) !important;
+  border-color: rgba(255,255,255,.2) !important;
   color: #f5f7fa !important;
 }
 
@@ -1585,7 +1585,7 @@ textarea,
 .access-field select,
 .access-field textarea {
   background: #0b141e !important;
-  border-color: rgba(255,106,0,.18) !important;
+  border-color: rgba(255,255,255,.18) !important;
   color: #ffffff !important;
 }
 
@@ -1597,7 +1597,7 @@ textarea:focus,
 .access-field select:focus,
 .access-field textarea:focus {
   border-color: var(--onyx-accent) !important;
-  box-shadow: 0 0 0 3px rgba(255,106,0,.13) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.13) !important;
 }
 
 .table th,
@@ -1611,7 +1611,7 @@ textarea:focus,
 
 .table tbody tr:hover,
 .access-table tbody tr:hover {
-  background: rgba(255,106,0,.055) !important;
+  background: rgba(255,255,255,.055) !important;
 }
 
 .stat-card .value,
@@ -1640,7 +1640,7 @@ textarea:focus,
 .hr-status,
 .contract-status,
 .employee-status {
-  border-color: rgba(255,106,0,.32) !important;
+  border-color: rgba(255,255,255,.32) !important;
 }
 
 /* Broad module sweep for page-specific legacy classes. */
@@ -1682,7 +1682,7 @@ textarea:focus,
   background:
     linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
     var(--onyx-surface) !important;
-  border-color: rgba(255,106,0,.18) !important;
+  border-color: rgba(255,255,255,.18) !important;
   box-shadow: 0 10px 28px rgba(0,0,0,.22) !important;
 }
 
@@ -1745,7 +1745,7 @@ textarea:focus,
 .template-btn,
 .preview-btn {
   background: rgba(255,255,255,.025) !important;
-  border-color: rgba(255,106,0,.22) !important;
+  border-color: rgba(255,255,255,.22) !important;
   color: #f5f7fa !important;
 }
 
@@ -1766,8 +1766,8 @@ textarea:focus,
 .admin-btn:hover,
 .template-btn:hover,
 .preview-btn:hover {
-  background: rgba(255,106,0,.1) !important;
-  border-color: rgba(255,106,0,.46) !important;
+  background: rgba(255,255,255,.1) !important;
+  border-color: rgba(255,255,255,.46) !important;
   text-decoration: none !important;
 }
 
@@ -1804,7 +1804,7 @@ textarea:focus,
 .crm-table tbody tr:hover,
 .pos-table tbody tr:hover,
 .admin-table tbody tr:hover {
-  background: rgba(255,106,0,.055) !important;
+  background: rgba(255,255,255,.055) !important;
 }
 
 .dash-empty,
@@ -1815,13 +1815,13 @@ textarea:focus,
 .customer-empty,
 .admin-empty,
 .template-empty {
-  border-color: rgba(255,106,0,.18) !important;
+  border-color: rgba(255,255,255,.18) !important;
   color: var(--onyx-muted) !important;
 }
 
 .dash-board {
-  --dash-line: rgba(255,106,0,.2) !important;
-  --dash-soft: rgba(255,106,0,.09) !important;
+  --dash-line: rgba(255,255,255,.2) !important;
+  --dash-soft: rgba(255,255,255,.09) !important;
 }
 
 /* Mobile app experience */
@@ -1866,9 +1866,9 @@ textarea:focus,
   .mobile-appbar {
     align-items: center;
     background:
-      linear-gradient(90deg, rgba(255,106,0,.16), transparent 42%),
+      linear-gradient(90deg, rgba(255,255,255,.16), transparent 42%),
       rgba(7,17,26,.96);
-    border-bottom: 1px solid rgba(255,106,0,.24);
+    border-bottom: 1px solid rgba(255,255,255,.24);
     box-shadow: 0 12px 28px rgba(0,0,0,.42);
     display: flex;
     gap: 10px;
@@ -1932,7 +1932,7 @@ textarea:focus,
   .mobile-appbar-actions button {
     align-items: center;
     background: rgba(255,255,255,.035);
-    border: 1px solid rgba(255,106,0,.22);
+    border: 1px solid rgba(255,255,255,.22);
     color: #fff;
     display: inline-flex;
     font: inherit;
@@ -1949,7 +1949,7 @@ textarea:focus,
     align-items: center;
     background:
       linear-gradient(180deg, rgba(19,29,40,.96), rgba(7,17,26,.98));
-    border-top: 1px solid rgba(255,106,0,.24);
+    border-top: 1px solid rgba(255,255,255,.24);
     bottom: 0;
     box-shadow: 0 -14px 28px rgba(0,0,0,.44);
     display: grid;
@@ -1990,7 +1990,7 @@ textarea:focus,
 
   .mobile-bottom-nav a.active,
   .mobile-bottom-nav button.active {
-    background: rgba(255,106,0,.12);
+    background: rgba(255,255,255,.12);
     color: #fff;
   }
 
@@ -2001,9 +2001,9 @@ textarea:focus,
 
   .mobile-more-panel {
     background:
-      linear-gradient(180deg, rgba(255,106,0,.08), transparent 24%),
+      linear-gradient(180deg, rgba(255,255,255,.08), transparent 24%),
       #07111a;
-    border-top: 1px solid rgba(255,106,0,.28);
+    border-top: 1px solid rgba(255,255,255,.28);
     bottom: 0;
     box-shadow: 0 -24px 60px rgba(0,0,0,.6);
     display: block;
@@ -2057,7 +2057,7 @@ textarea:focus,
   .mobile-more-grid a {
     align-items: center;
     background: rgba(255,255,255,.035);
-    border: 1px solid rgba(255,106,0,.2);
+    border: 1px solid rgba(255,255,255,.2);
     color: #fff;
     display: flex;
     gap: 9px;
@@ -2081,7 +2081,7 @@ textarea:focus,
     align-items: center;
     background: var(--onyx-accent);
     border: 1px solid var(--onyx-accent);
-    box-shadow: 0 14px 30px rgba(255,106,0,.28);
+    box-shadow: 0 14px 30px rgba(255,255,255,.28);
     color: #050506;
     display: inline-flex;
     font-size: 10px;
@@ -2207,7 +2207,7 @@ textarea:focus,
     background:
       linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
       var(--onyx-surface) !important;
-    border: 1px solid rgba(255,106,0,.18) !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
     padding: 8px !important;
   }
 

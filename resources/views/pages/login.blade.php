@@ -13,10 +13,10 @@
             --bg: #07111a;
             --panel: #101923;
             --panel-2: #131d28;
-            --accent: #ff6a00;
-            --accent-2: #ff8a1d;
-            --line: rgba(255,106,0,.18);
-            --line-strong: rgba(255,106,0,.42);
+            --accent: #ffffff;
+            --accent-2: #d8d8de;
+            --line: rgba(255,255,255,.18);
+            --line-strong: rgba(255,255,255,.42);
             --text: #fff;
             --muted: #8d99a8;
             --soft: #dce3ec;
@@ -29,10 +29,10 @@
         body {
             align-items: center;
             background:
-                linear-gradient(rgba(255,106,0,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,106,0,.028) 1px, transparent 1px),
-                radial-gradient(circle at 82% 14%, rgba(255,106,0,.24), transparent 30%),
-                radial-gradient(circle at 18% 82%, rgba(255,138,29,.12), transparent 28%),
+                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
+                radial-gradient(circle at 82% 14%, rgba(255,255,255,.24), transparent 30%),
+                radial-gradient(circle at 18% 82%, rgba(216,216,222,.12), transparent 28%),
                 var(--bg);
             background-size: 40px 40px, 40px 40px, auto, auto, auto;
             color: var(--text);
@@ -77,7 +77,7 @@
         .login-frame {
             background: transparent;
             border: 1px solid var(--line-strong);
-            box-shadow: 0 34px 90px rgba(0,0,0,.62), 0 0 0 1px rgba(255,106,0,.08);
+            box-shadow: 0 34px 90px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.08);
             display: grid;
             grid-template-columns: minmax(360px, 420px) minmax(360px, 1fr);
             min-height: 560px;
@@ -98,8 +98,8 @@
         .brand-side {
             align-items: stretch;
             background:
-                linear-gradient(145deg, rgba(255,106,0,.28), transparent 35%),
-                linear-gradient(315deg, rgba(255,138,29,.2), transparent 40%),
+                linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%),
+                linear-gradient(315deg, rgba(216,216,222,.2), transparent 40%),
                 linear-gradient(180deg, rgba(255,255,255,.065), transparent 60%),
                 #07111a;
             border-right: 1px solid var(--line);
@@ -111,8 +111,8 @@
 
         .brand-side::before {
             background:
-                linear-gradient(rgba(255,106,0,.055) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,106,0,.04) 1px, transparent 1px);
+                linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
             background-size: 34px 34px;
             content: "";
             inset: 0;
@@ -238,7 +238,7 @@
         }
 
         .feature-icon.finance {
-            color: #ffb347;
+            color: #d8d8de;
         }
 
         .feature-icon.team {
@@ -265,7 +265,7 @@
             align-content: center;
             background:
                 linear-gradient(180deg, rgba(255,255,255,.035), transparent 34%),
-                linear-gradient(135deg, rgba(255,106,0,.055), transparent 35%),
+                linear-gradient(135deg, rgba(255,255,255,.055), transparent 35%),
                 var(--panel);
             display: grid;
             padding: 42px;
@@ -367,7 +367,7 @@
 
         .input-wrap:focus-within {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255,106,0,.12);
+            box-shadow: 0 0 0 3px rgba(255,255,255,.12);
         }
 
         .input {
@@ -424,7 +424,7 @@
         }
 
         .password-toggle:focus-visible {
-            box-shadow: 0 0 0 3px rgba(255,106,0,.18);
+            box-shadow: 0 0 0 3px rgba(255,255,255,.18);
         }
 
         .form-link-row {
