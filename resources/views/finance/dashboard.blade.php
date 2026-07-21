@@ -3,27 +3,46 @@
 @section('content')
 @include('finance.partials.style')
 
-<section class="finance-page">
-    <header class="finance-header">
-        <div class="finance-title"><div class="finance-icon"><i class="fa-solid fa-scale-balanced"></i></div><div><h1>Finance Control Centre</h1><div class="finance-muted">Budget, revenue, expense, cash, receivables, payables and control exceptions from connected modules.</div></div></div>
-        <div class="finance-actions">
-            <form method="POST" action="{{ route('finance.sync') }}">@csrf<button class="finance-button secondary" type="submit"><i class="fa-solid fa-arrows-rotate"></i> Sync Modules</button></form>
-            <a class="finance-button" href="{{ route('finance.transactions.index') }}"><i class="fa-solid fa-list-check"></i> Transaction Register</a>
+<section class="finance-page tems-command">
+    <header class="tems-command-header">
+        <div class="tems-command-title">
+            <div class="tems-command-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div>
+                <span class="tems-command-eyebrow">Finance control</span>
+                <h1>Financial Command Centre</h1>
+                <div class="tems-command-subtitle">Revenue, expense, cash discipline, receivables, payables, budget pressure, transaction evidence, and synced control exceptions.</div>
+            </div>
+        </div>
+        <div class="tems-command-actions">
+            <form method="POST" action="{{ route('finance.sync') }}">
+                @csrf
+                <button class="tems-button secondary" type="submit"><i class="fa-solid fa-arrows-rotate"></i> Sync Modules</button>
+            </form>
+            <a class="tems-button" href="{{ route('finance.transactions.index') }}"><i class="fa-solid fa-list-check"></i> Transaction Register</a>
         </div>
     </header>
 
-    @if(session('success')) <div class="finance-alert success">{{ session('success') }}</div> @endif
+    @if(session('success'))
+        <div class="finance-alert success">{{ session('success') }}</div>
+    @endif
 
-    <section class="finance-grid">
-        <div class="finance-card"><span>Revenue This Month</span><strong>UGX {{ number_format((float) $metrics['revenue_month'], 2) }}</strong></div>
-        <div class="finance-card"><span>Expenses This Month</span><strong>UGX {{ number_format((float) $metrics['expense_month'], 2) }}</strong></div>
-        <div class="finance-card"><span>Receivables</span><strong>UGX {{ number_format((float) $metrics['receivables'], 2) }}</strong></div>
-        <div class="finance-card"><span>Payables</span><strong>UGX {{ number_format((float) $metrics['payables'], 2) }}</strong></div>
+    <section class="tems-kpi-grid">
+        <article class="tems-kpi-card"><span>Revenue This Month</span><strong>UGX {{ number_format((float) $metrics['revenue_month'], 2) }}</strong><small>Recognized inflow from connected modules.</small></article>
+        <article class="tems-kpi-card"><span>Expenses This Month</span><strong>UGX {{ number_format((float) $metrics['expense_month'], 2) }}</strong><small>Current month outflow under review.</small></article>
+        <article class="tems-kpi-card"><span>Receivables</span><strong>UGX {{ number_format((float) $metrics['receivables'], 2) }}</strong><small>Customer money due to the business.</small></article>
+        <article class="tems-kpi-card"><span>Payables</span><strong>UGX {{ number_format((float) $metrics['payables'], 2) }}</strong><small>Supplier and operational obligations pending.</small></article>
     </section>
 
-    <section class="finance-split">
-        <div class="finance-panel">
-            <div class="finance-panel-head"><h2>Recent Financial Transactions</h2><span class="finance-muted">Synced from Sales, Commercial, Purchases and HR.</span></div>
+    <section class="tems-dashboard-grid">
+        <article class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Ledger activity</span>
+                    <h2>Recent Financial Transactions</h2>
+                    <div class="tems-muted">Synced from Sales, Commercial, Purchases, and HR.</div>
+                </div>
+                <a class="tems-button secondary" href="{{ route('finance.transactions.index') }}">Open Ledger</a>
+            </div>
             @include('finance.partials.table', [
                 'headers' => ['Reference', 'Source', 'Counterparty', 'Direction', 'Amount', 'Status', 'Control'],
                 'rows' => $recentTransactions->map(fn ($transaction) => [
@@ -36,19 +55,47 @@
                     e($transaction->evidence_status),
                 ])->all()
             ])
-        </div>
-        <div class="finance-panel">
-            <div class="finance-panel-head"><h2>Financial Alerts</h2></div>
-            @forelse($alerts as $alert)
-                <div class="finance-alert {{ $alert['severity'] === 'High' ? 'danger' : 'warning' }}"><strong>{{ $alert['title'] }}</strong><br>{{ $alert['message'] }}</div>
-            @empty
-                <div class="finance-alert success">No critical financial exceptions detected from current synced data.</div>
-            @endforelse
-        </div>
+        </article>
+
+        <aside class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Control exceptions</span>
+                    <h2>Financial Alerts</h2>
+                </div>
+            </div>
+            <div class="tems-work-list">
+                @forelse($alerts as $alert)
+                    <div class="tems-work-card">
+                        <div>
+                            <span class="tems-list-label">{{ $alert['severity'] }}</span>
+                            <strong class="tems-panel-title">{{ $alert['title'] }}</strong>
+                            <small class="tems-muted">{{ $alert['message'] }}</small>
+                        </div>
+                        <span class="tems-status {{ $alert['severity'] === 'High' ? 'danger' : 'warning' }}">Review</span>
+                    </div>
+                @empty
+                    <div class="tems-work-card">
+                        <div>
+                            <span class="tems-list-label">Control state</span>
+                            <strong class="tems-panel-title">No critical exceptions</strong>
+                            <small class="tems-muted">Current synced data has no high-priority finance alerts.</small>
+                        </div>
+                        <span class="tems-status success">Clear</span>
+                    </div>
+                @endforelse
+            </div>
+        </aside>
     </section>
 
-    <section class="finance-panel">
-        <div class="finance-panel-head"><h2>Budget Control Lines</h2><a class="finance-button secondary" href="{{ route('finance.budgets.index') }}">Manage Budget</a></div>
+    <section class="tems-panel">
+        <div class="tems-panel-head">
+            <div>
+                <span class="tems-panel-kicker">Budget governance</span>
+                <h2>Budget Control Lines</h2>
+            </div>
+            <a class="tems-button secondary" href="{{ route('finance.budgets.index') }}">Manage Budget</a>
+        </div>
         @include('finance.partials.table', [
             'headers' => ['Line', 'Account', 'Cost Centre', 'Budget', 'Committed', 'Actual', 'Available', 'Utilization'],
             'rows' => $budgetLines->map(fn ($line) => [

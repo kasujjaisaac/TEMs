@@ -3,35 +3,39 @@
 @section('content')
 @include('commercial.partials.style')
 
-<section class="commercial-page">
-    <header class="commercial-header">
-        <div class="commercial-title">
-            <div class="commercial-title-icon"><i class="fa-solid fa-address-book"></i></div>
+<section class="commercial-page tems-command">
+    <header class="tems-command-header">
+        <div class="tems-command-title">
+            <div class="tems-command-icon"><i class="fa-solid fa-address-book"></i></div>
             <div>
-                <h1>CRM & Customer Accounts</h1>
-                <div class="commercial-muted">Account ownership, customer history, commercial links, and relationship health in one customer record.</div>
+                <span class="tems-command-eyebrow">CRM & customer accounts</span>
+                <h1>Customer Health Command</h1>
+                <div class="tems-command-subtitle">Account ownership, relationship status, commercial linkage, opportunity context, and support follow-up in one customer operating view.</div>
             </div>
         </div>
-        <div class="commercial-actions">
-            <a class="commercial-button" href="{{ route('crm.accounts.index') }}"><i class="fa-solid fa-users"></i> Accounts</a>
-            <a class="commercial-button secondary" href="{{ route('commercial.organizations.index') }}"><i class="fa-solid fa-building"></i> Commercial Organizations</a>
+        <div class="tems-command-actions">
+            <a class="tems-button" href="{{ route('crm.accounts.index') }}"><i class="fa-solid fa-users"></i> Accounts</a>
+            <a class="tems-button secondary" href="{{ route('commercial.organizations.index') }}"><i class="fa-solid fa-building"></i> Organizations</a>
         </div>
     </header>
 
-    <section class="commercial-grid">
-        <div class="commercial-card"><span>Customer Accounts</span><strong>{{ $metrics['customer_accounts'] }}</strong></div>
-        <div class="commercial-card"><span>Active Accounts</span><strong>{{ $metrics['active_accounts'] }}</strong></div>
-        <div class="commercial-card"><span>Commercial Linked</span><strong>{{ $metrics['linked_commercial_accounts'] }}</strong></div>
-        <div class="commercial-card"><span>Open Opportunities</span><strong>{{ $metrics['open_opportunities'] }}</strong></div>
-        <div class="commercial-card"><span>Open CRM Leads</span><strong>{{ $metrics['open_crm_leads'] }}</strong></div>
-        <div class="commercial-card"><span>Support Follow-ups</span><strong>{{ $metrics['open_support_tickets'] }}</strong></div>
+    <section class="tems-kpi-grid">
+        <article class="tems-kpi-card"><span>Customer Accounts</span><strong>{{ $metrics['customer_accounts'] }}</strong><small>Total relationship records owned by CRM.</small></article>
+        <article class="tems-kpi-card"><span>Active Accounts</span><strong>{{ $metrics['active_accounts'] }}</strong><small>Customers currently available for operational work.</small></article>
+        <article class="tems-kpi-card"><span>Commercial Linked</span><strong>{{ $metrics['linked_commercial_accounts'] }}</strong><small>Accounts connected to commercial organizations.</small></article>
+        <article class="tems-kpi-card"><span>Open Opportunities</span><strong>{{ $metrics['open_opportunities'] }}</strong><small>Live commercial value connected to customer relationships.</small></article>
+        <article class="tems-kpi-card"><span>Open CRM Leads</span><strong>{{ $metrics['open_crm_leads'] }}</strong><small>Demand records still requiring CRM attention.</small></article>
+        <article class="tems-kpi-card"><span>Support Follow-ups</span><strong>{{ $metrics['open_support_tickets'] }}</strong><small>Customer service items that may affect retention.</small></article>
     </section>
 
-    <section class="commercial-split">
-        <div class="commercial-panel">
-            <div class="commercial-panel-head">
-                <h2>Recent Customer Accounts</h2>
-                <a class="commercial-button secondary" href="{{ route('crm.accounts.index') }}">View All</a>
+    <section class="tems-dashboard-grid">
+        <article class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Relationship desk</span>
+                    <h2>Recent Customer Accounts</h2>
+                </div>
+                <a class="tems-button secondary" href="{{ route('crm.accounts.index') }}">View All</a>
             </div>
             @include('commercial.partials.table', [
                 'headers' => ['Account', 'Contact', 'Terms', 'Status'],
@@ -42,12 +46,44 @@
                     '<span class="commercial-badge ' . ($account->is_active ? 'success' : 'warning') . '">' . ($account->is_active ? 'Active' : 'Inactive') . '</span>',
                 ])->all()
             ])
-        </div>
+        </article>
 
-        <div class="commercial-panel">
-            <div class="commercial-panel-head">
-                <h2>Commercial Context</h2>
-                <span class="commercial-muted">Deal records stay in Commercial Operations</span>
+        <aside class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Health signals</span>
+                    <h2>Account Attention Queue</h2>
+                </div>
+            </div>
+            <div class="tems-work-list">
+                <div class="tems-work-card">
+                    <div><span class="tems-list-label">Commercial linkage</span><small class="tems-muted">Accounts connected to organization records.</small></div>
+                    <strong>{{ $metrics['linked_commercial_accounts'] }}</strong>
+                </div>
+                <div class="tems-work-card">
+                    <div><span class="tems-list-label">Open CRM leads</span><small class="tems-muted">Leads that can become customer records.</small></div>
+                    <strong>{{ $metrics['open_crm_leads'] }}</strong>
+                </div>
+                <div class="tems-work-card">
+                    <div><span class="tems-list-label">Support follow-ups</span><small class="tems-muted">Service records that may affect account health.</small></div>
+                    <strong>{{ $metrics['open_support_tickets'] }}</strong>
+                </div>
+                <div class="tems-work-card">
+                    <div><span class="tems-list-label">Opportunity context</span><small class="tems-muted">Commercial work visible from customer records.</small></div>
+                    <strong>{{ $metrics['open_opportunities'] }}</strong>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="tems-two-column">
+        <article class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Commercial context</span>
+                    <h2>Recent Opportunities</h2>
+                </div>
+                <span class="tems-status">Source owned by Commercial</span>
             </div>
             @include('commercial.partials.table', [
                 'headers' => ['Opportunity', 'Organization', 'Stage', 'Value'],
@@ -58,22 +94,25 @@
                     e($opportunity->currency ?: 'UGX') . ' ' . number_format((float) $opportunity->estimated_value, 2),
                 ])->all()
             ])
-        </div>
-    </section>
+        </article>
 
-    <section class="commercial-panel">
-        <div class="commercial-panel-head">
-            <h2>Module Responsibilities</h2>
-            <span class="commercial-muted">No duplicated customer ownership</span>
-        </div>
-        @include('commercial.partials.table', [
-            'headers' => ['Area', 'Owns', 'Hands Off'],
-            'rows' => [
-                ['Commercial Operations', 'Campaigns, leads, opportunities, proposals, quotations, contracts, sales handoff', 'Won or active customer relationship is linked into CRM & Customer Accounts'],
-                ['CRM & Customer Accounts', 'Customer profile, contacts, account history, communication trail, account health, credit/payment relationship', 'Invoices, payments, and accounting controls remain in Finance'],
-                ['Customer 360', 'One account view that displays linked commercial, sales, finance, and support history', 'Each source module keeps its operational records'],
-            ],
-        ])
+        <article class="tems-panel">
+            <div class="tems-panel-head">
+                <div>
+                    <span class="tems-panel-kicker">Operating model</span>
+                    <h2>Module Responsibilities</h2>
+                </div>
+                <span class="tems-status">No duplicated ownership</span>
+            </div>
+            @include('commercial.partials.table', [
+                'headers' => ['Area', 'Owns', 'Hands Off'],
+                'rows' => [
+                    ['Commercial Operations', 'Campaigns, leads, opportunities, proposals, quotations, contracts, sales handoff', 'Won or active customer relationship is linked into CRM & Customer Accounts'],
+                    ['CRM & Customer Accounts', 'Customer profile, contacts, account history, communication trail, account health, credit/payment relationship', 'Invoices, payments, and accounting controls remain in Finance'],
+                    ['Customer 360', 'One account view that displays linked commercial, sales, finance, and support history', 'Each source module keeps its operational records'],
+                ],
+            ])
+        </article>
     </section>
 </section>
 @endsection

@@ -19,7 +19,7 @@
         background:
             linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
             var(--onyx-surface, #101923);
-        border: 1px solid rgba(255,106,0,.18);
+        border: 1px solid rgba(255,255,255,.18);
         border-radius: 0;
         box-shadow: 0 10px 28px rgba(0,0,0,.22);
     }
@@ -41,8 +41,8 @@
 
     .hr-core-icon {
         align-items: center;
-        background: var(--onyx-accent, #ff6a00);
-        border: 1px solid var(--onyx-accent, #ff6a00);
+        background: var(--onyx-accent, #ffffff);
+        border: 1px solid var(--onyx-accent, #ffffff);
         color: #050506;
         display: inline-flex;
         flex: 0 0 38px;
@@ -89,8 +89,8 @@
     .hr-core-button,
     .hr-core-icon-button {
         align-items: center;
-        background: var(--onyx-accent, #ff6a00);
-        border: 1px solid var(--onyx-accent, #ff6a00);
+        background: var(--onyx-accent, #ffffff);
+        border: 1px solid var(--onyx-accent, #ffffff);
         color: #050506;
         cursor: pointer;
         display: inline-flex;
@@ -109,14 +109,14 @@
     .hr-core-button.secondary,
     .hr-core-icon-button {
         background: rgba(255,255,255,.025);
-        border-color: rgba(255,106,0,.2);
+        border-color: rgba(255,255,255,.2);
         color: var(--onyx-text, #f5f7fa);
     }
 
     .hr-core-button:hover,
     .hr-core-icon-button:hover {
-        border-color: var(--onyx-accent-2, #ff8a1d);
-        box-shadow: 0 0 0 3px rgba(255,106,0,.11);
+        border-color: var(--onyx-accent-2, #d8d8de);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.11);
         text-decoration: none;
     }
 
@@ -190,7 +190,7 @@
     }
 
     .hr-core-table tbody tr:hover {
-        background: rgba(255,106,0,.055);
+        background: rgba(255,255,255,.055);
     }
 
     .hr-core-table-title {
@@ -202,7 +202,7 @@
     }
 
     .hr-core-badge {
-        border: 1px solid rgba(255,106,0,.32);
+        border: 1px solid rgba(255,255,255,.32);
         color: #d8d8de;
         display: inline-flex;
         font-size: 10px;
@@ -234,7 +234,7 @@
     .hr-core-field select,
     .hr-core-field textarea {
         background: #0b141e;
-        border: 1px solid rgba(255,106,0,.18);
+        border: 1px solid rgba(255,255,255,.18);
         color: #ffffff;
         font: inherit;
         font-size: 12px;
@@ -252,8 +252,8 @@
     .hr-core-field input:focus,
     .hr-core-field select:focus,
     .hr-core-field textarea:focus {
-        border-color: var(--onyx-accent, #ff6a00);
-        box-shadow: 0 0 0 3px rgba(255,106,0,.13);
+        border-color: var(--onyx-accent, #ffffff);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.13);
         outline: 0;
     }
 
@@ -266,7 +266,7 @@
         background:
             linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
             var(--onyx-surface, #101923);
-        border: 1px solid rgba(255,106,0,.18);
+        border: 1px solid rgba(255,255,255,.18);
         color: #ffffff;
         font-size: 12px;
         font-weight: 800;
