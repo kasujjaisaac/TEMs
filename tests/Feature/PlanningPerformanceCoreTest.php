@@ -17,6 +17,7 @@ use Database\Seeders\Planning\PlanningPerformanceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class PlanningPerformanceCoreTest extends TestCase
@@ -322,6 +323,66 @@ class PlanningPerformanceCoreTest extends TestCase
             'title' => 'Prepare daily operating update',
             'status' => 'Not Started',
         ]);
+    }
+
+    public function test_workplan_csv_upload_creates_workplan_targets_and_assignments(): void
+    {
+        $admin = $this->createUser('super_admin');
+        $this->seed(HrOrganizationCoreSeeder::class);
+        $this->seed(PlanningPerformanceSeeder::class);
+
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, \App\Services\Planning\PlanningPerformanceService::WORKPLAN_IMPORT_HEADERS);
+        fputcsv($csv, [
+            'DEPT-COMM-UPLOAD', 'Commercial Upload Workplan', 'Department', 'Uploaded commercial plan',
+            'OBJ-001', 'COMM-UPLOAD-001', 'Create qualified opportunities', 'Numeric',
+            'Qualified opportunities', '7', '0', 'opportunities', 'High', '25',
+            now()->toDateString(), now()->addMonth()->toDateString(), 'COMM', 'COMM-002',
+            $admin->email, 'Accountable', 'Opportunity or visit evidence',
+            'Supervisor verified evidence', 'Imported target description',
+        ]);
+        rewind($csv);
+        $csvContent = stream_get_contents($csv);
+        fclose($csv);
+
+        $response = $this->actingAs($admin)
+            ->post(route('planning.workplans.import'), [
+                'workplan_file' => UploadedFile::fake()->createWithContent('commercial_workplan.csv', $csvContent),
+            ]);
+        $response->assertRedirect(route('planning.workplans.index'));
+
+        $workplan = Workplan::where('tenant_id', $admin->tenant_id)->where('code', 'DEPT-COMM-UPLOAD')->firstOrFail();
+        $item = WorkplanItem::where('tenant_id', $admin->tenant_id)->where('reference', 'COMM-UPLOAD-001')->firstOrFail();
+
+        $this->assertSame($workplan->id, $item->workplan_id);
+        $this->assertDatabaseHas('workplan_assignments', [
+            'tenant_id' => $admin->tenant_id,
+            'workplan_item_id' => $item->id,
+            'employee_id' => $admin->id,
+            'assignment_role' => 'Accountable',
+        ]);
+        $this->assertGreaterThan(0, TargetAllocation::where('tenant_id', $admin->tenant_id)->where('workplan_item_id', $item->id)->count());
+        $this->assertDatabaseHas('planning_workplan_imports', [
+            'tenant_id' => $admin->tenant_id,
+            'status' => 'Imported',
+            'targets_imported' => 1,
+        ]);
+        $this->assertDatabaseHas('domain_events', [
+            'tenant_id' => $admin->tenant_id,
+            'event_name' => 'workplan.imported',
+        ]);
+    }
+
+    public function test_workplan_import_template_downloads_csv(): void
+    {
+        $admin = $this->createUser('super_admin');
+
+        $response = $this->actingAs($admin)
+            ->get(route('planning.workplans.template'))
+            ->assertOk()
+            ->assertDownload('tems_workplan_import_template.csv');
+
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
     }
 
     private function createUser(string $roleSlug): User

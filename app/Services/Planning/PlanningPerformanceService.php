@@ -14,19 +14,31 @@ use App\Models\Planning\StrategicObjective;
 use App\Models\Planning\StrategicPillar;
 use App\Models\Planning\TargetAllocation;
 use App\Models\Planning\Workplan;
+use App\Models\Planning\WorkplanAssignment;
 use App\Models\Planning\WorkplanItem;
 use App\Models\Planning\PlanningDailyTask;
+use App\Models\Planning\PlanningWorkplanImport;
 use App\Models\User;
 use App\Services\Enterprise\DomainEventService;
 use App\Services\Enterprise\NotificationService;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class PlanningPerformanceService
 {
+    public const WORKPLAN_IMPORT_HEADERS = [
+        'workplan_code', 'workplan_title', 'workplan_level', 'workplan_description',
+        'objective_code', 'target_reference', 'target_title', 'target_type', 'kpi',
+        'target_value', 'actual_value', 'unit', 'priority', 'weight', 'starts_on',
+        'due_on', 'department_code', 'position_code', 'employee_email',
+        'assignment_role', 'required_evidence_type', 'quality_standard', 'description',
+    ];
+
     public function bootstrapTenant(int $tenantId): PlanningYear
     {
         $year = $this->currentPlanningYear($tenantId);
@@ -157,6 +169,227 @@ class PlanningPerformanceService
                 ['period_end' => $week->copy()->endOfWeek()->toDateString(), 'target_value' => $weeklyTarget, 'status' => 'Planned']
             );
         });
+    }
+
+    public function importWorkplanCsv(int $tenantId, User $user, UploadedFile $file): PlanningWorkplanImport
+    {
+        $year = $this->bootstrapTenant($tenantId);
+        [$rows, $errors] = $this->parseWorkplanCsv($file);
+
+        if ($errors !== []) {
+            PlanningWorkplanImport::create([
+                'tenant_id' => $tenantId,
+                'uploaded_by' => $user->id,
+                'planning_year_id' => $year->id,
+                'original_filename' => $file->getClientOriginalName(),
+                'status' => 'Failed',
+                'rows_read' => count($rows),
+                'errors' => $errors,
+                'imported_at' => now(),
+            ]);
+
+            throw ValidationException::withMessages(['workplan_file' => implode(' ', array_slice($errors, 0, 3))]);
+        }
+
+        return DB::transaction(function () use ($tenantId, $user, $file, $year, $rows): PlanningWorkplanImport {
+            $createdWorkplans = [];
+            $importedTargets = 0;
+
+            foreach ($rows as $index => $row) {
+                $line = $index + 2;
+                $department = $this->departmentByCode($tenantId, $row['department_code'] ?? null);
+                $position = $this->positionByCode($tenantId, $row['position_code'] ?? null);
+                $employee = $this->employeeByEmail($tenantId, $row['employee_email'] ?? null);
+                $objective = $this->objectiveByCode($tenantId, $row['objective_code'] ?? null);
+
+                $missing = [];
+                if (! empty($row['department_code']) && ! $department) {
+                    $missing[] = 'department_code';
+                }
+                if (! empty($row['position_code']) && ! $position) {
+                    $missing[] = 'position_code';
+                }
+                if (! empty($row['employee_email']) && ! $employee) {
+                    $missing[] = 'employee_email';
+                }
+                if (! empty($row['objective_code']) && ! $objective) {
+                    $missing[] = 'objective_code';
+                }
+                if ($missing !== []) {
+                    throw ValidationException::withMessages(['workplan_file' => 'Row ' . $line . ' references unknown ' . implode(', ', $missing) . '.']);
+                }
+
+                $workplanCode = strtoupper(trim((string) $row['workplan_code']));
+                $existing = Workplan::where('tenant_id', $tenantId)->where('code', $workplanCode)->first();
+                $workplan = Workplan::updateOrCreate(
+                    ['tenant_id' => $tenantId, 'code' => $workplanCode],
+                    [
+                        'planning_year_id' => $year->id,
+                        'department_id' => $department?->id,
+                        'position_id' => $position?->id,
+                        'employee_id' => $employee?->id,
+                        'title' => $row['workplan_title'],
+                        'level' => $row['workplan_level'] ?: ($employee ? 'Individual' : ($position ? 'Position' : ($department ? 'Department' : 'Corporate'))),
+                        'description' => $row['workplan_description'] ?: null,
+                        'owner_name' => $department?->name ?: $position?->title ?: $employee?->name ?: null,
+                        'approval_status' => 'Draft',
+                        'health_status' => 'Not Started',
+                    ]
+                );
+
+                if (! $existing) {
+                    $createdWorkplans[$workplan->id] = true;
+                }
+
+                $item = WorkplanItem::updateOrCreate(
+                    ['tenant_id' => $tenantId, 'reference' => strtoupper(trim((string) $row['target_reference']))],
+                    [
+                        'workplan_id' => $workplan->id,
+                        'strategic_objective_id' => $objective?->id,
+                        'title' => $row['target_title'],
+                        'description' => $row['description'] ?: null,
+                        'target_type' => $row['target_type'] ?: 'Numeric',
+                        'kpi' => $row['kpi'] ?: $row['target_title'],
+                        'target_value' => (float) $row['target_value'],
+                        'actual_value' => (float) ($row['actual_value'] ?: 0),
+                        'unit' => $row['unit'] ?: null,
+                        'priority' => $row['priority'] ?: 'Medium',
+                        'weight' => (int) ($row['weight'] ?: 10),
+                        'starts_on' => $row['starts_on'] ?: $year->starts_on,
+                        'due_on' => $row['due_on'] ?: $year->ends_on,
+                        'required_evidence_type' => $row['required_evidence_type'] ?: null,
+                        'quality_standard' => $row['quality_standard'] ?: null,
+                        'approval_status' => 'Draft',
+                        'health_status' => 'Not Started',
+                        'created_by' => $user->id,
+                        'updated_by' => $user->id,
+                    ]
+                );
+
+                WorkplanAssignment::updateOrCreate(
+                    ['tenant_id' => $tenantId, 'workplan_item_id' => $item->id, 'assignment_role' => $row['assignment_role'] ?: 'Accountable'],
+                    [
+                        'department_id' => $department?->id ?? $workplan->department_id,
+                        'position_id' => $position?->id,
+                        'employee_id' => $employee?->id,
+                        'supervisor_id' => null,
+                        'contribution_weight' => 100,
+                        'status' => 'Active',
+                    ]
+                );
+
+                $this->createAllocations($item);
+                $importedTargets++;
+            }
+
+            $import = PlanningWorkplanImport::create([
+                'tenant_id' => $tenantId,
+                'uploaded_by' => $user->id,
+                'planning_year_id' => $year->id,
+                'original_filename' => $file->getClientOriginalName(),
+                'status' => 'Imported',
+                'rows_read' => count($rows),
+                'workplans_created' => count($createdWorkplans),
+                'targets_imported' => $importedTargets,
+                'metadata' => ['template_headers' => self::WORKPLAN_IMPORT_HEADERS],
+                'imported_at' => now(),
+            ]);
+
+            app(DomainEventService::class)->record('workplan.imported', 'Planning and Performance', $import, [
+                'rows_read' => count($rows),
+                'workplans_created' => count($createdWorkplans),
+                'targets_imported' => $importedTargets,
+            ], $tenantId, $user);
+
+            return $import;
+        });
+    }
+
+    private function parseWorkplanCsv(UploadedFile $file): array
+    {
+        $handle = fopen($file->getRealPath(), 'rb');
+        if (! $handle) {
+            return [[], ['Unable to read the uploaded workplan file.']];
+        }
+
+        $headers = fgetcsv($handle);
+        if ($headers === false) {
+            fclose($handle);
+            return [[], ['The uploaded workplan file is empty.']];
+        }
+
+        $headers = array_map(fn ($header): string => strtolower(trim((string) $header)), $headers);
+        $missing = array_diff(['workplan_code', 'workplan_title', 'target_reference', 'target_title', 'target_value'], $headers);
+        if ($missing !== []) {
+            fclose($handle);
+            return [[], ['Missing required columns: ' . implode(', ', $missing) . '.']];
+        }
+
+        $rows = [];
+        $errors = [];
+        $line = 1;
+        while (($data = fgetcsv($handle)) !== false) {
+            $line++;
+            if (count(array_filter($data, fn ($value): bool => trim((string) $value) !== '')) === 0) {
+                continue;
+            }
+
+            $row = array_fill_keys(self::WORKPLAN_IMPORT_HEADERS, '');
+            foreach ($headers as $index => $header) {
+                if (array_key_exists($header, $row)) {
+                    $row[$header] = trim((string) ($data[$index] ?? ''));
+                }
+            }
+
+            foreach (['workplan_code', 'workplan_title', 'target_reference', 'target_title', 'target_value'] as $required) {
+                if ($row[$required] === '') {
+                    $errors[] = 'Row ' . $line . ' is missing ' . $required . '.';
+                }
+            }
+            if ($row['target_value'] !== '' && ! is_numeric($row['target_value'])) {
+                $errors[] = 'Row ' . $line . ' target_value must be numeric.';
+            }
+            if ($row['actual_value'] !== '' && ! is_numeric($row['actual_value'])) {
+                $errors[] = 'Row ' . $line . ' actual_value must be numeric.';
+            }
+            if ($row['weight'] !== '' && (! is_numeric($row['weight']) || (int) $row['weight'] < 0 || (int) $row['weight'] > 100)) {
+                $errors[] = 'Row ' . $line . ' weight must be between 0 and 100.';
+            }
+            foreach (['starts_on', 'due_on'] as $dateField) {
+                if ($row[$dateField] !== '' && ! strtotime($row[$dateField])) {
+                    $errors[] = 'Row ' . $line . ' ' . $dateField . ' must be a valid date.';
+                }
+            }
+
+            $rows[] = $row;
+        }
+        fclose($handle);
+
+        if ($rows === []) {
+            $errors[] = 'The uploaded workplan file has no target rows.';
+        }
+
+        return [$rows, $errors];
+    }
+
+    private function departmentByCode(int $tenantId, ?string $code): ?HrDepartment
+    {
+        return $code ? HrDepartment::where('tenant_id', $tenantId)->where('code', strtoupper(trim($code)))->first() : null;
+    }
+
+    private function positionByCode(int $tenantId, ?string $code): ?HrPosition
+    {
+        return $code ? HrPosition::where('tenant_id', $tenantId)->where('code', strtoupper(trim($code)))->first() : null;
+    }
+
+    private function employeeByEmail(int $tenantId, ?string $email): ?User
+    {
+        return $email ? User::where('tenant_id', $tenantId)->whereRaw('LOWER(email) = ?', [strtolower(trim($email))])->first() : null;
+    }
+
+    private function objectiveByCode(int $tenantId, ?string $code): ?StrategicObjective
+    {
+        return $code ? StrategicObjective::where('tenant_id', $tenantId)->where('code', strtoupper(trim($code)))->first() : null;
     }
 
     public function submitEvidence(WorkplanItem $item, User $submitter, array $data, ?Request $request = null): WorkplanEvidence

@@ -141,6 +141,8 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/objectives', [PlanningObjectiveController::class, 'index'])->name('objectives.index');
         Route::post('/objectives', [PlanningObjectiveController::class, 'store'])->name('objectives.store');
         Route::get('/workplans', [PlanningWorkplanController::class, 'index'])->name('workplans.index');
+        Route::get('/workplans/import-template', [PlanningWorkplanController::class, 'template'])->name('workplans.template');
+        Route::post('/workplans/import', [PlanningWorkplanController::class, 'import'])->name('workplans.import');
         Route::get('/workplans/{workplan}', [PlanningWorkplanController::class, 'show'])->name('workplans.show');
         Route::post('/workplans/{workplan}/items', [PlanningWorkplanController::class, 'storeItem'])->name('workplans.items.store');
         Route::post('/workplans/{workplan}/approve', [PlanningWorkplanController::class, 'approve'])->name('workplans.approve');

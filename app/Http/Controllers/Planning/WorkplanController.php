@@ -10,10 +10,12 @@ use App\Models\Planning\Workplan;
 use App\Models\Planning\WorkplanAssignment;
 use App\Models\Planning\WorkplanEvidence;
 use App\Models\Planning\WorkplanItem;
+use App\Models\Planning\PlanningWorkplanImport;
 use App\Models\User;
 use App\Services\Planning\PlanningPerformanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -31,7 +33,61 @@ class WorkplanController extends PlanningController
                 ->orderBy('level')
                 ->orderBy('title')
                 ->paginate(15),
+            'imports' => PlanningWorkplanImport::with('uploader')
+                ->where('tenant_id', $this->tenantId())
+                ->latest()
+                ->limit(6)
+                ->get(),
         ]);
+    }
+
+    public function template(PlanningPerformanceService $planning): StreamedResponse
+    {
+        $this->authorizePlanning('planning.workplans.manage');
+
+        return response()->streamDownload(function () use ($planning): void {
+            $out = fopen('php://output', 'wb');
+            fputcsv($out, PlanningPerformanceService::WORKPLAN_IMPORT_HEADERS);
+            fputcsv($out, [
+                'DEPT-COMM-2026-2027',
+                'Commercial Operations Workplan 2026/2027',
+                'Department',
+                'Commercial growth targets owned by Commercial Operations.',
+                'OBJ-001',
+                'COMM-Q1-001',
+                'Acquire five qualified customer opportunities',
+                'Numeric',
+                'Qualified opportunities created',
+                '5',
+                '0',
+                'opportunities',
+                'High',
+                '20',
+                now()->toDateString(),
+                now()->addMonth()->toDateString(),
+                'COMM',
+                'COMM-002',
+                '',
+                'Accountable',
+                'Opportunity record, meeting notes, quotation or approved site visit.',
+                'Evidence must be dated, attributable and supervisor-verifiable.',
+                'Build and qualify customer opportunities for the current commercial period.',
+            ]);
+            fclose($out);
+        }, 'tems_workplan_import_template.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function import(Request $request, PlanningPerformanceService $planning): RedirectResponse
+    {
+        $this->authorizePlanning('planning.workplans.manage');
+
+        $data = $request->validate([
+            'workplan_file' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
+        ]);
+
+        $import = $planning->importWorkplanCsv($this->tenantId(), $request->user(), $data['workplan_file']);
+
+        return redirect()->route('planning.workplans.index')->with('success', 'Workplan upload imported: ' . $import->targets_imported . ' target(s), ' . $import->workplans_created . ' new workplan(s).');
     }
 
     public function show(Workplan $workplan, PlanningPerformanceService $planning): View
