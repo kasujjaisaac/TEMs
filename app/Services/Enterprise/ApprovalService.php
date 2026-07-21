@@ -139,12 +139,15 @@ class ApprovalService
         }
 
         foreach ($rules as $rule) {
+            $approverUserId = $this->approverUserId($approval, $rule);
+            $approverRole = $approverUserId && is_numeric($rule->approver_role) ? null : $rule->approver_role;
+
             ApprovalStep::create([
                 'tenant_id' => $approval->tenant_id,
                 'approval_request_id' => $approval->id,
                 'sequence' => $rule->sequence,
-                'approver_role' => $rule->approver_role,
-                'approver_user_id' => $rule->approver_user_id,
+                'approver_role' => $approverRole,
+                'approver_user_id' => $approverUserId,
                 'status' => 'Pending',
                 'metadata' => ['approval_rule_id' => $rule->id, 'minimum_amount' => $rule->minimum_amount],
             ]);
@@ -173,5 +176,20 @@ class ApprovalService
             $approval->title . ' is awaiting your approval.',
             ['source_module' => $approval->module, 'type' => 'approval', 'severity' => $approval->priority === 'Critical' ? 'High' : 'Info']
         );
+    }
+
+    private function approverUserId(ApprovalRequest $approval, object $rule): ?int
+    {
+        if ($rule->approver_user_id) {
+            return (int) $rule->approver_user_id;
+        }
+
+        if (! is_numeric($rule->approver_role)) {
+            return null;
+        }
+
+        $userId = (int) $rule->approver_role;
+
+        return User::where('tenant_id', $approval->tenant_id)->whereKey($userId)->exists() ? $userId : null;
     }
 }
