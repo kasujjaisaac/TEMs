@@ -129,6 +129,16 @@
     @if(auth()->user()?->hasPermission('commercial.opportunities.change_stage'))
         <section class="commercial-panel">
             <div class="commercial-panel-head"><h2>Stage Control</h2><span class="commercial-muted">Stage movement updates probability and writes history.</span></div>
+            <form method="POST" action="{{ route('commercial.opportunities.stage_controls.verify', $opportunity) }}">@csrf<button class="commercial-button secondary" type="submit">Verify Stage Controls</button></form>
+            @include('commercial.partials.table', [
+                'headers' => ['Stage', 'Control', 'Status', 'Checked'],
+                'rows' => $stageControls->map(fn ($control) => [
+                    e($control->stage),
+                    e($control->control_label),
+                    '<span class="commercial-badge ' . ($control->status === 'Passed' ? 'success' : 'warning') . '">' . e($control->status) . '</span>',
+                    e($control->verified_at ?: '-'),
+                ])->all()
+            ])
             <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.stage.update', $opportunity) }}">
                 @csrf
                 @method('PATCH')
@@ -143,6 +153,84 @@
                 <div class="commercial-field"><label>Reason</label><input name="reason" value="{{ old('reason') }}" placeholder="Customer confirmed next step"></div>
                 <div class="commercial-field"><label>Notes</label><input name="notes" value="{{ old('notes') }}" placeholder="Optional context"></div>
                 <div class="commercial-field full"><button class="commercial-button" type="submit"><i class="fa-solid fa-arrow-right-arrow-left"></i> Update Stage</button></div>
+            </form>
+        </section>
+    @endif
+
+    @if(auth()->user()?->hasPermission('commercial.opportunities.update'))
+        <section class="commercial-split">
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Negotiation History</h2><span class="commercial-muted">Customer position, Texaro position, values, and follow-up</span></div>
+                @include('commercial.partials.table', [
+                    'headers' => ['Topic', 'Status', 'Value', 'Follow-up'],
+                    'rows' => $negotiations->map(fn ($negotiation) => [
+                        '<strong class="commercial-table-title">' . e($negotiation->topic) . '</strong><span class="commercial-muted">' . e($negotiation->customer_position ?: '-') . '</span>',
+                        e($negotiation->status),
+                        number_format((float) ($negotiation->agreed_value ?: $negotiation->proposed_value), 2),
+                        e($negotiation->next_follow_up_on ?: '-'),
+                    ])->all()
+                ])
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.negotiations.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field double"><label>Topic</label><input name="topic" required></div>
+                    <div class="commercial-field"><label>Proposed Value</label><input name="proposed_value" type="number" min="0" step="0.01"></div>
+                    <div class="commercial-field"><label>Follow-up</label><input name="next_follow_up_on" type="date"></div>
+                    <div class="commercial-field full"><label>Customer Position</label><textarea name="customer_position"></textarea></div>
+                    <div class="commercial-field full"><label>Texaro Position</label><textarea name="texaro_position"></textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Record Negotiation</button></div>
+                </form>
+            </div>
+            <div class="commercial-panel">
+                <div class="commercial-panel-head"><h2>Renewal & Expansion</h2><span class="commercial-muted">Retention, upsell, and cross-sell planning</span></div>
+                @include('commercial.partials.table', [
+                    'headers' => ['Record', 'Due / Type', 'Value', 'Status'],
+                    'rows' => $renewals->map(fn ($renewal) => [
+                        e($renewal->reference),
+                        e($renewal->renewal_due_on),
+                        e($renewal->currency . ' ' . number_format((float) $renewal->renewal_value, 2)),
+                        e($renewal->status),
+                    ])->concat($expansions->map(fn ($expansion) => [
+                        e($expansion->reference),
+                        e($expansion->expansion_type),
+                        e($expansion->currency . ' ' . number_format((float) $expansion->estimated_value, 2)),
+                        e($expansion->status),
+                    ]))->all()
+                ])
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.renewals.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Renewal Due</label><input name="renewal_due_on" type="date" required></div>
+                    <div class="commercial-field"><label>Value</label><input name="renewal_value" type="number" min="0" step="0.01" value="{{ $opportunity->estimated_value }}"></div>
+                    <div class="commercial-field full"><label>Retention Plan</label><textarea name="retention_plan"></textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Schedule Renewal</button></div>
+                </form>
+                <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.expansions.store', $opportunity) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Type</label><select name="expansion_type"><option>Upsell</option><option>Cross-sell</option><option>Expansion</option></select></div>
+                    <div class="commercial-field double"><label>Title</label><input name="title" required></div>
+                    <div class="commercial-field"><label>Value</label><input name="estimated_value" type="number" min="0" step="0.01"></div>
+                    <div class="commercial-field full"><label>Rationale</label><textarea name="rationale"></textarea></div>
+                    <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Identify Expansion</button></div>
+                </form>
+            </div>
+        </section>
+    @endif
+
+    @if(auth()->user()?->hasPermission('commercial.opportunities.close'))
+        <section class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Lost Opportunity Analysis</h2><span class="commercial-muted">Required when a deal is lost</span></div>
+            @if($lostAnalysis)
+                @include('commercial.partials.table', [
+                    'headers' => ['Reason', 'Competitor', 'Lessons', 'Recovery'],
+                    'rows' => [[e($lostAnalysis->primary_reason), e($lostAnalysis->competitor_name ?: '-'), e($lostAnalysis->lessons_learned ?: '-'), e($lostAnalysis->recovery_action ?: '-')]]
+                ])
+            @endif
+            <form class="commercial-form" method="POST" action="{{ route('commercial.opportunities.lost_analysis.store', $opportunity) }}">
+                @csrf
+                <div class="commercial-field"><label>Primary Reason</label><input name="primary_reason" required></div>
+                <div class="commercial-field"><label>Competitor</label><input name="competitor_name"></div>
+                <div class="commercial-field full"><label>Lessons Learned</label><textarea name="lessons_learned"></textarea></div>
+                <div class="commercial-field full"><label>Recovery Action</label><textarea name="recovery_action"></textarea></div>
+                <div class="commercial-field full"><button class="commercial-button secondary" type="submit">Record Lost Analysis</button></div>
             </form>
         </section>
     @endif

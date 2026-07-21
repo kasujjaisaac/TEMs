@@ -14,6 +14,7 @@ use App\Models\Commercial\CommercialCampaign;
 use App\Models\Commercial\CommercialStakeholder;
 use App\Models\User;
 use App\Services\Commercial\CommercialAuditService;
+use App\Services\Commercial\CommercialCompletionService;
 use App\Services\Commercial\CommercialLegacyCustomerBridgeService;
 use App\Services\Commercial\CommercialNumberingService;
 use App\Services\Commercial\CommercialRevenueLifecycleService;
@@ -94,7 +95,92 @@ class OpportunityController extends CommercialController
                 'proposals', 'quotations', 'contracts', 'billingRequests',
             ]),
             'stages' => CommercialPipelineStage::where('tenant_id', $this->tenantId())->where('is_active', true)->orderBy('display_order')->get(),
+            'stageControls' => \DB::table('commercial_stage_controls')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->latest()->get(),
+            'negotiations' => \DB::table('commercial_negotiations')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->latest()->get(),
+            'renewals' => \DB::table('commercial_renewals')->where('tenant_id', $this->tenantId())->where('organization_id', $opportunity->organization_id)->latest('renewal_due_on')->get(),
+            'expansions' => \DB::table('commercial_expansion_opportunities')->where('tenant_id', $this->tenantId())->where('source_opportunity_id', $opportunity->id)->latest()->get(),
+            'lostAnalysis' => \DB::table('commercial_lost_opportunity_analyses')->where('tenant_id', $this->tenantId())->where('opportunity_id', $opportunity->id)->first(),
         ]);
+    }
+
+    public function verifyStageControls(CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.change_stage');
+        $this->ensureTenant($opportunity);
+
+        $result = $completion->verifyStageControls($opportunity, Auth::user());
+
+        return back()->with($result['passed'] ? 'success' : 'warning', $result['passed'] ? 'Stage controls passed.' : 'Some stage controls are still incomplete.');
+    }
+
+    public function storeNegotiation(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'stakeholder_id' => ['nullable', 'integer'],
+            'topic' => ['required', 'string', 'max:160'],
+            'customer_position' => ['nullable', 'string', 'max:3000'],
+            'texaro_position' => ['nullable', 'string', 'max:3000'],
+            'proposed_value' => ['nullable', 'numeric', 'min:0'],
+            'agreed_value' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', 'max:60'],
+            'next_follow_up_on' => ['nullable', 'date'],
+        ]);
+
+        $completion->recordNegotiation($opportunity, $request->user(), $data);
+
+        return back()->with('success', 'Negotiation recorded.');
+    }
+
+    public function storeRenewal(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'contract_id' => ['nullable', 'integer'],
+            'renewal_due_on' => ['required', 'date'],
+            'renewal_value' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', 'max:60'],
+            'retention_plan' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        $completion->scheduleRenewal($opportunity, $request->user(), $data);
+
+        return back()->with('success', 'Renewal scheduled.');
+    }
+
+    public function storeExpansion(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.update');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'expansion_type' => ['nullable', 'string', 'max:80'],
+            'title' => ['required', 'string', 'max:255'],
+            'estimated_value' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', 'max:60'],
+            'rationale' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        $completion->identifyExpansion($opportunity, $request->user(), $data);
+
+        return back()->with('success', 'Expansion opportunity identified.');
+    }
+
+    public function storeLostAnalysis(Request $request, CommercialOpportunity $opportunity, CommercialCompletionService $completion): RedirectResponse
+    {
+        $this->authorizeCommercial('commercial.opportunities.close');
+        $this->ensureTenant($opportunity);
+        $data = $request->validate([
+            'primary_reason' => ['required', 'string', 'max:160'],
+            'competitor_name' => ['nullable', 'string', 'max:160'],
+            'lessons_learned' => ['nullable', 'string', 'max:3000'],
+            'recovery_action' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        $completion->recordLostAnalysis($opportunity, $request->user(), $data);
+
+        return back()->with('success', 'Lost opportunity analysis recorded.');
     }
 
     public function storeProposal(Request $request, CommercialOpportunity $opportunity, CommercialRevenueLifecycleService $revenue, CommercialAuditService $audit): RedirectResponse

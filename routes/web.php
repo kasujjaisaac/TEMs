@@ -62,6 +62,8 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/', [CrmCustomerAccountController::class, 'dashboard'])->name('dashboard');
         Route::get('/accounts', [CrmCustomerAccountController::class, 'index'])->name('accounts.index');
         Route::get('/accounts/{customer}', [CrmCustomerAccountController::class, 'show'])->name('accounts.show');
+        Route::post('/accounts/{customer}/account-plan', [CrmCustomerAccountController::class, 'storeAccountPlan'])->name('accounts.account_plan.store');
+        Route::post('/accounts/{customer}/health', [CrmCustomerAccountController::class, 'captureHealth'])->name('accounts.health.capture');
     });
 
     Route::prefix('commercial')->name('commercial.')->group(function () {
@@ -82,6 +84,11 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::post('/contracts/{contract}/sign', [CommercialOpportunityController::class, 'signContract'])->name('contracts.sign');
         Route::post('/opportunities/{opportunity}/billing-requests', [CommercialOpportunityController::class, 'storeBillingRequest'])->name('opportunities.billing_requests.store');
         Route::post('/opportunities/{opportunity}/handoff-to-sales', [CommercialOpportunityController::class, 'handoffToSales'])->name('opportunities.handoff_to_sales');
+        Route::post('/opportunities/{opportunity}/stage-controls/verify', [CommercialOpportunityController::class, 'verifyStageControls'])->name('opportunities.stage_controls.verify');
+        Route::post('/opportunities/{opportunity}/negotiations', [CommercialOpportunityController::class, 'storeNegotiation'])->name('opportunities.negotiations.store');
+        Route::post('/opportunities/{opportunity}/renewals', [CommercialOpportunityController::class, 'storeRenewal'])->name('opportunities.renewals.store');
+        Route::post('/opportunities/{opportunity}/expansions', [CommercialOpportunityController::class, 'storeExpansion'])->name('opportunities.expansions.store');
+        Route::post('/opportunities/{opportunity}/lost-analysis', [CommercialOpportunityController::class, 'storeLostAnalysis'])->name('opportunities.lost_analysis.store');
         Route::resource('opportunities', CommercialOpportunityController::class)->only(['index', 'create', 'store', 'show']);
         Route::resource('activities', CommercialActivityController::class)->only(['index', 'create', 'store']);
         Route::resource('meetings', CommercialMeetingController::class)->only(['index', 'create', 'store']);

@@ -85,6 +85,54 @@
         ])
     </section>
 
+    <section class="commercial-split">
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Account Plan</h2><span class="commercial-muted">Ownership, growth, retention, and review discipline</span></div>
+            @if($accountPlan)
+                @include('commercial.partials.table', [
+                    'headers' => ['Field', 'Value'],
+                    'rows' => [
+                        ['Relationship Stage', e($accountPlan->relationship_stage)],
+                        ['Health / Risk', e($accountPlan->health_status . ' / ' . $accountPlan->risk_level)],
+                        ['Objectives', e($accountPlan->objectives ?: '-')],
+                        ['Growth Strategy', e($accountPlan->growth_strategy ?: '-')],
+                        ['Retention Strategy', e($accountPlan->retention_strategy ?: '-')],
+                        ['Next Review', e($accountPlan->next_review_on ?: '-')],
+                    ],
+                ])
+            @endif
+            @if(auth()->user()?->hasPermission('crm.accounts.manage') || auth()->user()?->hasPermission('customers.manage'))
+                <form class="commercial-form" method="POST" action="{{ route('crm.accounts.account_plan.store', $account->id) }}">
+                    @csrf
+                    <div class="commercial-field"><label>Relationship Stage</label><input name="relationship_stage" value="{{ $accountPlan->relationship_stage ?? 'Active' }}"></div>
+                    <div class="commercial-field"><label>Risk Level</label><select name="risk_level"><option>Low</option><option @selected(($accountPlan->risk_level ?? '') === 'Medium')>Medium</option><option @selected(($accountPlan->risk_level ?? '') === 'High')>High</option></select></div>
+                    <div class="commercial-field full"><label>Objectives</label><textarea name="objectives">{{ $accountPlan->objectives ?? '' }}</textarea></div>
+                    <div class="commercial-field full"><label>Growth Strategy</label><textarea name="growth_strategy">{{ $accountPlan->growth_strategy ?? '' }}</textarea></div>
+                    <div class="commercial-field full"><label>Retention Strategy</label><textarea name="retention_strategy">{{ $accountPlan->retention_strategy ?? '' }}</textarea></div>
+                    <div class="commercial-field"><label>Next Review</label><input name="next_review_on" type="date" value="{{ $accountPlan->next_review_on ?? now()->addMonth()->toDateString() }}"></div>
+                    <div class="commercial-field full"><button class="commercial-button" type="submit">Save Account Plan</button></div>
+                </form>
+            @endif
+        </div>
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Customer Health</h2><span class="commercial-muted">Pipeline, revenue, tickets, and risk</span></div>
+            @if(auth()->user()?->hasPermission('crm.health.view') || auth()->user()?->hasPermission('crm.accounts.manage'))
+                <form method="POST" action="{{ route('crm.accounts.health.capture', $account->id) }}">@csrf<button class="commercial-button" type="submit">Capture Health</button></form>
+            @endif
+            @include('commercial.partials.table', [
+                'headers' => ['Date', 'Score', 'Status', 'Risk', 'Pipeline', 'Revenue'],
+                'rows' => $healthSnapshots->map(fn ($snapshot) => [
+                    e($snapshot->snapshot_date),
+                    e($snapshot->health_score . '%'),
+                    '<span class="commercial-badge success">' . e($snapshot->health_status) . '</span>',
+                    e($snapshot->risk_level),
+                    number_format((float) $snapshot->open_pipeline_value, 2),
+                    number_format((float) $snapshot->lifetime_revenue, 2),
+                ])->all()
+            ])
+        </div>
+    </section>
+
     <section class="commercial-panel">
         <div class="commercial-panel-head">
             <h2>Linked Commercial Opportunities</h2>
@@ -121,15 +169,36 @@
             <div class="commercial-panel-head"><h2>Relationship Timeline</h2><span class="commercial-muted">CRM leads and payments</span></div>
             @include('commercial.partials.table', [
                 'headers' => ['Record', 'Status', 'Value / Amount'],
-                'rows' => $crmLeads->map(fn ($lead) => [
+                'rows' => $timeline->map(fn ($event) => [
+                    '<strong class="commercial-table-title">' . e($event->title) . '</strong><span class="commercial-muted">' . e($event->event_type . ' / ' . $event->source_module) . '</span>',
+                    e($event->occurred_at ?: '-'),
+                    e($event->description ?: '-'),
+                ])->concat($crmLeads->map(fn ($lead) => [
                     '<strong class="commercial-table-title">' . e($lead->contact_name) . '</strong><span class="commercial-muted">' . e($lead->source) . '</span>',
                     '<span class="commercial-badge">' . e($lead->status) . '</span>',
                     number_format((float) $lead->estimated_value, 2),
-                ])->concat($payments->map(fn ($payment) => [
+                ]))->concat($payments->map(fn ($payment) => [
                     '<strong class="commercial-table-title">' . e($payment->invoice_number) . '</strong><span class="commercial-muted">' . e($payment->payment_date ?: '-') . '</span>',
                     e($payment->method ?: 'Payment'),
                     number_format((float) $payment->amount, 2),
                 ]))->all()
+            ])
+        </div>
+    </section>
+
+    <section class="commercial-split">
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Renewals</h2><span class="commercial-muted">Retention opportunities</span></div>
+            @include('commercial.partials.table', [
+                'headers' => ['Reference', 'Due', 'Value', 'Status'],
+                'rows' => $renewals->map(fn ($renewal) => [e($renewal->reference), e($renewal->renewal_due_on), e($renewal->currency . ' ' . number_format((float) $renewal->renewal_value, 2)), e($renewal->status)])->all()
+            ])
+        </div>
+        <div class="commercial-panel">
+            <div class="commercial-panel-head"><h2>Expansion</h2><span class="commercial-muted">Upsell and cross-sell pipeline</span></div>
+            @include('commercial.partials.table', [
+                'headers' => ['Reference', 'Type', 'Title', 'Value', 'Status'],
+                'rows' => $expansions->map(fn ($expansion) => [e($expansion->reference), e($expansion->expansion_type), e($expansion->title), e($expansion->currency . ' ' . number_format((float) $expansion->estimated_value, 2)), e($expansion->status)])->all()
             ])
         </div>
     </section>

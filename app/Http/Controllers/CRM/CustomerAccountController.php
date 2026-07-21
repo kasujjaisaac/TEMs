@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use App\Services\CRM\CustomerIdentityService;
+use App\Services\CRM\CustomerAccountLifecycleService;
 
 class CustomerAccountController extends Controller
 {
@@ -86,7 +87,39 @@ class CustomerAccountController extends Controller
             'payments' => $this->customerPayments($tenantId, $account->id),
             'crmLeads' => $this->customerCrmLeads($tenantId, $account->id),
             'identityLinks' => $this->customerIdentityLinks($tenantId, $account->id),
+            'accountPlan' => DB::table('crm_account_plans')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->first(),
+            'timeline' => DB::table('crm_account_timeline')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest('occurred_at')->limit(20)->get(),
+            'healthSnapshots' => DB::table('crm_customer_health_snapshots')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest('snapshot_date')->limit(8)->get(),
+            'renewals' => DB::table('commercial_renewals')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest('renewal_due_on')->limit(8)->get(),
+            'expansions' => DB::table('commercial_expansion_opportunities')->where('tenant_id', $tenantId)->where('customer_id', $account->id)->latest()->limit(8)->get(),
         ]);
+    }
+
+    public function storeAccountPlan(Request $request, int $customer, CustomerAccountLifecycleService $accounts)
+    {
+        abort_unless(Auth::user()?->hasPermission('crm.accounts.manage') || Auth::user()?->hasPermission('customers.manage'), 403);
+        $data = $request->validate([
+            'relationship_stage' => ['nullable', 'string', 'max:80'],
+            'objectives' => ['nullable', 'string', 'max:3000'],
+            'growth_strategy' => ['nullable', 'string', 'max:3000'],
+            'retention_strategy' => ['nullable', 'string', 'max:3000'],
+            'health_status' => ['nullable', 'string', 'max:60'],
+            'risk_level' => ['nullable', 'string', 'max:40'],
+            'next_review_on' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $accounts->upsertAccountPlan($this->tenantId(), $customer, $request->user(), $data);
+
+        return back()->with('success', 'Account plan saved.');
+    }
+
+    public function captureHealth(int $customer, CustomerAccountLifecycleService $accounts)
+    {
+        abort_unless(Auth::user()?->hasPermission('crm.health.view') || Auth::user()?->hasPermission('crm.accounts.manage'), 403);
+        $accounts->captureHealth($this->tenantId(), $customer, Auth::user());
+
+        return back()->with('success', 'Customer health captured.');
     }
 
     private function authorizeCrm(): void
