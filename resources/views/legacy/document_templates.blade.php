@@ -210,6 +210,7 @@ if ($previewKey !== '' && isset($templates[$previewKey])) {
             <div class="receipt-thanks">Thank you for your business!</div>
         </main>
     <?php endif; ?>
+@include('layouts.design-lock')
 </body>
 </html>
     <?php

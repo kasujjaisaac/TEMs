@@ -551,5 +551,6 @@
             </div>
         </div>
     </footer>
+@include('layouts.design-lock')
 </body>
 </html>

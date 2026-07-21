@@ -298,5 +298,6 @@
             });
         });
     </script>
+@include('layouts.design-lock')
 </body>
 </html>

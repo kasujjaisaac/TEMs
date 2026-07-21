@@ -675,6 +675,7 @@ if (! function_exists('onyx_page_end')) {
             <button type="button" data-mobile-more><i class="fa-solid fa-ellipsis"></i><span>More</span></button>
         </nav>
         <a class="mobile-fab" href="<?= route('commercial.opportunities.create') ?>" aria-label="New opportunity"><i class="fa-solid fa-plus"></i><span>Deal</span></a>
+        <?= view('layouts.design-lock')->render() ?>
         </body></html>
         <?php
     }
